@@ -928,6 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 採点後のスコアを保持する変数
 let _scores = {goii:0, bunpo:0, chokkai:0};
+let _fieldStatus = {};
 
 let _audioSpeed = 1.0;
 function setAudioSpeed(rate) {
@@ -1172,13 +1173,16 @@ function checkFlex(input, correctArr){
 function gradeAll(){
   let gScore=0, bScore=0, cScore=0;
   let detail = '';
+  _fieldStatus = {};
 
   // --- 語彙Q1 ---
   let g1s=0;
   ANS.g1.forEach((ans,i)=>{
     const el = document.getElementById('g1_'+(i+1));
     const val = (el.value||'').trim();
-    if(val===ans){g1s+=1;el.style.background='#d5f5e3';}
+    const ok = val===ans;
+    _fieldStatus['g1_'+(i+1)] = ok?'correct':'wrong';
+    if(ok){g1s+=1;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   gScore+=g1s;
@@ -1192,6 +1196,7 @@ function gradeAll(){
     const val=el?el.value:'';
     const pts=val===ans?3:0;
     g2s+=pts;
+    _fieldStatus['g2_'+(i+1)] = pts===3?'correct':'wrong';
     if(el) el.style.background=pts===3?'#d5f5e3':'#fdecea';
     const mark=pts===3?'✅ 3点':'❌ 0点';
     g2html+=`<li>問${i+1}：${mark}　正解「${ans}」→ 選択：「${val||'（未選択）'}」</li>`;
@@ -1218,8 +1223,10 @@ function gradeAll(){
     const bucket=document.getElementById(bucketIds[i]);
     if(cleaned===correct && traps.length===0){
       g3s+=2;
+      _fieldStatus['g3_'+(i+1)] = 'correct';
       if(bucket) bucket.style.background='#d5f5e3';
     } else {
+      _fieldStatus['g3_'+(i+1)] = 'wrong';
       if(bucket) bucket.style.background='#fdecea';
     }
   });
@@ -1233,14 +1240,18 @@ function gradeAll(){
   const g4ans=ANS.g4_days;
   g4ids.forEach((id,i)=>{
     const el=document.getElementById(id);
-    if(normalize(el.value)===normalize(g4ans[i])){g4s+=2;el.style.background='#d5f5e3';}
+    const ok=normalize(el.value)===normalize(g4ans[i]);
+    _fieldStatus[id]=ok?'correct':'wrong';
+    if(ok){g4s+=2;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   const g4tids=['g4_8','g4_9','g4_10','g4_11'];
   const g4tans=ANS.g4_time;
   g4tids.forEach((id,i)=>{
     const el=document.getElementById(id);
-    if(normalize(el.value)===normalize(g4tans[i])){g4s+=2;el.style.background='#d5f5e3';}
+    const ok=normalize(el.value)===normalize(g4tans[i]);
+    _fieldStatus[id]=ok?'correct':'wrong';
+    if(ok){g4s+=2;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   gScore+=g4s;
@@ -1253,7 +1264,9 @@ function gradeAll(){
     const val=el.value.trim().toLowerCase();
     // ／区切りの複数正解に対応
     const accepted=ANS.g5[i].split('／').map(s=>s.trim().toLowerCase());
-    if(val && accepted.includes(val)){g5s+=2;el.style.background='#d5f5e3';}
+    const ok5=val && accepted.includes(val);
+    _fieldStatus['g5_'+(i+1)]=ok5?'correct':'wrong';
+    if(ok5){g5s+=2;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   }
   gScore+=g5s;
@@ -1268,7 +1281,9 @@ function gradeAll(){
     ids.forEach((id,j)=>{
       const el=document.getElementById(id);
       const v=(el.value||'').trim();
-      if(normalize(v)===normalize(correct[j])){el.style.background='#d5f5e3';}
+      const okB1=normalize(v)===normalize(correct[j]);
+      _fieldStatus[id]=okB1?'correct':'wrong';
+      if(okB1){el.style.background='#d5f5e3';}
       else{el.style.background='#fdecea';allOk=false;}
     });
     if(allOk) b1s+=ids.length;
@@ -1280,7 +1295,9 @@ function gradeAll(){
   let b2s=0;
   ANS.b2.forEach((ans,i)=>{
     const el=document.getElementById('b2_'+(i+1));
-    if((el.value||'')=== ans){b2s+=2;el.style.background='#d5f5e3';}
+    const okB2=(el.value||'')=== ans;
+    _fieldStatus['b2_'+(i+1)]=okB2?'correct':'wrong';
+    if(okB2){b2s+=2;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   bScore+=b2s;
@@ -1301,6 +1318,7 @@ function gradeAll(){
     const el=document.getElementById('b4_'+(i+1));
     const v=normalize(el.value).replace(/です$/,'');
     const ok=opts.some(a=>normalize(a).replace(/です$/,'')===v);
+    _fieldStatus['b4_'+(i+1)]=ok?'correct':'wrong';
     if(ok){b4s+=3;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
@@ -1311,7 +1329,9 @@ function gradeAll(){
   let b5s=0;
   ANS.b5.forEach((ans,i)=>{
     const el=document.getElementById('b5_'+(i+1));
-    if((el.value||'')===ans){b5s+=3;el.style.background='#d5f5e3';}
+    const okB5=(el.value||'')===ans;
+    _fieldStatus['b5_'+(i+1)]=okB5?'correct':'wrong';
+    if(okB5){b5s+=3;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   bScore+=b5s;
@@ -1323,7 +1343,9 @@ function gradeAll(){
     const el=document.getElementById('b6_'+(i+1));
     const v=normalize(el.value);
     const a=normalize(ans);
-    if(v.includes(a)||a.includes(v)&&v.length>3){b6s+=3;el.style.background='#d5f5e3';}
+    const okB6=v.includes(a)||a.includes(v)&&v.length>3;
+    _fieldStatus['b6_'+(i+1)]=okB6?'correct':'wrong';
+    if(okB6){b6s+=3;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   bScore+=b6s;
@@ -1336,7 +1358,9 @@ function gradeAll(){
   let c2s=0;
   ANS.c2.forEach((ans,i)=>{
     const el=document.getElementById('c2_'+(i+1));
-    if((el.value||'').trim()===ans){c2s+=3;el.style.background='#d5f5e3';}
+    const okC2=(el.value||'').trim()===ans;
+    _fieldStatus['c2_'+(i+1)]=okC2?'correct':'wrong';
+    if(okC2){c2s+=3;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   cScore+=c2s;
@@ -1346,7 +1370,9 @@ function gradeAll(){
   let c7s=0;
   ANS.c7.forEach((ans,i)=>{
     const el=document.getElementById('c7_'+(i+1));
-    if(normalize(el.value)===ans){c7s+=3;el.style.background='#d5f5e3';}
+    const okC7=normalize(el.value)===ans;
+    _fieldStatus['c7_'+(i+1)]=okC7?'correct':'wrong';
+    if(okC7){c7s+=3;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   cScore+=c7s;
@@ -1358,8 +1384,11 @@ function gradeAll(){
     const elp=document.getElementById('c8_'+(i+1)+'p');
     const elc=document.getElementById('c8_'+(i+1)+'c');
     const vp=(elp.value||'').trim().replace(/,/g,'');
-    if(vp===ans){c8s+=2;elp.style.background='#d5f5e3';}else{elp.style.background='#fdecea';}
-    if(normalize(elc.value)===ANS.c8c[i]){c8s+=1;elc.style.background='#d5f5e3';}else{elc.style.background='#fdecea';}
+    const okC8p=vp===ans; const okC8c=normalize(elc.value)===ANS.c8c[i];
+    _fieldStatus['c8_'+(i+1)+'p']=okC8p?'correct':'wrong';
+    _fieldStatus['c8_'+(i+1)+'c']=okC8c?'correct':'wrong';
+    if(okC8p){c8s+=2;elp.style.background='#d5f5e3';}else{elp.style.background='#fdecea';}
+    if(okC8c){c8s+=1;elc.style.background='#d5f5e3';}else{elc.style.background='#fdecea';}
   });
   cScore+=c8s;
   detail+=`<p><b>聴解Q8:</b> ${c8s}/6点</p>`;
@@ -1369,7 +1398,9 @@ function gradeAll(){
   ANS.c10.forEach((ans,i)=>{
     const el=document.getElementById('c10_'+(i+1));
     const v=(el.value||'').trim().replace(/[ー\-]/g,'-');
-    if(v===ans){c10s+=3;el.style.background='#d5f5e3';}
+    const okC10=v===ans;
+    _fieldStatus['c10_'+(i+1)]=okC10?'correct':'wrong';
+    if(okC10){c10s+=3;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
   cScore+=c10s;
@@ -1380,17 +1411,27 @@ function gradeAll(){
   ANS.c11.forEach((ans,i)=>{
     const el=document.getElementById('c11_'+(i+1));
     const v=(el.value||'').trim();
-    if(v===ans||v==='○'&&ans==='○'||v==='x'&&ans==='✕'||v.toLowerCase()==='x'&&ans==='✕'){
-      c11s+=4;el.style.background='#d5f5e3';
-    } else if(normalize(v)===normalize(ans)){
-      c11s+=4;el.style.background='#d5f5e3';
-    } else {el.style.background='#fdecea';}
+    const okC11=v===ans||v==='○'&&ans==='○'||v==='x'&&ans==='✕'||v.toLowerCase()==='x'&&ans==='✕'||normalize(v)===normalize(ans);
+    _fieldStatus['c11_'+(i+1)]=okC11?'correct':'wrong';
+    if(okC11){c11s+=4;el.style.background='#d5f5e3';}
+    else{el.style.background='#fdecea';}
   });
   cScore+=c11s;
   detail+=`<p><b>聴解Q11:</b> ${c11s}/20点</p>`;
 
   // --- 聴解Q1,Q3,Q4,Q5,Q6,Q9,Q12: teacher grades ---
   detail+='<p><b>聴解Q1,Q3,Q4,Q5,Q6,Q9,Q12：先生採点</b></p>';
+
+  // 先生採点フィールドをステータスに追加
+  ['b3_1','b3_2','b3_3','b3_4','b3_5',
+   'b7_1','b7_2','b7_3','b7_4',
+   'c1_1','c1_2',
+   'c3_1a','c3_1b','c3_1c','c3_2a','c3_2b','c3_2c',
+   'c4_1','c4_2','c5_1','c5_2',
+   'c6_1a','c6_1b','c6_2a','c6_2b',
+   'c9_1s','c9_1e','c9_1d','c9_2sa','c9_2ea','c9_2sb','c9_2eb','c9_2d',
+   'c12_1','c12_2','c12_3','c12_4'
+  ].forEach(id=>{_fieldStatus[id]='manual';});
 
   // スコア保存
   _scores = {goii: gScore, bunpo: bScore, chokkai: cScore};
@@ -1434,43 +1475,7 @@ async function submitResults(){
     if(el) freeAnswers[id] = el.value.trim();
   });
 
-  // フィールドステータス（セル色付け用）
-  const _autoFields = [
-    'g1_1','g1_2','g1_3','g1_4','g1_5','g1_6','g1_7','g1_8','g1_9','g1_10',
-    'g2_1','g2_2','g2_3','g2_4','g2_5','g2_6','g2_7','g2_8',
-    'g4_1','g4_2','g4_3','g4_5','g4_6','g4_7','g4_8','g4_9','g4_10','g4_11',
-    ...Array.from({length:20},(_,i)=>`g5_${i+1}`),
-    'b1_1','b1_2','b1_3','b1_4','b1_5a','b1_5b','b1_6a','b1_6b','b1_6c','b1_7',
-    'b2_1','b2_2','b2_3','b2_4','b2_5',
-    'b4_1','b4_2','b4_3','b4_4','b4_5',
-    'b5_1','b5_2','b5_3','b5_4',
-    'b6_1','b6_2','b6_3','b6_4','b6_5','b6_6',
-    'c2_1','c2_2','c7_1','c7_2',
-    'c8_1p','c8_1c','c8_2p','c8_2c',
-    'c10_1','c10_2',
-    'c11_1','c11_2','c11_3','c11_4','c11_5',
-  ];
-  // #d5f5e3=rgb(213,245,227)、#fdecea=rgb(253,236,234) ブラウザがRGBに変換するため両方チェック
-  const _isOk  = bg => bg.includes('213, 245') || bg.includes('d5f5e3');
-  const _isNg  = bg => bg.includes('253, 236') || bg.includes('fdecea');
-  const fieldStatus = {};
-  _autoFields.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){const bg=el.style.background||'';fieldStatus[id]=_isOk(bg)?'correct':_isNg(bg)?'wrong':'';}
-  });
-  [['g3-b-kuni','g3_1'],['g3-b-heya','g3_2'],['g3-b-shigoto','g3_3']].forEach(([bid,fid])=>{
-    const b=document.getElementById(bid);
-    if(b) fieldStatus[fid]=_isOk(b.style.background||'')?'correct':'wrong';
-  });
-  ['b3_1','b3_2','b3_3','b3_4','b3_5',
-   'b7_1','b7_2','b7_3','b7_4',
-   'c1_1','c1_2',
-   'c3_1a','c3_1b','c3_1c','c3_2a','c3_2b','c3_2c',
-   'c4_1','c4_2','c5_1','c5_2',
-   'c6_1a','c6_1b','c6_2a','c6_2b',
-   'c9_1s','c9_1e','c9_1d','c9_2sa','c9_2ea','c9_2sb','c9_2eb','c9_2d',
-   'c12_1','c12_2','c12_3','c12_4'
-  ].forEach(id=>{fieldStatus[id]='manual';});
+  // gradeAll()で構築済みの_fieldStatusをそのまま使用
 
   const payload = {
     timestamp:     new Date().toLocaleString('ja-JP'),
@@ -1484,7 +1489,7 @@ async function submitResults(){
     chokkai_auto:  _scores.chokkai,
     leave_count:   _leaveCount,
     free_answers:  JSON.stringify(freeAnswers),
-    field_status:  fieldStatus,
+    field_status:  _fieldStatus,
   };
 
   try {
