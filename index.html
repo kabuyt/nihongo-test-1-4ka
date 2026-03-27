@@ -853,8 +853,9 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
 
 <!-- 結果表示 -->
 <div class="result-box" id="result-box">
-  <h2 style="color:#1a5276;margin-bottom:12px">📊 採点結果</h2>
-  <div class="score-summary">
+  <h2 style="color:#1a5276;margin-bottom:12px">✅ Đã hoàn thành bài kiểm tra</h2>
+  <p style="color:#555;margin-bottom:12px;font-size:14px">Hãy nhấn nút bên dưới để gửi kết quả cho giáo viên.</p>
+  <div class="score-summary" id="score-summary-area" style="display:none">
     <div class="score-card"><h3>語彙テスト</h3><div class="pts" id="r-goii">-</div><div style="font-size:12px;color:#888">/ 100点（自動採点分）</div></div>
     <div class="score-card"><h3>文法テスト</h3><div class="pts" id="r-bunpo">-</div><div style="font-size:12px;color:#888">/ 100点（自動採点分）</div></div>
     <div class="score-card"><h3>聴解テスト</h3><div class="pts" id="r-chokkai">-</div><div style="font-size:12px;color:#888">/ 100点（自動採点分）</div></div>
@@ -1436,11 +1437,9 @@ function gradeAll(){
   // スコア保存
   _scores = {goii: gScore, bunpo: bScore, chokkai: cScore};
 
-  // 表示
-  document.getElementById('r-goii').textContent = gScore;
-  document.getElementById('r-bunpo').textContent = bScore;
-  document.getElementById('r-chokkai').textContent = cScore;
-  document.getElementById('result-detail').innerHTML = '<hr style="margin:12px 0">'+detail;
+  // スコアと詳細は非表示（先生のみスプレッドシートで確認）
+  document.getElementById('score-summary-area').style.display = 'none';
+  document.getElementById('result-detail').style.display = 'none';
   document.getElementById('send-status').textContent = '';
   document.getElementById('send-btn').disabled = false;
   const rb=document.getElementById('result-box');
