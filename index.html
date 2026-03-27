@@ -43,6 +43,7 @@ input[type=text]{border:1px solid #aaa;border-radius:6px;padding:8px 6px;font-si
 .answer-box input[type=text].long{width:min(180px,60vw)}
 .answer-box input[type=text].medium{width:min(120px,45vw)}
 .choice-list{font-size:13px;color:#444;line-height:2;margin:8px 0}
+.g2-radio{display:flex;flex-direction:column;gap:4px;margin-top:4px}.g2-radio label{display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer}
 table.qa-table{width:100%;border-collapse:collapse;margin-top:8px}
 table.qa-table td,table.qa-table th{border:1px solid #ccc;padding:8px 6px;font-size:13px;vertical-align:middle}
 table.qa-table th{background:#eaf0fb;font-weight:bold;text-align:center}
@@ -100,6 +101,21 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
   .img-row{grid-template-columns:repeat(5,1fr)}
 }
 
+/* 助詞セレクト */
+.sel-particle{font-size:14px;padding:2px 4px;border-radius:4px;border:1px solid #aaa;min-width:52px}
+
+/* 語彙Q3 パズル */
+.g3-pool{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f0f2f5;border-radius:8px;min-height:48px;margin-bottom:12px}
+.g3-tile{display:inline-block;background:#fff;border:2px solid #5b9bd5;border-radius:6px;padding:7px 11px;font-size:13px;cursor:pointer;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.g3-tile.g3-sel{background:#5b9bd5;color:#fff;border-color:#2d6da3;transform:scale(1.05)}
+.g3-buckets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.g3-bucket{border:2px dashed #aaa;border-radius:8px;min-height:80px;padding:6px;cursor:pointer;transition:border-color .15s,background .15s}
+.g3-bucket:hover,.g3-bucket.g3-over{border-color:#5b9bd5;background:#eef4ff}
+.g3-bucket-none{border-color:#ccc;background:#fafafa}
+.g3-bucket-none .g3-bucket-label{color:#888}
+.g3-bucket-label{font-size:13px;font-weight:bold;color:#333;text-align:center;margin-bottom:6px;pointer-events:none}
+.g3-bucket-drop{display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.g3-bucket-drop .g3-tile{font-size:12px;padding:5px 8px;background:#e8f4fd;border-color:#5b9bd5;color:#1a5276}
 </style>
 </head>
 <body>
@@ -183,10 +199,10 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
         <td style="text-align:center"><img src="images/goii/image14.jpeg" style="max-height:70px"></td>
       </tr>
       <tr>
-        <td>１）<input type="text" id="g2_1"></td>
-        <td>２）<input type="text" id="g2_2"></td>
-        <td>３）<input type="text" id="g2_3"></td>
-        <td>４）<input type="text" id="g2_4"></td>
+        <td>１）<select id="g2_1"><option value="">--</option><option value="てちう">てちう</option><option value="てちょう">てちょう</option><option value="てぢょう">てぢょう</option><option value="てうちょ">てうちょ</option></select></td>
+        <td>２）<select id="g2_2"><option value="">--</option><option value="がばん">がばん</option><option value="かぱん">かぱん</option><option value="かばん">かばん</option><option value="かばの">かばの</option></select></td>
+        <td>３）<select id="g2_3"><option value="">--</option><option value="えんびつ">えんびつ</option><option value="えんぴっ">えんぴっ</option><option value="えんぴず">えんぴず</option><option value="えんぴつ">えんぴつ</option></select></td>
+        <td>４）<select id="g2_4"><option value="">--</option><option value="てんわ">てんわ</option><option value="でんわ">でんわ</option><option value="でんは">でんは</option><option value="でわん">でわん</option></select></td>
       </tr>
       <tr>
         <td style="text-align:center"><img src="images/goii/image15.jpeg" style="max-height:70px"></td>
@@ -195,32 +211,53 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
         <td style="text-align:center"><img src="images/goii/image18.png" style="max-height:70px"></td>
       </tr>
       <tr>
-        <td>５）<input type="text" id="g2_5"></td>
-        <td>６）<input type="text" id="g2_6"></td>
-        <td>７）<input type="text" id="g2_7"></td>
-        <td>８）<input type="text" id="g2_8"></td>
+        <td>５）<select id="g2_5"><option value="">--</option><option value="コンビューター">コンビューター</option><option value="コンピユーター">コンピユーター</option><option value="コンピューター">コンピューター</option><option value="コンピュータ">コンピュータ</option></select></td>
+        <td>６）<select id="g2_6"><option value="">--</option><option value="エリベーター">エリベーター</option><option value="エレベータ">エレベータ</option><option value="エレベーダ">エレベーダ</option><option value="エレベーター">エレベーター</option></select></td>
+        <td>７）<select id="g2_7"><option value="">--</option><option value="バイン">バイン</option><option value="ワイン">ワイン</option><option value="ウイン">ウイン</option><option value="ワイム">ワイム</option></select></td>
+        <td>８）<select id="g2_8"><option value="">--</option><option value="コーピー">コーピー</option><option value="コーヒイ">コーヒイ</option><option value="コーヒー">コーヒー</option><option value="コーフィ">コーフィ</option></select></td>
       </tr>
     </table></div>
   </div>
 
   <!-- Q3 -->
   <div class="q-block">
-    <div class="q-title">問題３．Từ A→L hãy chọn đáp án đúng　＜各2点×3問＝6点＞</div>
-    <div class="choice-list">
-      A．さとう（佐藤）さん　　B．かいぎしつ（会議室）　　C．かんこく（韓国）　　D．すずき（鈴木）さん<br>
-      E．アメリカ　　F．マイクさん　　G．きょうし（教師）　　H．にほん（日本）<br>
-      I．けんきゅうしゃ（研究者）　　J．エンジニア　　K．しょくどう（食堂）　　L．じむしょ（事務所）
+    <div class="q-title">問題３．Phân loại từ A→L vào đúng nhóm　＜各2点×3問＝6点＞</div>
+    <div style="font-size:12px;color:#888;margin-bottom:10px">▶ Nhấn thẻ để chọn, sau đó nhấn nhóm để xếp vào. Nhấn thẻ đã xếp để lấy lại. ⚠ Xếp sai sẽ bị trừ điểm!</div>
+    <div class="g3-pool" id="g3-pool">
+      <div class="g3-tile" data-key="a" onclick="g3TileClick(event,this)">A. さとう</div>
+      <div class="g3-tile" data-key="b" onclick="g3TileClick(event,this)">B. かいぎしつ</div>
+      <div class="g3-tile" data-key="c" onclick="g3TileClick(event,this)">C. かんこく</div>
+      <div class="g3-tile" data-key="d" onclick="g3TileClick(event,this)">D. すずき</div>
+      <div class="g3-tile" data-key="e" onclick="g3TileClick(event,this)">E. アメリカ</div>
+      <div class="g3-tile" data-key="f" onclick="g3TileClick(event,this)">F. マイク</div>
+      <div class="g3-tile" data-key="g" onclick="g3TileClick(event,this)">G. きょうし</div>
+      <div class="g3-tile" data-key="h" onclick="g3TileClick(event,this)">H. にほん</div>
+      <div class="g3-tile" data-key="i" onclick="g3TileClick(event,this)">I. けんきゅうしゃ</div>
+      <div class="g3-tile" data-key="j" onclick="g3TileClick(event,this)">J. エンジニア</div>
+      <div class="g3-tile" data-key="k" onclick="g3TileClick(event,this)">K. しょくどう</div>
+      <div class="g3-tile" data-key="l" onclick="g3TileClick(event,this)">L. じむしょ</div>
     </div>
-    <div style="margin-top:10px;font-size:13px;color:#555">Ví dụ）ひと（人）　→　<span class="already">A、D、F</span></div>
-    <div class="answer-row" style="margin-top:8px">
-      <div class="answer-box"><span>１）くに（国）</span><input type="text" id="g3_1" class="long"></div>
+    <div class="g3-buckets">
+      <div class="g3-bucket" onclick="g3BucketClick('g3-b-kuni')">
+        <div class="g3-bucket-label">１）くに</div>
+        <div class="g3-bucket-drop" id="g3-b-kuni"></div>
+      </div>
+      <div class="g3-bucket" onclick="g3BucketClick('g3-b-heya')">
+        <div class="g3-bucket-label">２）へや</div>
+        <div class="g3-bucket-drop" id="g3-b-heya"></div>
+      </div>
+      <div class="g3-bucket" onclick="g3BucketClick('g3-b-shigoto')">
+        <div class="g3-bucket-label">３）しごと</div>
+        <div class="g3-bucket-drop" id="g3-b-shigoto"></div>
+      </div>
+      <div class="g3-bucket g3-bucket-none" onclick="g3BucketClick('g3-b-none')">
+        <div class="g3-bucket-label">Không thuộc nhóm nào</div>
+        <div class="g3-bucket-drop" id="g3-b-none"></div>
+      </div>
     </div>
-    <div class="answer-row">
-      <div class="answer-box"><span>２）へや（部屋）・ばしょ（場所）</span><input type="text" id="g3_2" class="long"></div>
-    </div>
-    <div class="answer-row">
-      <div class="answer-box"><span>３）しごと（仕事）</span><input type="text" id="g3_3" class="long"></div>
-    </div>
+    <input type="hidden" id="g3_1">
+    <input type="hidden" id="g3_2">
+    <input type="hidden" id="g3_3">
   </div>
 
   <!-- Q4 -->
@@ -321,13 +358,13 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
     <div class="q-instruction">Hãy điền từ đúng（trợ từ...）vào（　　）.</div>
 
     <div class="sentence">Ví dụ）　きょう（<span class="already">は</span>）すいようびです。</div>
-    <div class="sentence">１）　つつみさんはまいばんなんじ（<span class="fill-inline"><input type="text" id="b1_1" class="blank sm"></span>）ねますか。</div>
-    <div class="sentence">２）　チュンさんはじっしゅうせいです。リンさん（<span class="fill-inline"><input type="text" id="b1_2" class="blank sm"></span>）じっしゅうせいです。</div>
-    <div class="sentence">３）　やまもとさんはABC（<span class="fill-inline"><input type="text" id="b1_3" class="blank sm"></span>）かいしゃいんです。</div>
-    <div class="sentence">４）　しつれいです（<span class="fill-inline"><input type="text" id="b1_4" class="blank sm"></span>）、おいくつですか。</div>
-    <div class="sentence">５）　これ（<span class="fill-inline"><input type="text" id="b1_5a" class="blank sm"></span>）だれ（<span class="fill-inline"><input type="text" id="b1_5b" class="blank sm"></span>）ボールペンですか。</div>
-    <div class="sentence">６）　VPぎんこう（<span class="fill-inline"><input type="text" id="b1_6a" class="blank sm"></span>）なんじ（<span class="fill-inline"><input type="text" id="b1_6b" class="blank sm"></span>）なんじ（<span class="fill-inline"><input type="text" id="b1_6c" class="blank sm"></span>）までですか。</div>
-    <div class="sentence">７）　やすみはあした（<span class="fill-inline"><input type="text" id="b1_7" class="blank sm"></span>）あさってです。</div>
+    <div class="sentence">１）　つつみさんはまいばんなんじ（<span class="fill-inline"><select id="b1_1" class="sel-particle"><option value="">-</option><option>で</option><option>に</option><option>を</option><option>は</option></select></span>）ねますか。</div>
+    <div class="sentence">２）　チュンさんはじっしゅうせいです。リンさん（<span class="fill-inline"><select id="b1_2" class="sel-particle"><option value="">-</option><option>が</option><option>は</option><option>も</option><option>と</option></select></span>）じっしゅうせいです。</div>
+    <div class="sentence">３）　やまもとさんはABC（<span class="fill-inline"><select id="b1_3" class="sel-particle"><option value="">-</option><option>で</option><option>は</option><option>の</option><option>が</option></select></span>）かいしゃいんです。</div>
+    <div class="sentence">４）　しつれいです（<span class="fill-inline"><select id="b1_4" class="sel-particle"><option value="">-</option><option>は</option><option>も</option><option>が</option><option>で</option></select></span>）、おいくつですか。</div>
+    <div class="sentence">５）　これ（<span class="fill-inline"><select id="b1_5a" class="sel-particle"><option value="">-</option><option>が</option><option>も</option><option>は</option><option>を</option></select></span>）だれ（<span class="fill-inline"><select id="b1_5b" class="sel-particle"><option value="">-</option><option>が</option><option>は</option><option>の</option><option>で</option></select></span>）ボールペンですか。</div>
+    <div class="sentence">６）　VPぎんこう（<span class="fill-inline"><select id="b1_6a" class="sel-particle"><option value="">-</option><option>が</option><option>も</option><option>で</option><option>は</option></select></span>）なんじ（<span class="fill-inline"><select id="b1_6b" class="sel-particle"><option value="">-</option><option>まで</option><option>に</option><option>から</option><option>で</option></select></span>）なんじ（<span class="fill-inline"><select id="b1_6c" class="sel-particle"><option value="">-</option><option>から</option><option>に</option><option>まで</option><option>で</option></select></span>）までですか。</div>
+    <div class="sentence">７）　やすみはあした（<span class="fill-inline"><select id="b1_7" class="sel-particle"><option value="">-</option><option>や</option><option>も</option><option>と</option><option>か</option></select></span>）あさってです。</div>
   </div>
 
   <!-- B-Q2 -->
@@ -346,16 +383,16 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
       <p class="sentence">２）　けさ、5じに（　<span class="fill-inline">
         <select id="b2_2" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
-          <option value="おきました">おきました</option>
           <option value="おきます">おきます</option>
+          <option value="おきました">おきました</option>
           <option value="ねます">ねます</option>
         </select>
       </span>　）。</p>
       <p class="sentence">３）　まいにち（　<span class="fill-inline">
         <select id="b2_3" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
-          <option value="はたらきます">はたらきます</option>
           <option value="はたらきました">はたらきました</option>
+          <option value="はたらきます">はたらきます</option>
         </select>
       </span>　）か。</p>
       <p class="sentence">４）　じむしょは（　<span class="fill-inline">
@@ -396,15 +433,15 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
   <!-- B-Q4 -->
   <div class="q-block">
     <div class="q-title">問題４．Hãy ghi bằng Hiragana　＜各3点×5問＝15点＞</div>
-    <div class="q-instruction">ひらがなで答えてください。</div>
+    <div class="q-instruction">Chọn cách đọc bằng Hiragana đúng.</div>
     <div class="sentence">Ví dụ）０９：１５　→　<span class="already">くじじゅうごふんです。</span></div>
     <div class="sentence">　　　　＼3,600　→　<span class="already">さんぜんろっぴゃくえんです。</span></div>
     <hr class="thin">
-    <div class="sentence">１）１０：４０　→　<input type="text" id="b4_1" class="blank lg"></div>
-    <div class="sentence">２）１８：３０　→　<input type="text" id="b4_2" class="blank lg"></div>
-    <div class="sentence">３）００：２０　→　<input type="text" id="b4_3" class="blank lg"></div>
-    <div class="sentence">４）＼125,840　→　<input type="text" id="b4_4" class="blank" style="width:280px"></div>
-    <div class="sentence">５）＼74,090　→　<input type="text" id="b4_5" class="blank" style="width:280px"></div>
+    <div class="sentence">１）１０：４０　→　<select id="b4_1"><option value="">--</option><option>じゅうじさんじゅっぷん</option><option>じゅうじよんじゅっぷん</option><option>じゅうじはん</option><option>くじよんじゅっぷん</option></select></div>
+    <div class="sentence">２）１８：３０　→　<select id="b4_2"><option value="">--</option><option>しちじはん</option><option>ろくじはん</option><option>じゅうはちじはん</option><option>ろくじさんじゅっぷん</option></select></div>
+    <div class="sentence">３）００：２０　→　<select id="b4_3"><option value="">--</option><option>れいじじゅっぷん</option><option>れいじにじゅっぷん</option><option>じゅうにじにじゅっぷん</option><option>れいじさんじゅっぷん</option></select></div>
+    <div class="sentence">４）＼125,840　→　<select id="b4_4" style="max-width:100%"><option value="">--</option><option>じゅうにまんはっぴゃくよんじゅうえん</option><option>じゅうにまんごせんはっぴゃくよんじゅうえん</option><option>じゅうごまんはっぴゃくよんじゅうえん</option><option>にじゅうごまんはっぴゃくよんじゅうえん</option></select></div>
+    <div class="sentence">５）＼74,090　→　<select id="b4_5" style="max-width:100%"><option value="">--</option><option>しちまんよんせんきゅうじゅうえん</option><option>ななまんよんせんきゅうじゅうえん</option><option>ごまんよんせんきゅうじゅうえん</option><option>ははまんよんせんきゅうじゅうえん</option></select></div>
   </div>
 
   <!-- B-Q5 -->
@@ -415,52 +452,109 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
     </div>
     <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;font-size:14px;line-height:2.2">
       <b>もりもとさんのいっしゅうかん</b><br>
-      もりもとさんはげつようびとすいようびにはたらきます。げつようびは8じからはたらきます。すいようびは1じからはたらきます。よる7じにおわります。どようびのばんとにちようびのばん、べんきょうします。どようびとにちようびもやすみません。まいばん11じにねます。
+      もりもとさん は げつようび と すいようび に はたらきます。げつようび は 8じ から はたらきます。すいようび は 1じ から はたらきます。よる 7じ に おわります。どようび の ばん と にちようび の ばん、べんきょうします。どようび と にちようび も やすみません。まいばん 11じ に ねます。
     </div>
     <div style="margin-top:10px">
-      <p style="font-size:13px;color:#555">１）　かようび、もりもとさんははたらきますか。</p>
-      <textarea class="free" id="b5_1"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:8px">２）　すいようび、もりもとさんはばんまではたらきますか。</p>
-      <textarea class="free" id="b5_2"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:8px">３）　げつようび、もりもとさんはなんじにねますか。</p>
-      <textarea class="free" id="b5_3"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:8px">４）　もりもとさんのやすみはなんようびですか。</p>
-      <textarea class="free" id="b5_4"></textarea>
+      <p style="font-size:13px;color:#555">１）　かようび、もりもとさん は はたらきますか。</p>
+      <select id="b5_1" style="font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa">
+        <option value="">-- Chọn câu trả lời --</option>
+        <option>はい、8じからはたらきます。</option>
+        <option>いいえ、はたらきません。</option>
+        <option>はい、はたらきます。</option>
+        <option>いいえ、べんきょうします。</option>
+      </select>
+      <p style="font-size:13px;color:#555;margin-top:12px">２）　すいようび、もりもとさん は ばん まで はたらきますか。</p>
+      <select id="b5_2" style="font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa">
+        <option value="">-- Chọn câu trả lời --</option>
+        <option>いいえ、ごごにおわります。</option>
+        <option>はい、よる7じにおわります。</option>
+        <option>はい、まいにちはたらきます。</option>
+        <option>いいえ、よるははたらきません。</option>
+      </select>
+      <p style="font-size:13px;color:#555;margin-top:12px">３）　げつようび、もりもとさん は なんじ に ねますか。</p>
+      <select id="b5_3" style="font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa">
+        <option value="">-- Chọn câu trả lời --</option>
+        <option>げつようびは8じにねます。</option>
+        <option>よる9じにねます。</option>
+        <option>まいばん11じにねます。</option>
+        <option>まいばん1じにねます。</option>
+      </select>
+      <p style="font-size:13px;color:#555;margin-top:12px">４）　もりもとさん の やすみ は なんようびですか。</p>
+      <select id="b5_4" style="font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa">
+        <option value="">-- Chọn câu trả lời --</option>
+        <option>にちようびです。</option>
+        <option>どようびです。</option>
+        <option>かようびとにちようびです。</option>
+        <option>やすみはありません。</option>
+      </select>
     </div>
   </div>
 
   <!-- B-Q6 -->
   <div class="q-block">
     <div class="q-title">問題６．Hoàn thành đoạn hội thoại bên dưới　＜各3点×6問＝18点＞</div>
-    <div class="sentence">①　A：すみません。（<input type="text" id="b6_1" class="blank lg">　）。
-      <br>　　B：ああ、トイレはあちらです。</div>
+    <div class="sentence">①　A：すみません。（
+      <select id="b6_1" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+        <option value="">--</option>
+        <option>なんじまでですか</option>
+        <option>トイレはどちらですか</option>
+        <option>トイレはどれですか</option>
+        <option>かいぎしつはどこですか</option>
+      </select>）。<br>　　B：ああ、トイレはあちらです。</div>
     <div class="sentence" style="margin-top:10px">②　A：はじめまして。105のディエンです。よろしくおねがいします。
-      <br>　　B：（<input type="text" id="b6_2" class="blank medium">）、よろしくおねがいします。</div>
+      <br>　　B：（<select id="b6_2" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+        <option value="">--</option>
+        <option>はじめまして</option>
+        <option>こちらこそ</option>
+        <option>ありがとうございます</option>
+        <option>どうぞよろしく</option>
+      </select>）、よろしくおねがいします。</div>
     <div class="sentence" style="margin-top:10px">③　A：あのう、これ、おみやげです。どうぞ。
-      <br>　　B：えっ、（<input type="text" id="b6_3" class="blank lg">）。
-      <br>　　A：それはベトナムのコーヒーです。</div>
-    <div class="sentence" style="margin-top:10px">④　A：さとうさん、ひるやすみは（<input type="text" id="b6_4" class="blank lg">）。
-      <br>　　B：12じ50ぷんまでです。
+      <br>　　B：えっ、（<select id="b6_3" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+        <option value="">--</option>
+        <option>これはいくらですか</option>
+        <option>これはなんですか</option>
+        <option>これはどこですか</option>
+        <option>これはだれのですか</option>
+      </select>）。<br>　　A：それはベトナムのコーヒーです。</div>
+    <div class="sentence" style="margin-top:10px">④　A：さとうさん、ひるやすみは（<select id="b6_4" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+        <option value="">--</option>
+        <option>なんじからですか</option>
+        <option>なんじまでですか</option>
+        <option>いつですか</option>
+        <option>いくらですか</option>
+      </select>）。<br>　　B：12じ50ぷんまでです。
       <br>　　A：あしたはやすみですか。
-      <br>　　B：いいえ、（<input type="text" id="b6_5" class="blank lg">）。やすみはにちようびです。</div>
-    <div class="sentence" style="margin-top:10px">⑤　A：すみません、（<input type="text" id="b6_6" class="blank lg">）。
-      <br>　　B：かいぎしつは6かいです。</div>
+      <br>　　B：いいえ、（<select id="b6_5" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+        <option value="">--</option>
+        <option>やすみです</option>
+        <option>やすみじゃありません</option>
+        <option>やすみでした</option>
+        <option>やすみじゃないですか</option>
+      </select>）。やすみはにちようびです。</div>
+    <div class="sentence" style="margin-top:10px">⑤　A：すみません、（<select id="b6_6" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+        <option value="">--</option>
+        <option>かいぎしつはどこですか</option>
+        <option>かいぎしつはなんかいですか</option>
+        <option>かいぎしつはなんじですか</option>
+        <option>じむしょはなんかいですか</option>
+      </select>）。<br>　　B：かいぎしつは6かいです。</div>
   </div>
 
   <!-- B-Q7 -->
   <div class="q-block">
     <div class="q-title">問題７．Trả lời câu hỏi　＜各4点×4問＝16点＞</div>
     <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
-      ※ Đây là câu hỏi dành cho bạn. Hãy trả lời về bản thân bạn.
+      ※ Hãy trả lời về bản thân bạn bằng tiếng Nhật.
     </div>
     <div style="margin-top:10px">
-      <p style="font-size:13px;color:#555">１）あなたはかいしゃいんですか。</p>
+      <p style="font-size:13px;color:#555">１）あなた は かいしゃいんですか。</p>
       <textarea class="free" id="b7_1"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:8px">２）にちようび、なんじにおきますか。</p>
+      <p style="font-size:13px;color:#555;margin-top:8px">２）にちようび、なんじ に おきますか。</p>
       <textarea class="free" id="b7_2"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:8px">３）しごとは2じにおわりますか。</p>
+      <p style="font-size:13px;color:#555;margin-top:8px">３）しごと は 2じ に おわりますか。</p>
       <textarea class="free" id="b7_3"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:8px">４）がっこうのやすみはなんようびですか。</p>
+      <p style="font-size:13px;color:#555;margin-top:8px">４）がっこう の やすみ は なんようびですか。</p>
       <textarea class="free" id="b7_4"></textarea>
     </div>
   </div>
@@ -715,7 +809,7 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
   <div class="q-block">
     <div class="q-title">問題１２．Trả lời câu hỏi　＜各5点×4問＝20点＞</div>
     <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
-      ※ Đây là câu hỏi về bản thân bạn. Hãy trả lời về chính mình bằng tiếng Việt.
+      ※ Hãy trả lời về bản thân bạn bằng tiếng Nhật.
     </div>
     <div class="audio-q" style="margin-top:10px">
       <div class="qlabel">① 問１</div>
@@ -946,6 +1040,13 @@ const ANS = {
     ['じゅうにまんごせんはっぴゃくよんじゅうえん'],
     ['ななまんよんせんきゅうじゅうえん'],
   ],
+  // 文法Q5 (各3点)
+  b5: [
+    'いいえ、はたらきません。',
+    'はい、よる7じにおわります。',
+    'まいばん11じにねます。',
+    'やすみはありません。',
+  ],
   // 文法Q6 (各3点) - partial auto grade
   b6: [
     'トイレはどちらですか',
@@ -1005,18 +1106,16 @@ function gradeAll(){
   gScore+=g1s;
   detail+=`<p><b>語彙Q1:</b> ${g1s}/10点</p>`;
 
-  // --- 語彙Q2 (完全一致3点・1文字違い2点) ---
+  // --- 語彙Q2 (完全一致3点) ---
   let g2s=0;
   let g2html='<p><b>語彙Q2:</b></p><ul>';
   ANS.g2.forEach((ans,i)=>{
-    const el=document.getElementById('g2_'+(i+1));
-    const pts=scoreG2(el.value, ans);
+    const el=document.getElementById(`g2_${i+1}`);
+    const val=el?el.value:'';
+    const pts=val===ans?3:0;
     g2s+=pts;
-    const mark=pts===3?'✅ 3点':pts===2?'△ 2点':'❌ 0点';
-    if(pts===3){el.style.background='#d4edda';}
-    else if(pts===2){el.style.background='#fff3cd';}
-    else if(el.value){el.style.background='#fdecea';}
-    g2html+=`<li>問${i+1}：${mark}　正解「${ans}」→ 記入：「${el.value||'（未記入）'}」</li>`;
+    const mark=pts===3?'✅ 3点':'❌ 0点';
+    g2html+=`<li>問${i+1}：${mark}　正解「${ans}」→ 選択：「${val||'（未選択）'}」</li>`;
   });
   g2html+=`</ul><p>小計: ${g2s}/24点</p>`;
   gScore+=g2s;
@@ -1024,17 +1123,30 @@ function gradeAll(){
 
   // --- 語彙Q3 ---
   let g3s=0;
-  const g3labels=['１(国)','２(部屋)','３(仕事)'];
+  let g3penalty=0;
   ANS.g3.forEach((ans,i)=>{
     const el=document.getElementById('g3_'+(i+1));
-    const val=normalize(el.value).replace(/[、,，]/g,'');
-    const correct=ans.join('').toLowerCase();
-    const sorted=val.split('').filter(c=>c.match(/[a-lA-L]/)).map(c=>c.toLowerCase()).sort().join('');
-    if(sorted===correct.split('').sort().join('')){g3s+=2;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    const val=el.value.toLowerCase();
+    const letters=val.split('').filter(c=>c.match(/[a-l]/));
+    // A/D/F（ひと）が含まれていたら1枚につき-1点
+    const traps=letters.filter(c=>['a','d','f'].includes(c));
+    g3penalty+=traps.length;
+    // トラップを除いた正解判定
+    const cleaned=letters.filter(c=>!['a','d','f'].includes(c)).sort().join('');
+    const correct=ans.slice().sort().join('');
+    // バケットの背景色を更新（タイルの親要素）
+    const bucketIds=['g3-b-kuni','g3-b-heya','g3-b-shigoto'];
+    const bucket=document.getElementById(bucketIds[i]);
+    if(cleaned===correct && traps.length===0){
+      g3s+=2;
+      if(bucket) bucket.style.background='#d5f5e3';
+    } else {
+      if(bucket) bucket.style.background='#fdecea';
+    }
   });
-  gScore+=g3s;
-  detail+=`<p><b>語彙Q3:</b> ${g3s}/6点</p>`;
+  const g3total=Math.max(0, g3s-g3penalty);
+  gScore+=g3total;
+  detail+=`<p><b>語彙Q3:</b> ${g3total}/6点${g3penalty>0?' (減点 -'+g3penalty+'点)':''}</p>`;
 
   // --- 語彙Q4 ---
   let g4s=0;
@@ -1055,14 +1167,18 @@ function gradeAll(){
   gScore+=g4s;
   detail+=`<p><b>語彙Q4:</b> ${g4s}/20点</p>`;
 
-  // --- 語彙Q5 (show model, teacher grades) ---
-  let g5html='<p><b>語彙Q5（模範解答）:</b></p><ul style="font-size:13px">';
+  // --- 語彙Q5 (自動採点) ---
+  let g5s=0;
   for(let i=0;i<20;i++){
     const el=document.getElementById('g5_'+(i+1));
-    g5html+=`<li>問${i+1}：模範解答「${ANS.g5[i]}」→ 記入：「${el.value||'（未記入）'}」</li>`;
+    const val=el.value.trim().toLowerCase();
+    // ／区切りの複数正解に対応
+    const accepted=ANS.g5[i].split('／').map(s=>s.trim().toLowerCase());
+    if(val && accepted.includes(val)){g5s+=2;el.style.background='#d5f5e3';}
+    else{el.style.background='#fdecea';}
   }
-  g5html+='</ul>';
-  detail+=g5html;
+  gScore+=g5s;
+  detail+=`<p><b>語彙Q5:</b> ${g5s}/40点</p>`;
 
   // --- 文法Q1 ---
   let b1s=0;
@@ -1112,8 +1228,15 @@ function gradeAll(){
   bScore+=b4s;
   detail+=`<p><b>文法Q4:</b> ${b4s}/15点</p>`;
 
-  // --- 文法Q5 (teacher) ---
-  detail+='<p><b>文法Q5（模範解答）:</b> 1)いいえ、はたらきません / 2)はい、はたらきます / 3)11じにねます / 4)かようびともくようびときんようびです</p>';
+  // --- 文法Q5 ---
+  let b5s=0;
+  ANS.b5.forEach((ans,i)=>{
+    const el=document.getElementById('b5_'+(i+1));
+    if((el.value||'')===ans){b5s+=3;el.style.background='#d5f5e3';}
+    else{el.style.background='#fdecea';}
+  });
+  bScore+=b5s;
+  detail+=`<p><b>文法Q5:</b> ${b5s}/12点</p>`;
 
   // --- 文法Q6 ---
   let b6s=0;
@@ -1273,6 +1396,8 @@ function resetAll(){
   });
   document.querySelectorAll('input[type=radio]').forEach(el=>el.checked=false);
   initB3Puzzles();
+  g3Reset();
+  ['g3-b-kuni','g3-b-heya','g3-b-shigoto','g3-b-none'].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.background=''; });
   document.getElementById('result-box').style.display='none';
 }
 
@@ -1336,6 +1461,79 @@ function updateB3(n){
 }
 
 document.addEventListener('DOMContentLoaded', initB3Puzzles);
+
+
+// ===== 語彙Q5 セレクト初期化 =====
+function initG5Selects() {
+  const answers = ANS.g5;
+  for (let i = 0; i < 20; i++) {
+    const sel = document.getElementById('g5_' + (i + 1));
+    if (!sel) continue;
+    const correct = answers[i];
+    // 正解以外から3つランダムに選ぶ
+    const pool = answers.filter((_, j) => j !== i);
+    const distractors = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+    const options = [correct, ...distractors].sort(() => Math.random() - 0.5);
+    options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt;
+      sel.appendChild(o);
+    });
+  }
+}
+
+// ===== 語彙Q3 パズル =====
+let g3Selected = null;
+const G3_TRAP = ['a','d','f']; // ひと → 減点対象
+
+function g3TileClick(e, tile) {
+  e.stopPropagation();
+  if (tile.parentElement.id === 'g3-pool') {
+    // プール内：選択/解除
+    if (g3Selected === tile) {
+      tile.classList.remove('g3-sel');
+      g3Selected = null;
+    } else {
+      if (g3Selected) g3Selected.classList.remove('g3-sel');
+      g3Selected = tile;
+      tile.classList.add('g3-sel');
+    }
+  } else {
+    // バケット内：プールに戻す
+    tile.classList.remove('g3-sel');
+    document.getElementById('g3-pool').appendChild(tile);
+    if (g3Selected === tile) g3Selected = null;
+    g3UpdateHidden();
+  }
+}
+
+function g3BucketClick(dropId) {
+  if (!g3Selected) return;
+  g3Selected.classList.remove('g3-sel');
+  document.getElementById(dropId).appendChild(g3Selected);
+  g3Selected = null;
+  g3UpdateHidden();
+}
+
+function g3UpdateHidden() {
+  const getKeys = id => Array.from(document.getElementById(id).querySelectorAll('.g3-tile')).map(t => t.dataset.key).join('');
+  document.getElementById('g3_1').value = getKeys('g3-b-kuni');
+  document.getElementById('g3_2').value = getKeys('g3-b-heya');
+  document.getElementById('g3_3').value = getKeys('g3-b-shigoto');
+}
+
+function g3Reset() {
+  const pool = document.getElementById('g3-pool');
+  ['g3-b-kuni','g3-b-heya','g3-b-shigoto','g3-b-none'].forEach(id => {
+    Array.from(document.getElementById(id).querySelectorAll('.g3-tile')).forEach(t => {
+      t.classList.remove('g3-sel');
+      pool.appendChild(t);
+    });
+  });
+  if (g3Selected) { g3Selected.classList.remove('g3-sel'); g3Selected = null; }
+  g3UpdateHidden();
+}
 </script>
 </body>
 </html>
