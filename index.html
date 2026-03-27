@@ -1433,6 +1433,41 @@ async function submitResults(){
     if(el) freeAnswers[id] = el.value.trim();
   });
 
+  // フィールドステータス（セル色付け用）
+  const _autoFields = [
+    'g1_1','g1_2','g1_3','g1_4','g1_5','g1_6','g1_7','g1_8','g1_9','g1_10',
+    'g2_1','g2_2','g2_3','g2_4','g2_5','g2_6','g2_7','g2_8',
+    'g4_1','g4_2','g4_3','g4_5','g4_6','g4_7','g4_8','g4_9','g4_10','g4_11',
+    ...Array.from({length:20},(_,i)=>`g5_${i+1}`),
+    'b1_1','b1_2','b1_3','b1_4','b1_5a','b1_5b','b1_6a','b1_6b','b1_6c','b1_7',
+    'b2_1','b2_2','b2_3','b2_4','b2_5',
+    'b4_1','b4_2','b4_3','b4_4','b4_5',
+    'b5_1','b5_2','b5_3','b5_4',
+    'b6_1','b6_2','b6_3','b6_4','b6_5','b6_6',
+    'c2_1','c2_2','c7_1','c7_2',
+    'c8_1p','c8_1c','c8_2p','c8_2c',
+    'c10_1','c10_2',
+    'c11_1','c11_2','c11_3','c11_4','c11_5',
+  ];
+  const fieldStatus = {};
+  _autoFields.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){const bg=el.style.background||'';fieldStatus[id]=bg.includes('d5f5e3')?'correct':bg.includes('fdecea')?'wrong':'';}
+  });
+  [['g3-b-kuni','g3_1'],['g3-b-heya','g3_2'],['g3-b-shigoto','g3_3']].forEach(([bid,fid])=>{
+    const b=document.getElementById(bid);
+    if(b) fieldStatus[fid]=(b.style.background||'').includes('d5f5e3')?'correct':'wrong';
+  });
+  ['b3_1','b3_2','b3_3','b3_4','b3_5',
+   'b7_1','b7_2','b7_3','b7_4',
+   'c1_1','c1_2',
+   'c3_1a','c3_1b','c3_1c','c3_2a','c3_2b','c3_2c',
+   'c4_1','c4_2','c5_1','c5_2',
+   'c6_1a','c6_1b','c6_2a','c6_2b',
+   'c9_1s','c9_1e','c9_1d','c9_2sa','c9_2ea','c9_2sb','c9_2eb','c9_2d',
+   'c12_1','c12_2','c12_3','c12_4'
+  ].forEach(id=>{fieldStatus[id]='manual';});
+
   const payload = {
     timestamp:     new Date().toLocaleString('ja-JP'),
     test_date:     document.getElementById('test_date').value,
@@ -1444,7 +1479,8 @@ async function submitResults(){
     bunpo_auto:    _scores.bunpo,
     chokkai_auto:  _scores.chokkai,
     leave_count:   _leaveCount,
-    free_answers:  JSON.stringify(freeAnswers)
+    free_answers:  JSON.stringify(freeAnswers),
+    field_status:  fieldStatus,
   };
 
   try {
