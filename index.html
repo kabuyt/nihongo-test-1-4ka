@@ -45,7 +45,7 @@ input[type=text]{border:1px solid #aaa;border-radius:6px;padding:8px 6px;font-si
 .choice-list{font-size:13px;color:#444;line-height:2;margin:8px 0}
 .g2-radio{display:flex;flex-direction:column;gap:4px;margin-top:4px}.g2-radio label{display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer}
 table.qa-table{width:100%;border-collapse:collapse;margin-top:8px}
-table.qa-table td,table.qa-table th{border:1px solid #ccc;padding:8px 6px;font-size:13px;vertical-align:middle}
+table.qa-table td,table.qa-table th{border:1px solid #ccc;padding:6px 4px;font-size:12px;vertical-align:middle;word-break:break-word}
 table.qa-table th{background:#eaf0fb;font-weight:bold;text-align:center}
 table.qa-table input[type=text]{width:100%;border:none;border-bottom:1px solid #aaa;border-radius:0;outline:none;font-size:15px;padding:4px 2px;background:transparent}
 /* ラジオ・チェック：タップ領域を大きく */
@@ -149,6 +149,11 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
   <button class="tab-btn" onclick="showTab('chokkai')">Nghe hiểu<br><small>/100点</small></button>
 </div>
 
+<!-- カンニング防止バナー -->
+<div id="cheat-banner" style="display:none;background:#c0392b;color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:bold;position:sticky;top:42px;z-index:99">
+  ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
+</div>
+
 <!-- ============================================================ -->
 <!-- 語彙テスト -->
 <!-- ============================================================ -->
@@ -157,11 +162,7 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
 
   <!-- Q1 -->
   <div class="q-block">
-    <div class="q-title">問題１．Từ A→K hãy chọn đáp án đúng　＜各1点×10問＝10点＞</div>
-    <div class="choice-list">
-      a．いしゃ（医師）　b．ネクタイ　c．くるま　d．かぎ　e．つくえ<br>
-      f．めいし　g．としょかん　h．しんぶん　i．かさ　k．とけい
-    </div>
+    <div class="q-title">問題１．Hãy chọn từ đúng cho mỗi hình　＜各1点×10問＝10点＞</div>
     <div class="img-row" id="g1-imgs">
       <div class="img-item"><img src="images/goii/image1.jpeg"><label>①</label></div>
       <div class="img-item"><img src="images/goii/image2.jpeg"><label>②</label></div>
@@ -175,48 +176,48 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
       <div class="img-item"><img src="images/goii/image10.png"><label>⑩</label></div>
     </div>
     <div class="answer-row">
-      <div class="answer-box"><span>①</span><select id="g1_1" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>②</span><select id="g1_2" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>③</span><select id="g1_3" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>④</span><select id="g1_4" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>⑤</span><select id="g1_5" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>⑥</span><select id="g1_6" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>⑦</span><select id="g1_7" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>⑧</span><select id="g1_8" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>⑨</span><select id="g1_9" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
-      <div class="answer-box"><span>⑩</span><select id="g1_10" class="g1-ans"><option value="">-</option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option><option>i</option><option>k</option></select></div>
+      <div class="answer-box"><span>①</span><select id="g1_1" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>②</span><select id="g1_2" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>③</span><select id="g1_3" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>④</span><select id="g1_4" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>⑤</span><select id="g1_5" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>⑥</span><select id="g1_6" class="g1-ans"><option value="">-</option><option>ネクタイ</option><option>いしゃ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>⑦</span><select id="g1_7" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>⑧</span><select id="g1_8" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>⑨</span><select id="g1_9" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
+      <div class="answer-box"><span>⑩</span><select id="g1_10" class="g1-ans"><option value="">-</option><option>いしゃ</option><option>ネクタイ</option><option>くるま</option><option>かぎ</option><option>つくえ</option><option>めいし</option><option>としょかん</option><option>しんぶん</option><option>かさ</option><option>とけい</option></select></div>
     </div>
   </div>
 
   <!-- Q2 -->
   <div class="q-block">
     <div class="q-title">問題２．Chuyển sang tiếng Nhật（日本語で書いてください）　＜各3点×8問＝24点＞</div>
-    <div class="table-scroll"><table class="qa-table" style="min-width:380px">
+    <table class="qa-table" style="width:100%">
       <tr>
-        <td style="text-align:center"><img src="images/goii/image11.jpeg" style="max-height:70px"></td>
-        <td style="text-align:center"><img src="images/goii/image12.jpeg" style="max-height:70px"></td>
-        <td style="text-align:center"><img src="images/goii/image13.jpeg" style="max-height:70px"></td>
-        <td style="text-align:center"><img src="images/goii/image14.jpeg" style="max-height:70px"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image11.jpeg" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image12.jpeg" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image13.jpeg" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image14.jpeg" style="max-height:60px;max-width:100%"></td>
       </tr>
       <tr>
-        <td>１）<select id="g2_1"><option value="">--</option><option value="てちう">てちう</option><option value="てちょう">てちょう</option><option value="てぢょう">てぢょう</option><option value="てうちょ">てうちょ</option></select></td>
-        <td>２）<select id="g2_2"><option value="">--</option><option value="がばん">がばん</option><option value="かぱん">かぱん</option><option value="かばん">かばん</option><option value="かばの">かばの</option></select></td>
-        <td>３）<select id="g2_3"><option value="">--</option><option value="えんびつ">えんびつ</option><option value="えんぴっ">えんぴっ</option><option value="えんぴず">えんぴず</option><option value="えんぴつ">えんぴつ</option></select></td>
-        <td>４）<select id="g2_4"><option value="">--</option><option value="てんわ">てんわ</option><option value="でんわ">でんわ</option><option value="でんは">でんは</option><option value="でわん">でわん</option></select></td>
+        <td>１）<select id="g2_1" style="width:100%;font-size:11px"><option value="">--</option><option value="てちう">てちう</option><option value="てちょう">てちょう</option><option value="てぢょう">てぢょう</option><option value="てうちょ">てうちょ</option></select></td>
+        <td>２）<select id="g2_2" style="width:100%;font-size:11px"><option value="">--</option><option value="がばん">がばん</option><option value="かぱん">かぱん</option><option value="かばん">かばん</option><option value="かばの">かばの</option></select></td>
+        <td>３）<select id="g2_3" style="width:100%;font-size:11px"><option value="">--</option><option value="えんびつ">えんびつ</option><option value="えんぴっ">えんぴっ</option><option value="えんぴず">えんぴず</option><option value="えんぴつ">えんぴつ</option></select></td>
+        <td>４）<select id="g2_4" style="width:100%;font-size:11px"><option value="">--</option><option value="てんわ">てんわ</option><option value="でんわ">でんわ</option><option value="でんは">でんは</option><option value="でわん">でわん</option></select></td>
       </tr>
       <tr>
-        <td style="text-align:center"><img src="images/goii/image15.jpeg" style="max-height:70px"></td>
-        <td style="text-align:center"><img src="images/goii/image16.jpeg" style="max-height:70px"></td>
-        <td style="text-align:center"><img src="images/goii/image17.jpeg" style="max-height:70px"></td>
-        <td style="text-align:center"><img src="images/goii/image18.png" style="max-height:70px"></td>
+        <td style="text-align:center"><img src="images/goii/image15.jpeg" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center"><img src="images/goii/image16.jpeg" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center"><img src="images/goii/image17.jpeg" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center"><img src="images/goii/image18.png" style="max-height:60px;max-width:100%"></td>
       </tr>
       <tr>
-        <td>５）<select id="g2_5"><option value="">--</option><option value="コンビューター">コンビューター</option><option value="コンピユーター">コンピユーター</option><option value="コンピューター">コンピューター</option><option value="コンピュータ">コンピュータ</option></select></td>
-        <td>６）<select id="g2_6"><option value="">--</option><option value="エリベーター">エリベーター</option><option value="エレベータ">エレベータ</option><option value="エレベーダ">エレベーダ</option><option value="エレベーター">エレベーター</option></select></td>
-        <td>７）<select id="g2_7"><option value="">--</option><option value="バイン">バイン</option><option value="ワイン">ワイン</option><option value="ウイン">ウイン</option><option value="ワイム">ワイム</option></select></td>
-        <td>８）<select id="g2_8"><option value="">--</option><option value="コーピー">コーピー</option><option value="コーヒイ">コーヒイ</option><option value="コーヒー">コーヒー</option><option value="コーフィ">コーフィ</option></select></td>
+        <td>５）<select id="g2_5" style="width:100%;font-size:11px"><option value="">--</option><option value="コンビューター">コンビューター</option><option value="コンピユーター">コンピユーター</option><option value="コンピューター">コンピューター</option><option value="コンピュータ">コンピュータ</option></select></td>
+        <td>６）<select id="g2_6" style="width:100%;font-size:11px"><option value="">--</option><option value="エリベーター">エリベーター</option><option value="エレベータ">エレベータ</option><option value="エレベーダ">エレベーダ</option><option value="エレベーター">エレベーター</option></select></td>
+        <td>７）<select id="g2_7" style="width:100%;font-size:11px"><option value="">--</option><option value="バイン">バイン</option><option value="ワイン">ワイン</option><option value="ウイン">ウイン</option><option value="ワイム">ワイム</option></select></td>
+        <td>８）<select id="g2_8" style="width:100%;font-size:11px"><option value="">--</option><option value="コーピー">コーピー</option><option value="コーヒイ">コーヒイ</option><option value="コーヒー">コーヒー</option><option value="コーフィ">コーフィ</option></select></td>
       </tr>
-    </table></div>
+    </table>
   </div>
 
   <!-- Q3 -->
@@ -254,6 +255,9 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
         <div class="g3-bucket-label">Không thuộc nhóm nào</div>
         <div class="g3-bucket-drop" id="g3-b-none"></div>
       </div>
+    </div>
+    <div style="text-align:right;margin-top:6px">
+      <button type="button" onclick="g3Reset()" style="font-size:12px;padding:4px 12px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555">↺ Đặt lại</button>
     </div>
     <input type="hidden" id="g3_1">
     <input type="hidden" id="g3_2">
@@ -296,47 +300,47 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
     <div class="q-title">問題５．Tiếng Việt ⇔ Tiếng Nhật　＜各2点×20問＝40点＞</div>
     <div class="q-instruction">Hãy viết nghĩa của tiếng Nhật bằng tiếng Việt.</div>
     <div class="table-scroll">
-    <table class="qa-table" style="min-width:380px">
+    <table class="qa-table" style="width:100%">
       <tr><th colspan="2">Nhật→Việt</th><th colspan="2">Nhật→Việt</th></tr>
       <tr>
-        <td>１．ばんごう</td><td><input type="text" id="g5_1"></td>
-        <td>びょういん</td><td><input type="text" id="g5_2"></td>
+        <td style="white-space:nowrap">１．ばんごう</td><td><input type="text" id="g5_1"></td>
+        <td style="white-space:nowrap">１１．びょういん</td><td><input type="text" id="g5_2"></td>
       </tr>
       <tr>
-        <td>２．ぎんこう</td><td><input type="text" id="g5_3"></td>
-        <td>おわります</td><td><input type="text" id="g5_4"></td>
+        <td style="white-space:nowrap">２．ぎんこう</td><td><input type="text" id="g5_3"></td>
+        <td style="white-space:nowrap">１２．おわります</td><td><input type="text" id="g5_4"></td>
       </tr>
       <tr>
-        <td>３．しゃいん</td><td><input type="text" id="g5_5"></td>
-        <td>えいが</td><td><input type="text" id="g5_6"></td>
+        <td style="white-space:nowrap">３．しゃいん</td><td><input type="text" id="g5_5"></td>
+        <td style="white-space:nowrap">１３．えいが</td><td><input type="text" id="g5_6"></td>
       </tr>
       <tr>
-        <td>４．ごぜん</td><td><input type="text" id="g5_7"></td>
-        <td>かさ</td><td><input type="text" id="g5_8"></td>
+        <td style="white-space:nowrap">４．ごぜん</td><td><input type="text" id="g5_7"></td>
+        <td style="white-space:nowrap">１４．かさ</td><td><input type="text" id="g5_8"></td>
       </tr>
       <tr>
-        <td>５．トイレ</td><td><input type="text" id="g5_9"></td>
-        <td>おきます</td><td><input type="text" id="g5_10"></td>
+        <td style="white-space:nowrap">５．トイレ</td><td><input type="text" id="g5_9"></td>
+        <td style="white-space:nowrap">１５．おきます</td><td><input type="text" id="g5_10"></td>
       </tr>
       <tr>
-        <td>６．まいあさ</td><td><input type="text" id="g5_11"></td>
-        <td>やすみます</td><td><input type="text" id="g5_12"></td>
+        <td style="white-space:nowrap">６．まいあさ</td><td><input type="text" id="g5_11"></td>
+        <td style="white-space:nowrap">１６．やすみます</td><td><input type="text" id="g5_12"></td>
       </tr>
       <tr>
-        <td>７．ちか</td><td><input type="text" id="g5_13"></td>
-        <td>うけつけ</td><td><input type="text" id="g5_14"></td>
+        <td style="white-space:nowrap">７．ちか</td><td><input type="text" id="g5_13"></td>
+        <td style="white-space:nowrap">１７．うけつけ</td><td><input type="text" id="g5_14"></td>
       </tr>
       <tr>
-        <td>８．ごご</td><td><input type="text" id="g5_15"></td>
-        <td>ねます</td><td><input type="text" id="g5_16"></td>
+        <td style="white-space:nowrap">８．ごご</td><td><input type="text" id="g5_15"></td>
+        <td style="white-space:nowrap">１８．ねます</td><td><input type="text" id="g5_16"></td>
       </tr>
       <tr>
-        <td>９．かいだん</td><td><input type="text" id="g5_17"></td>
-        <td>すみません</td><td><input type="text" id="g5_18"></td>
+        <td style="white-space:nowrap">９．かいだん</td><td><input type="text" id="g5_17"></td>
+        <td style="white-space:nowrap">１９．すみません</td><td><input type="text" id="g5_18"></td>
       </tr>
       <tr>
-        <td>１０．くつ</td><td><input type="text" id="g5_19"></td>
-        <td>じしょ</td><td><input type="text" id="g5_20"></td>
+        <td style="white-space:nowrap">１０．くつ</td><td><input type="text" id="g5_19"></td>
+        <td style="white-space:nowrap">２０．じしょ</td><td><input type="text" id="g5_20"></td>
       </tr>
     </table>
     </div>
@@ -568,6 +572,14 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
 <!-- ============================================================ -->
 <div id="tab-chokkai" class="section">
   <div class="section-title">聴解テスト（Bài kiểm tra nghe hiểu）</div>
+  <div style="background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:13px;color:#555">🔊 Tốc độ phát:</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="setAudioSpeed(0.75)" id="spd075" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×0.75</button>
+      <button onclick="setAudioSpeed(1.0)" id="spd100" style="padding:5px 12px;border-radius:6px;border:2px solid #1a5276;background:#eaf0fb;font-size:13px;cursor:pointer;font-weight:bold">×1.0</button>
+      <button onclick="setAudioSpeed(1.25)" id="spd125" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×1.25</button>
+    </div>
+  </div>
 
   <!-- C-Q1 -->
   <div class="q-block">
@@ -866,8 +878,74 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
 // ===== Google Apps Script URL（設定してください） =====
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwXK4KzCWntcF4T4DfUQ0kp_eZeqeOY0Yvg4QOVAA1_Utfe_It9Wc0L3mYiHgFARlHt/exec';
 
+// ===== カンニング防止 =====
+let _leaveCount = 0;
+let _antiCheatActive = false;
+
+function startAntiCheat() {
+  if (_antiCheatActive) return;
+  _antiCheatActive = true;
+
+  // タブ切り替え・アプリ切り替え検知
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _leaveCount++;
+      // 戻ってきたときにアラート
+      const onReturn = () => {
+        if (!document.hidden) {
+          alert(`⚠ Bạn đã rời khỏi bài kiểm tra ${_leaveCount} lần!\nNếu đóng ứng dụng hoặc chuyển tab, sẽ bị coi là GIAN LẬN và bị ghi lại.\n\n（${_leaveCount}回目の離脱を検出。記録されます。）`);
+          document.removeEventListener('visibilitychange', onReturn);
+        }
+      };
+      document.addEventListener('visibilitychange', onReturn);
+    }
+  });
+
+  // ページを閉じようとしたとき（カスタムメッセージはブラウザ依存）
+  window.addEventListener('beforeunload', e => {
+    e.preventDefault();
+    e.returnValue = 'Nếu đóng ứng dụng sẽ bị coi là gian lận!';
+  });
+
+  // 警告バナーを表示
+  const banner = document.getElementById('cheat-banner');
+  if (banner) banner.style.display = 'block';
+
+  // 右クリック禁止
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // コピー禁止
+  document.addEventListener('copy', e => e.preventDefault());
+}
+
+// 名前入力後にアンチチート開始
+document.addEventListener('DOMContentLoaded', () => {
+  const nameInput = document.getElementById('name_kata');
+  nameInput.addEventListener('blur', () => {
+    if (nameInput.value.trim()) startAntiCheat();
+  });
+});
+
 // 採点後のスコアを保持する変数
 let _scores = {goii:0, bunpo:0, chokkai:0};
+
+let _audioSpeed = 1.0;
+function setAudioSpeed(rate) {
+  _audioSpeed = rate;
+  document.querySelectorAll('audio').forEach(a => a.playbackRate = rate);
+  ['075','100','125'].forEach(s => {
+    const btn = document.getElementById('spd'+s);
+    if(btn) { btn.style.border='1px solid #aaa'; btn.style.background='#fff'; btn.style.fontWeight='normal'; }
+  });
+  const active = document.getElementById('spd'+(rate*100).toFixed(0).padStart(3,'0'));
+  if(active) { active.style.border='2px solid #1a5276'; active.style.background='#eaf0fb'; active.style.fontWeight='bold'; }
+  // 再生中のものにも適用
+  document.querySelectorAll('audio').forEach(a => { a.onplay = () => a.playbackRate = _audioSpeed; });
+}
+// 全audioに速度適用
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('audio').forEach(a => { a.onplay = () => a.playbackRate = _audioSpeed; });
+});
 
 function showTab(name) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -995,7 +1073,7 @@ async function finishTest() {
 // ===== 解答キー =====
 const ANS = {
   // 語彙Q1 (各1点)
-  g1: ['h','g','i','b','c','a','f','k','d','e'],
+  g1: ['しんぶん','としょかん','かさ','ネクタイ','くるま','いしゃ','めいし','とけい','かぎ','つくえ'],
   // 語彙Q2 (各3点) - teacher graded but show model answer
   g2: ['てちょう','かばん','えんぴつ','でんわ','コンピューター','エレベーター','ワイン','コーヒー'],
   // 語彙Q3 (各2点)
@@ -1099,7 +1177,7 @@ function gradeAll(){
   let g1s=0;
   ANS.g1.forEach((ans,i)=>{
     const el = document.getElementById('g1_'+(i+1));
-    const val = (el.value||'').trim().toLowerCase();
+    const val = (el.value||'').trim();
     if(val===ans){g1s+=1;el.style.background='#d5f5e3';}
     else{el.style.background='#fdecea';}
   });
@@ -1365,6 +1443,7 @@ async function submitResults(){
     goii_auto:     _scores.goii,
     bunpo_auto:    _scores.bunpo,
     chokkai_auto:  _scores.chokkai,
+    leave_count:   _leaveCount,
     free_answers:  JSON.stringify(freeAnswers)
   };
 
