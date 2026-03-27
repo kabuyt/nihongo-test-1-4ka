@@ -1075,7 +1075,7 @@ async function finishTest() {
 // ===== 解答キー =====
 const ANS = {
   // 語彙Q1 (各1点)
-  g1: ['しんぶん','としょかん','かさ','ネクタイ','くるま','いしゃ','めいし','とけい','かぎ','つくえ'],
+  g1: ['ネクタイ','かさ','としょかん','しんぶん','くるま','とけい','かぎ','めいし','いしゃ','つくえ'],
   // 語彙Q2 (各3点) - teacher graded but show model answer
   g2: ['てちょう','かばん','えんぴつ','でんわ','コンピューター','エレベーター','ワイン','コーヒー'],
   // 語彙Q3 (各2点)
@@ -1183,8 +1183,7 @@ function gradeAll(){
     const val = (el.value||'').trim();
     const ok = val===ans;
     _fieldStatus['g1_'+(i+1)] = ok?'correct':'wrong';
-    if(ok){g1s+=1;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(ok){g1s+=1;}
   });
   gScore+=g1s;
   detail+=`<p><b>語彙Q1:</b> ${g1s}/10点</p>`;
@@ -1198,7 +1197,6 @@ function gradeAll(){
     const pts=val===ans?3:0;
     g2s+=pts;
     _fieldStatus['g2_'+(i+1)] = pts===3?'correct':'wrong';
-    if(el) el.style.background=pts===3?'#d5f5e3':'#fdecea';
     const mark=pts===3?'✅ 3点':'❌ 0点';
     g2html+=`<li>問${i+1}：${mark}　正解「${ans}」→ 選択：「${val||'（未選択）'}」</li>`;
   });
@@ -1225,10 +1223,8 @@ function gradeAll(){
     if(cleaned===correct && traps.length===0){
       g3s+=2;
       _fieldStatus['g3_'+(i+1)] = 'correct';
-      if(bucket) bucket.style.background='#d5f5e3';
     } else {
       _fieldStatus['g3_'+(i+1)] = 'wrong';
-      if(bucket) bucket.style.background='#fdecea';
     }
   });
   const g3total=Math.max(0, g3s-g3penalty);
@@ -1243,8 +1239,7 @@ function gradeAll(){
     const el=document.getElementById(id);
     const ok=normalize(el.value)===normalize(g4ans[i]);
     _fieldStatus[id]=ok?'correct':'wrong';
-    if(ok){g4s+=2;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(ok){g4s+=2;}
   });
   const g4tids=['g4_8','g4_9','g4_10','g4_11'];
   const g4tans=ANS.g4_time;
@@ -1252,8 +1247,7 @@ function gradeAll(){
     const el=document.getElementById(id);
     const ok=normalize(el.value)===normalize(g4tans[i]);
     _fieldStatus[id]=ok?'correct':'wrong';
-    if(ok){g4s+=2;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(ok){g4s+=2;}
   });
   gScore+=g4s;
   detail+=`<p><b>語彙Q4:</b> ${g4s}/20点</p>`;
@@ -1267,8 +1261,7 @@ function gradeAll(){
     const accepted=ANS.g5[i].split('／').map(s=>s.trim().toLowerCase());
     const ok5=val && accepted.includes(val);
     _fieldStatus['g5_'+(i+1)]=ok5?'correct':'wrong';
-    if(ok5){g5s+=2;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(ok5){g5s+=2;}
   }
   gScore+=g5s;
   detail+=`<p><b>語彙Q5:</b> ${g5s}/40点</p>`;
@@ -1284,8 +1277,7 @@ function gradeAll(){
       const v=(el.value||'').trim();
       const okB1=normalize(v)===normalize(correct[j]);
       _fieldStatus[id]=okB1?'correct':'wrong';
-      if(okB1){el.style.background='#d5f5e3';}
-      else{el.style.background='#fdecea';allOk=false;}
+      if(!okB1){allOk=false;}
     });
     if(allOk) b1s+=ids.length;
   });
@@ -1298,8 +1290,7 @@ function gradeAll(){
     const el=document.getElementById('b2_'+(i+1));
     const okB2=(el.value||'')=== ans;
     _fieldStatus['b2_'+(i+1)]=okB2?'correct':'wrong';
-    if(okB2){b2s+=2;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okB2){b2s+=2;}
   });
   bScore+=b2s;
   detail+=`<p><b>文法Q2:</b> ${b2s}/10点</p>`;
@@ -1320,8 +1311,7 @@ function gradeAll(){
     const v=normalize(el.value).replace(/です$/,'');
     const ok=opts.some(a=>normalize(a).replace(/です$/,'')===v);
     _fieldStatus['b4_'+(i+1)]=ok?'correct':'wrong';
-    if(ok){b4s+=3;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(ok){b4s+=3;}
   });
   bScore+=b4s;
   detail+=`<p><b>文法Q4:</b> ${b4s}/15点</p>`;
@@ -1332,8 +1322,7 @@ function gradeAll(){
     const el=document.getElementById('b5_'+(i+1));
     const okB5=(el.value||'')===ans;
     _fieldStatus['b5_'+(i+1)]=okB5?'correct':'wrong';
-    if(okB5){b5s+=3;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okB5){b5s+=3;}
   });
   bScore+=b5s;
   detail+=`<p><b>文法Q5:</b> ${b5s}/12点</p>`;
@@ -1346,8 +1335,7 @@ function gradeAll(){
     const a=normalize(ans);
     const okB6=v.includes(a)||a.includes(v)&&v.length>3;
     _fieldStatus['b6_'+(i+1)]=okB6?'correct':'wrong';
-    if(okB6){b6s+=3;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okB6){b6s+=3;}
   });
   bScore+=b6s;
   detail+=`<p><b>文法Q6:</b> ${b6s}/18点</p>`;
@@ -1361,8 +1349,7 @@ function gradeAll(){
     const el=document.getElementById('c2_'+(i+1));
     const okC2=(el.value||'').trim()===ans;
     _fieldStatus['c2_'+(i+1)]=okC2?'correct':'wrong';
-    if(okC2){c2s+=3;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okC2){c2s+=3;}
   });
   cScore+=c2s;
   detail+=`<p><b>聴解Q2:</b> ${c2s}/6点</p>`;
@@ -1373,8 +1360,7 @@ function gradeAll(){
     const el=document.getElementById('c7_'+(i+1));
     const okC7=normalize(el.value)===ans;
     _fieldStatus['c7_'+(i+1)]=okC7?'correct':'wrong';
-    if(okC7){c7s+=3;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okC7){c7s+=3;}
   });
   cScore+=c7s;
   detail+=`<p><b>聴解Q7:</b> ${c7s}/6点</p>`;
@@ -1388,8 +1374,8 @@ function gradeAll(){
     const okC8p=vp===ans; const okC8c=normalize(elc.value)===ANS.c8c[i];
     _fieldStatus['c8_'+(i+1)+'p']=okC8p?'correct':'wrong';
     _fieldStatus['c8_'+(i+1)+'c']=okC8c?'correct':'wrong';
-    if(okC8p){c8s+=2;elp.style.background='#d5f5e3';}else{elp.style.background='#fdecea';}
-    if(okC8c){c8s+=1;elc.style.background='#d5f5e3';}else{elc.style.background='#fdecea';}
+    if(okC8p){c8s+=2;}
+    if(okC8c){c8s+=1;}
   });
   cScore+=c8s;
   detail+=`<p><b>聴解Q8:</b> ${c8s}/6点</p>`;
@@ -1401,8 +1387,7 @@ function gradeAll(){
     const v=(el.value||'').trim().replace(/[ー\-]/g,'-');
     const okC10=v===ans;
     _fieldStatus['c10_'+(i+1)]=okC10?'correct':'wrong';
-    if(okC10){c10s+=3;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okC10){c10s+=3;}
   });
   cScore+=c10s;
   detail+=`<p><b>聴解Q10:</b> ${c10s}/6点</p>`;
@@ -1414,8 +1399,7 @@ function gradeAll(){
     const v=(el.value||'').trim();
     const okC11=v===ans||v==='○'&&ans==='○'||v==='x'&&ans==='✕'||v.toLowerCase()==='x'&&ans==='✕'||normalize(v)===normalize(ans);
     _fieldStatus['c11_'+(i+1)]=okC11?'correct':'wrong';
-    if(okC11){c11s+=4;el.style.background='#d5f5e3';}
-    else{el.style.background='#fdecea';}
+    if(okC11){c11s+=4;}
   });
   cScore+=c11s;
   detail+=`<p><b>聴解Q11:</b> ${c11s}/20点</p>`;
