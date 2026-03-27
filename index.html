@@ -971,6 +971,20 @@ const ANS = {
 function normalize(s){
   return (s||'').trim().toLowerCase().replace(/\s+/g,'').replace(/[　]/g,'').replace(/ー/g,'ー');
 }
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+function scoreG2(input, correct){
+  const a=normalize(input), b=normalize(correct);
+  if(!a) return 0;
+  if(a===b) return 3;
+  if(levenshtein(a,b)===1) return 2;
+  return 0;
+}
 function checkFlex(input, correctArr){
   const n = normalize(input);
   return correctArr.some(a=>normalize(a)===n);
@@ -991,13 +1005,21 @@ function gradeAll(){
   gScore+=g1s;
   detail+=`<p><b>語彙Q1:</b> ${g1s}/10点</p>`;
 
-  // --- 語彙Q2 (show model answer, teacher grades) ---
-  let g2html='<p><b>語彙Q2（模範解答）:</b></p><ul>';
+  // --- 語彙Q2 (完全一致3点・1文字違い2点) ---
+  let g2s=0;
+  let g2html='<p><b>語彙Q2:</b></p><ul>';
   ANS.g2.forEach((ans,i)=>{
     const el=document.getElementById('g2_'+(i+1));
-    g2html+=`<li>問${i+1}：模範解答「${ans}」→ 記入：「${el.value||'（未記入）'}」</li>`;
+    const pts=scoreG2(el.value, ans);
+    g2s+=pts;
+    const mark=pts===3?'✅ 3点':pts===2?'△ 2点':'❌ 0点';
+    if(pts===3){el.style.background='#d4edda';}
+    else if(pts===2){el.style.background='#fff3cd';}
+    else if(el.value){el.style.background='#fdecea';}
+    g2html+=`<li>問${i+1}：${mark}　正解「${ans}」→ 記入：「${el.value||'（未記入）'}」</li>`;
   });
-  g2html+='</ul>';
+  g2html+=`</ul><p>小計: ${g2s}/24点</p>`;
+  gScore+=g2s;
   detail+=g2html;
 
   // --- 語彙Q3 ---
