@@ -73,21 +73,16 @@ function doPost(e) {
     const row = HEADERS.map(h => (data[h] !== undefined && data[h] !== null) ? data[h] : '');
     sheet.appendRow(row);
 
-    // セルの色付け（自動採点：正解=緑、不正解=赤、先生採点=黄）
-    if (data.field_status) {
-      const newRowNum = sheet.getLastRow();
-      const statusMap = data.field_status;
-      HEADERS.forEach((h, idx) => {
-        const s = statusMap[h];
-        if (s === 'correct') {
-          sheet.getRange(newRowNum, idx + 1).setBackground('#d5f5e3');
-        } else if (s === 'wrong') {
-          sheet.getRange(newRowNum, idx + 1).setBackground('#fdecea');
-        } else if (s === 'manual') {
-          sheet.getRange(newRowNum, idx + 1).setBackground('#fff3cd');
-        }
-      });
-    }
+    // セルの色付け（一括処理：自動採点正解=緑、不正解=赤、先生採点=黄）
+    const statusMap = data.field_status || {};
+    const bgColors = [HEADERS.map(h => {
+      const s = statusMap[h];
+      if (s === 'correct') return '#d5f5e3';
+      if (s === 'wrong')   return '#fdecea';
+      if (s === 'manual')  return '#fff3cd';
+      return null;
+    })];
+    sheet.getRange(sheet.getLastRow(), 1, 1, HEADERS.length).setBackgrounds(bgColors);
 
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'ok' }))
