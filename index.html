@@ -534,7 +534,6 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
         <div class="img-choice"><img src="images/chokkai/image6.png"><p><label><input type="radio" name="c3_1" value="b"> ｂ</label></p></div>
         <div class="img-choice"><img src="images/chokkai/image7.png"><p><label><input type="radio" name="c3_1" value="c"> ｃ</label></p></div>
       </div>
-      <p style="font-size:13px;margin-top:4px">これ→<select id="c3_1a"><option value="">--</option><option>a</option><option>b</option><option>c</option></select>　それ→<select id="c3_1b"><option value="">--</option><option>a</option><option>b</option><option>c</option></select>　あれ→<select id="c3_1c"><option value="">--</option><option>a</option><option>b</option><option>c</option></select></p>
     </div>
     <div class="audio-q" style="margin-top:10px">
       <div class="qlabel">② 問２</div>
@@ -544,7 +543,6 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
         <div class="img-choice"><img src="images/chokkai/image9.png"><p><label><input type="radio" name="c3_2" value="b"> ｂ</label></p></div>
         <div class="img-choice"><img src="images/chokkai/image10.png"><p><label><input type="radio" name="c3_2" value="c"> ｃ</label></p></div>
       </div>
-      <p style="font-size:13px;margin-top:4px">これ→<select id="c3_2a"><option value="">--</option><option>a</option><option>b</option><option>c</option></select>　それ→<select id="c3_2b"><option value="">--</option><option>a</option><option>b</option><option>c</option></select>　あれ→<select id="c3_2c"><option value="">--</option><option>a</option><option>b</option><option>c</option></select></p>
     </div>
   </div>
 
@@ -857,8 +855,7 @@ async function finishTest() {
     // 聴解Q2
     c2_1:getVal('c2_1'),c2_2:getVal('c2_2'),
     // 聴解Q3
-    c3_1a:getVal('c3_1a'),c3_1b:getVal('c3_1b'),c3_1c:getVal('c3_1c'),
-    c3_2a:getVal('c3_2a'),c3_2b:getVal('c3_2b'),c3_2c:getVal('c3_2c'),
+    c3_1:getRadio('c3_1'),c3_2:getRadio('c3_2'),
     // 聴解Q4（ラジオ）
     c4_1:getRadio('c4_1'),c4_2:getRadio('c4_2'),
     // 聴解Q5
