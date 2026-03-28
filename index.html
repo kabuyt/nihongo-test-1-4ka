@@ -1022,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const isInAppBrowser = /Line\//i.test(ua) || /Zalo/i.test(ua) || /FBAN|FBAV|FB_IAB|MessengerForiOS/i.test(ua);
   if (isInAppBrowser) {
     const isAndroid = /Android/i.test(ua);
-    const browserName = isAndroid ? 'Chrome' : 'Safari';
+    const browserName = isAndroid ? 'Chrome' : 'Safari / Chrome';
     const ol = document.getElementById('line-overlay');
     ol.querySelector('#line-browser-name').textContent = browserName;
     ol.querySelector('#line-browser-name2').textContent = browserName;
