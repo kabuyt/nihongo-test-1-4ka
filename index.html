@@ -965,14 +965,10 @@ function startAntiCheat() {
     if (document.hidden) {
       _leaveCount++;
       _silentReset();
-      // 戻ってきたときにアラート
-      const onReturn = () => {
-        if (!document.hidden) {
-          alert(`⚠ Bạn đã rời khỏi bài kiểm tra!\nToàn bộ câu trả lời đã bị XÓA.\n\n（タブ切り替えを検出。回答をリセットしました。${_leaveCount}回目）`);
-          document.removeEventListener('visibilitychange', onReturn);
-        }
-      };
-      document.addEventListener('visibilitychange', onReturn);
+    } else {
+      // 戻ってきた瞬間にも再リセット（iOSがDOM復元するケースに対応）
+      _silentReset();
+      alert(`⚠ Bạn đã rời khỏi bài kiểm tra!\nToàn bộ câu trả lời đã bị XÓA.\n\n（離脱を検出。回答をリセットしました。${_leaveCount}回目）`);
     }
   });
 
