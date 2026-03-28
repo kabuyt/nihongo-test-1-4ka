@@ -154,6 +154,23 @@ hr.thin{border:none;border-top:1px solid #eee;margin:10px 0}
   ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
 </div>
 
+<!-- LINEブラウザ強制移動オーバーレイ -->
+<div id="line-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+  <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+  <div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">このテストはSafariで開いてください</div>
+  <div style="color:#ffd;font-size:14px;margin-bottom:8px">Vui lòng mở bài kiểm tra bằng Safari</div>
+  <div style="color:#ccc;font-size:13px;margin-bottom:28px">LINEのブラウザではカンニング防止機能が正しく動作しません。</div>
+  <div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;max-width:320px">
+    <div style="font-size:13px;color:#333;font-weight:bold;margin-bottom:8px">📋 手順 / Cách mở:</div>
+    <div style="font-size:13px;color:#555;text-align:left;line-height:2">
+      1. 右下の <b>…</b> または <b>⋮</b> をタップ<br>
+      2. <b>「ブラウザで開く」</b> を選択<br>
+      3. Safari で開く
+    </div>
+  </div>
+  <div style="color:#aaa;font-size:12px">このページはLINEブラウザでは受験できません。</div>
+</div>
+
 <!-- ============================================================ -->
 <!-- 語彙テスト -->
 <!-- ============================================================ -->
@@ -998,6 +1015,13 @@ function startAntiCheat() {
   // コピー禁止
   document.addEventListener('copy', e => e.preventDefault());
 }
+
+// LINEブラウザ検出 → オーバーレイ表示
+document.addEventListener('DOMContentLoaded', () => {
+  if (/Line\//i.test(navigator.userAgent)) {
+    document.getElementById('line-overlay').style.display = 'flex';
+  }
+});
 
 // 名前入力後にアンチチート開始
 document.addEventListener('DOMContentLoaded', () => {
