@@ -1016,10 +1016,12 @@ function startAntiCheat() {
   document.addEventListener('copy', e => e.preventDefault());
 }
 
-// LINEブラウザ検出 → オーバーレイ表示
+// アプリ内ブラウザ検出 → オーバーレイ表示（LINE / Zalo / Messenger）
 document.addEventListener('DOMContentLoaded', () => {
-  if (/Line\//i.test(navigator.userAgent)) {
-    const isAndroid = /Android/i.test(navigator.userAgent);
+  const ua = navigator.userAgent;
+  const isInAppBrowser = /Line\//i.test(ua) || /Zalo/i.test(ua) || /FBAN|FBAV|FB_IAB|MessengerForiOS/i.test(ua);
+  if (isInAppBrowser) {
+    const isAndroid = /Android/i.test(ua);
     const browserName = isAndroid ? 'Chrome' : 'Safari';
     const ol = document.getElementById('line-overlay');
     ol.querySelector('#line-browser-name').textContent = browserName;
