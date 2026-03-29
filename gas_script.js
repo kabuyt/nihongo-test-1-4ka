@@ -12,12 +12,12 @@ const HEADERS = [
   '合計点','換算点(/3)','判定','離席回数','自由記述回答（JSON）'
 ];
 
-// 各セクションの満点・合格ライン
+// 各セクションの満点・合格ライン（合計225点以上＝75%で合格）
 const SCORE_CONFIG = {
-  '語彙点数':  { max: 100, pass: 60 },
-  '文法点数':  { max: 65,  pass: 39 },
-  '聴解点数':  { max: 44,  pass: 26 },
-  '合計点':    { max: 209, pass: 125 },
+  '語彙点数':  { max: 100, pass: 75 },
+  '文法点数':  { max: 100, pass: 75 },
+  '聴解点数':  { max: 100, pass: 75 },
+  '合計点':    { max: 300, pass: 225 },
 };
 
 // 回答結果シートのヘッダー
@@ -43,7 +43,7 @@ const ANS_HEADERS = [
   'c9_1s','c9_1e','c9_1d','c9_2sa','c9_2ea','c9_2sb','c9_2eb','c9_2d',
   'c10_1','c10_2',
   'c11_1','c11_2','c11_3','c11_4','c11_5',
-  'c12_1','c12_2','c12_3','c12_4',
+  'c12_1','c12_2','c12_3','c12_4','c12_5',
   // 自動採点の内訳（GASが書き込む。先生は変更しない）
   '語彙自動点','文法自動点','聴解自動点',
   // 手動採点の追加点（先生が記入する）
@@ -93,8 +93,8 @@ const CORRECT = {
   b4_5:['ななまんよんせんきゅうじゅうえん'],
   // 文法Q5
   b5_1:'いいえ、はたらきません。',
-  b5_2:'はい、よる7じにおわります。',
-  b5_3:'まいばん11じにねます。',
+  b5_2:'はい、はたらきます。',
+  b5_3:'11じにねます。',
   b5_4:'やすみはありません。',
   // 文法Q6
   b6_1:'トイレはどちらですか', b6_2:'こちらこそ',
@@ -122,8 +122,9 @@ const CORRECT = {
   c10_1:'336-8080', c10_2:'078-4211-3168',
   // 聴解Q11
   c11_1:'✕', c11_2:'✕', c11_3:'○', c11_4:'○', c11_5:'✕',
-  // 聴解Q12（先生採点）
-  c12_1:null, c12_2:null, c12_3:null, c12_4:null
+  // 聴解Q12（田中さんの一日・自動採点）
+  c12_1:'6じはん', c12_2:'しょくどう', c12_3:'6じ',
+  c12_4:'にほんごを べんきょうします', c12_5:'にちようび'
 };
 
 // 正規化（空白・大文字小文字・長音統一）
@@ -211,7 +212,7 @@ function doPost(e) {
     const chokkai = Number(data.chokkai_auto) || 0;
     const total   = goii + bunpo + chokkai;
     const scaled  = Math.round(total / 3 * 10) / 10;
-    const result  = scaled >= 60 ? '合格' : '不合格';
+    const result  = total >= 225 ? '合格' : '不合格';  // 300点中75%以上で合格
 
     sheet.appendRow([
       data.timestamp  || new Date().toISOString(),
@@ -382,7 +383,7 @@ function reflectManualScores() {
     const newChk    = chkAuto   + chkAdd;
     const newTotal  = newGoii + newBunpo + newChk;
     const newScaled = Math.round(newTotal / 3 * 10) / 10;
-    const newResult = newScaled >= 60 ? '合格' : '不合格';
+    const newResult = newTotal >= 225 ? '合格' : '不合格';  // 300点中75%以上で合格
 
     // 成績データを更新
     sheet.getRange(rowNum, sGoiiIdx   + 1).setValue(newGoii);
