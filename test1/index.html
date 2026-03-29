@@ -377,9 +377,9 @@
       <p style="font-size:13px;color:#555;margin-top:12px">２）　すいようび、もりもとさん は ばん まで はたらきますか。</p>
       <select id="b5_2" style="font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa">
         <option value="">-- Chọn câu trả lời --</option>
-        <option>いいえ、ごごにおわります。</option>
+        <option>いいえ、はたらきません。</option>
+        <option>はい、はたらきます。</option>
         <option>はい、よる7じにおわります。</option>
-        <option>はい、まいにちはたらきます。</option>
         <option>いいえ、よるははたらきません。</option>
       </select>
       <p style="font-size:13px;color:#555;margin-top:12px">３）　げつようび、もりもとさん は なんじ に ねますか。</p>
@@ -387,7 +387,7 @@
         <option value="">-- Chọn câu trả lời --</option>
         <option>げつようびは8じにねます。</option>
         <option>よる9じにねます。</option>
-        <option>まいばん11じにねます。</option>
+        <option>11じにねます。</option>
         <option>まいばん1じにねます。</option>
       </select>
       <p style="font-size:13px;color:#555;margin-top:12px">４）　もりもとさん の やすみ は なんようびですか。</p>
@@ -748,7 +748,7 @@
       <div class="qlabel">② げんき 病院</div>
       <audio controls src="audio/9-2.mp3"></audio>
       <p style="font-size:13px;margin-top:6px">
-        ごぜん（午前）：<select id="c9_2sa"><option value="">--</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>じ〜<select id="c9_2ea"><option value="">--</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>じ
+        ごぜん（午前）：<select id="c9_2sa"><option value="">--</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>じ〜<select id="c9_2ea"><option value="">--</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>じ<br>
         ごご（午後）：<select id="c9_2sb"><option value="">--</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option></select>じ〜<select id="c9_2eb"><option value="">--</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option></select>じ<br>
         やすみ：<select id="c9_2d"><option value="">--</option><option>にちようび</option><option>げつようび</option><option>かようび</option><option>すいようび</option><option>もくようび</option><option>きんようび</option><option>どようび</option></select>
       </p>
@@ -762,12 +762,12 @@
     <div class="audio-q">
       <div class="qlabel">① 問１</div>
       <audio controls src="audio/10-1.mp3"></audio>
-      <div class="answer-box" style="margin-top:6px">でんわばんごう：<input type="text" id="c10_1" class="blank lg" style="width:min(220px,70vw)"></div>
+      <div class="answer-box" style="margin-top:6px">でんわばんごう：<select id="c10_1"><option value="">--</option><option>336-8080</option><option>336-8008</option><option>363-8080</option><option>336-8880</option></select></div>
     </div>
     <div class="audio-q" style="margin-top:8px">
       <div class="qlabel">② 問２</div>
       <audio controls src="audio/10-2.mp3"></audio>
-      <div class="answer-box" style="margin-top:6px">でんわばんごう：<input type="text" id="c10_2" class="blank lg" style="width:min(220px,70vw)"></div>
+      <div class="answer-box" style="margin-top:6px">でんわばんごう：<select id="c10_2"><option value="">--</option><option>078-4211-3168</option><option>078-4112-3168</option><option>078-4211-3186</option><option>087-4211-3168</option></select></div>
     </div>
   </div>
 
@@ -799,29 +799,42 @@
 
   <!-- C-Q12 -->
   <div class="q-block">
-    <div class="q-title">問題１２．Trả lời câu hỏi　＜各5点×4問＝20点＞</div>
+    <div class="q-title">問題１２．田中さんの一日を聞いて答えてください　＜各4点×5問＝20点＞</div>
     <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
-      ※ Hãy trả lời về bản thân bạn bằng tiếng Nhật.
+      ※ Nghe đoạn văn về một ngày của Tanaka-san, nhìn tranh và trả lời câu hỏi.
     </div>
-    <div class="audio-q" style="margin-top:10px">
-      <div class="qlabel">① 問１</div>
-      <audio controls src="audio/12-1.mp3"></audio>
-      <textarea class="free" id="c12_1"></textarea>
+
+    <!-- 田中さんの1日イラスト -->
+    <div style="text-align:center;margin:12px 0">
+      <div style="font-weight:bold;color:#1a5276;font-size:15px;margin-bottom:8px">🗓 田中さんの いちにち</div>
+      <img src="images/chokkai/tanaka.png" alt="田中さんの一日" style="max-width:100%;max-height:280px;object-fit:contain;border:2px solid #333;border-radius:8px">
     </div>
-    <div class="audio-q">
-      <div class="qlabel">② 問２</div>
-      <audio controls src="audio/12-2.mp3"></audio>
-      <textarea class="free" id="c12_2"></textarea>
+
+    <!-- 音声 -->
+    <div style="margin:12px 0">
+      <audio controls src="audio/12-tanaka.mp3" style="width:100%"></audio>
     </div>
-    <div class="audio-q">
-      <div class="qlabel">③ 問３</div>
-      <audio controls src="audio/12-3.mp3"></audio>
-      <textarea class="free" id="c12_3"></textarea>
+
+    <!-- 問1〜5（選択肢はJSで動的生成） -->
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">① 田中さんは なんじに おきますか？</p>
+      <div class="answer-box"><select id="c12_1"><option value="">--</option></select></div>
     </div>
-    <div class="audio-q">
-      <div class="qlabel">④ 問４</div>
-      <audio controls src="audio/12-4.mp3"></audio>
-      <textarea class="free" id="c12_4"></textarea>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">② ひるやすみに どこで ごはんを たべますか？</p>
+      <div class="answer-box"><select id="c12_2"><option value="">--</option></select></div>
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">③ なんじに うちへ かえりますか？</p>
+      <div class="answer-box"><select id="c12_3"><option value="">--</option></select></div>
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">④ まいばん なにを しますか？</p>
+      <div class="answer-box"><select id="c12_4"><option value="">--</option></select></div>
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">⑤ やすみは なんようびですか？</p>
+      <div class="answer-box"><select id="c12_5"><option value="">--</option></select></div>
     </div>
   </div>
 </div>
@@ -933,8 +946,8 @@ const ANS = {
   // 文法Q5 (各3点)
   b5: [
     'いいえ、はたらきません。',
-    'はい、よる7じにおわります。',
-    'まいばん11じにねます。',
+    'はい、はたらきます。',
+    '11じにねます。',
     'やすみはありません。',
   ],
   // 文法Q6 (各3点)
@@ -957,6 +970,8 @@ const ANS = {
   c10: ['336-8080','078-4211-3168'],
   // 聴解Q11 (各4点)
   c11: ['✕','✕','○','○','✕'],
+  // 聴解Q12 (各4点) - 田中さんの一日
+  c12: ['6じはん','しょくどう','6じ','にほんごを べんきょうします','にちようび'],
 };
 
 // ===== 採点関数 =====
@@ -1191,15 +1206,26 @@ function gradeAll(){
   cScore+=c11s;
   detail+=`<p><b>聴解Q11:</b> ${c11s}/20点</p>`;
 
+  // --- 聴解Q12（田中さんの一日）---
+  let c12s=0;
+  ANS.c12.forEach((ans,i)=>{
+    const el=document.getElementById('c12_'+(i+1));
+    const v=(el.value||'').trim();
+    const okC12=v===ans;
+    _fieldStatus['c12_'+(i+1)]=okC12?'correct':'wrong';
+    if(okC12){c12s+=4;}
+  });
+  cScore+=c12s;
+  detail+=`<p><b>聴解Q12:</b> ${c12s}/20点</p>`;
+
   // --- 先生採点フィールド ---
-  detail+='<p><b>聴解Q1,Q3,Q4,Q5,Q6,Q9,Q12：先生採点</b></p>';
+  detail+='<p><b>聴解Q1,Q3,Q4,Q5,Q6,Q9：先生採点</b></p>';
   ['b3_1','b3_2','b3_3','b3_4','b3_5',
    'c1_1','c1_2',
    'c3_1a','c3_1b','c3_1c','c3_2a','c3_2b','c3_2c',
    'c4_1','c4_2','c5_1','c5_2',
    'c6_1a','c6_1b','c6_2a','c6_2b',
    'c9_1s','c9_1e','c9_1d','c9_2sa','c9_2ea','c9_2sb','c9_2eb','c9_2d',
-   'c12_1','c12_2','c12_3','c12_4'
   ].forEach(id=>{_fieldStatus[id]='manual';});
 
   // スコア保存
@@ -1256,13 +1282,13 @@ function collectPayload() {
     c9_2sa:getVal('c9_2sa'),c9_2ea:getVal('c9_2ea'),c9_2sb:getVal('c9_2sb'),c9_2eb:getVal('c9_2eb'),c9_2d:getVal('c9_2d'),
     c10_1:getVal('c10_1'),c10_2:getVal('c10_2'),
     c11_1:getVal('c11_1'),c11_2:getVal('c11_2'),c11_3:getVal('c11_3'),c11_4:getVal('c11_4'),c11_5:getVal('c11_5'),
-    c12_1:getVal('c12_1'),c12_2:getVal('c12_2'),c12_3:getVal('c12_3'),c12_4:getVal('c12_4'),
+    c12_1:getVal('c12_1'),c12_2:getVal('c12_2'),c12_3:getVal('c12_3'),c12_4:getVal('c12_4'),c12_5:getVal('c12_5'),
   };
 }
 
 // ===== 自由記述収集（submitResults用） =====
 function collectFreeAnswers() {
-  const freeIds = ['b5_1','b5_2','b5_3','b5_4','c12_1','c12_2','c12_3','c12_4'];
+  const freeIds = ['b5_1','b5_2','b5_3','b5_4'];
   const result = {};
   freeIds.forEach(id => {
     const el = document.getElementById(id);
@@ -1365,6 +1391,35 @@ function initG5Selects() {
   }
 }
 document.addEventListener('DOMContentLoaded', initG5Selects);
+
+// ===== 聴解Q12 セレクト初期化 =====
+function initC12Selects() {
+  // 各問の選択肢プール: [正解, ...ダミー]
+  const c12Options = [
+    // ① なんじに おきますか
+    ['6じはん', '5じ', '5じはん', '6じ', '7じ', '7じはん', '8じ'],
+    // ② どこで ごはんを たべますか
+    ['しょくどう', 'うち', 'レストラン', 'じむしょ', 'コンビニ', 'かいぎしつ'],
+    // ③ なんじに かえりますか
+    ['6じ', '4じ', '5じ', '5じはん', '7じ', '7じはん', '8じ'],
+    // ④ まいばん なにを しますか
+    ['にほんごを べんきょうします', 'テレビを みます', 'ほんを よみます', 'おんがくを ききます', 'てがみを かきます', 'ともだちに でんわします'],
+    // ⑤ やすみは なんようびですか
+    ['にちようび', 'げつようび', 'かようび', 'すいようび', 'もくようび', 'きんようび', 'どようび'],
+  ];
+  c12Options.forEach((opts, i) => {
+    const sel = document.getElementById('c12_' + (i + 1));
+    if (!sel) return;
+    const shuffled = [...opts].sort(() => Math.random() - 0.5);
+    shuffled.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt;
+      sel.appendChild(o);
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', initC12Selects);
 
 // ===== 語彙Q3 パズル =====
 let g3Selected = null;
