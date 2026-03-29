@@ -32,7 +32,7 @@ TF.init = function(config) {
   _tabs = config.tabs || ['goii', 'bunpo', 'chokkai'];
   const triggerField = config.antiCheatTrigger || 'name_kata';
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function _onReady() {
     // アプリ内ブラウザ検出
     _detectInAppBrowser();
 
@@ -48,7 +48,14 @@ TF.init = function(config) {
     document.querySelectorAll('audio').forEach(a => {
       a.onplay = () => a.playbackRate = _audioSpeed;
     });
-  });
+  }
+
+  // DOMが既にロード済みならすぐ実行、まだなら待つ
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _onReady);
+  } else {
+    _onReady();
+  }
 };
 
 // ===== カンニング防止 =====
