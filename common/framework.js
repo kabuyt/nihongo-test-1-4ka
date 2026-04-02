@@ -208,6 +208,39 @@ TF.finishTest = async function() {
   btn.textContent = '⏳ Đang gửi...';
 
   try {
+    // Supabaseに送信（学生IDがある場合）
+    const studentIdEl = document.getElementById('student_id');
+    const studentId = studentIdEl ? studentIdEl.value.trim().toUpperCase() : '';
+    if (studentId) {
+      const findRes = await fetch(
+        SUPABASE_URL + '/rest/v1/trainees?student_id=eq.' + encodeURIComponent(studentId) + '&select=id,name_romaji',
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
+      );
+      const trainees = await findRes.json();
+      if (trainees && trainees.length > 0) {
+        const testDate = document.getElementById('test_date').value || new Date().toISOString().slice(0,10);
+        await fetch(SUPABASE_URL + '/rest/v1/test_results', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            trainee_id: trainees[0].id,
+            test_name: 'みんなの日本語 第1-4課',
+            test_date: testDate,
+            score_vocab: _scores.goii,
+            score_grammar: _scores.bunpo,
+            score_listening: _scores.chokkai,
+            score_conversation: null
+          })
+        });
+      }
+    }
+
+    // GASにも送信
     await fetch(_gasUrl, {
       method: 'POST',
       mode: 'no-cors',
