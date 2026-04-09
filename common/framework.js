@@ -306,7 +306,7 @@ TF.submitResults = async function() {
         },
         body: JSON.stringify({
           trainee_id:        trainee.id,
-          test_name:         'みんなの日本語 第1-4課',
+          test_name:         document.title.replace('みんなの日本語 月間テスト', '').replace('（', '').replace('）', '').trim() || 'テスト',
           test_date:         testDate,
           score_vocab:       _scores.goii,
           score_grammar:     _scores.bunpo,

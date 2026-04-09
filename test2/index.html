@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a5276">
+<title>みんなの日本語 第2版　月間テスト（第5－11課）</title>
+<link rel="stylesheet" href="../common/style.css">
+</head>
+<body>
+
+<header>
+  <h1>みんなの日本語 第2版　月間テスト（第5－11課）</h1>
+  <p>Bài kiểm tra hàng tháng（Bài 5-11）</p>
+</header>
+
+<!-- 受験者情報 -->
+<div class="student-info">
+  <table>
+    <tr>
+      <td style="width:50%">名前（カタカナ）Họ tên Katakana：<input type="text" id="name_kata"></td>
+      <td>クラス Lớp：<input type="text" id="class_name"></td>
+    </tr>
+    <tr>
+      <td>名前（ローマ字）Họ tên Latinh：<input type="text" id="name_latin"></td>
+      <td>受験日 Ngày kiểm tra：<input type="date" id="test_date"></td>
+    </tr>
+    <tr>
+      <td colspan="2">会社名 Tên công ty：<input type="text" id="company"></td>
+    </tr>
+    <tr>
+      <td colspan="2" style="padding-top:6px">
+        <label style="font-weight:bold;color:#1a5276">学生ID（Student ID）：<input type="text" id="student_id" placeholder="例：VJC001" style="text-transform:uppercase;width:160px;margin-left:8px"></label>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- タブ -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('goii')">Từ vựng<br><small>/100点</small></button>
+  <button class="tab-btn" onclick="showTab('bunpo')">Ngữ pháp<br><small>/100点</small></button>
+  <button class="tab-btn" onclick="showTab('chokkai')">Nghe hiểu<br><small>/100点</small></button>
+</div>
+
+<!-- カンニング防止バナー -->
+<div id="cheat-banner" style="display:none;background:#c0392b;color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:bold;position:sticky;top:42px;z-index:99">
+  ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
+</div>
+
+<!-- LINEブラウザ強制移動オーバーレイ -->
+<div id="line-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+  <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+  <div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:12px">このテストは<span id="line-browser-name">Safari</span>で開いてください</div>
+  <div style="color:#ffd;font-size:14px;margin-bottom:8px">Vui lòng mở bài kiểm tra bằng <span id="line-browser-name2">Safari</span></div>
+  <div style="color:#ccc;font-size:13px;margin-bottom:28px">LINEのブラウザではカンニング防止機能が正しく動作しません。</div>
+  <div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;max-width:320px">
+    <div style="font-size:13px;color:#333;font-weight:bold;margin-bottom:8px">📋 手順 / Cách mở:</div>
+    <div style="font-size:13px;color:#555;text-align:left;line-height:2">
+      1. 右下の <b>…</b> または <b>⋮</b> をタップ<br>
+      2. <b>「ブラウザで開く」</b> を選択<br>
+      3. <span id="line-browser-name3">Safari</span> で開く
+    </div>
+  </div>
+  <div style="color:#aaa;font-size:12px">このページはLINEブラウザでは受験できません。</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 語彙テスト -->
+<!-- ============================================================ -->
+<div id="tab-goii" class="section active">
+  <div class="section-title">語彙テスト（Bài kiểm tra từ vựng）</div>
+
+  <!-- Q1 -->
+  <div class="q-block">
+    <div class="q-title">問題１．Hãy chọn từ đúng cho mỗi hình　＜各1点×10問＝10点＞</div>
+    <div class="img-row" id="g1-imgs">
+      <div class="img-item"><img src="images/goii/image1.png"><label>①</label></div>
+      <div class="img-item"><img src="images/goii/image2.png"><label>②</label></div>
+      <div class="img-item"><img src="images/goii/image3.png"><label>③</label></div>
+      <div class="img-item"><img src="images/goii/image4.png"><label>④</label></div>
+      <div class="img-item"><img src="images/goii/image5.png"><label>⑤</label></div>
+      <div class="img-item"><img src="images/goii/image6.png"><label>⑥</label></div>
+      <div class="img-item"><img src="images/goii/image7.png"><label>⑦</label></div>
+      <div class="img-item"><img src="images/goii/image8.png"><label>⑧</label></div>
+      <div class="img-item"><img src="images/goii/image9.png"><label>⑨</label></div>
+      <div class="img-item"><img src="images/goii/image10.png"><label>⑩</label></div>
+    </div>
+    <div class="answer-row">
+      <div class="answer-box"><span>①</span><select id="g1_1" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>②</span><select id="g1_2" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>③</span><select id="g1_3" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>④</span><select id="g1_4" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>⑤</span><select id="g1_5" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>⑥</span><select id="g1_6" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>⑦</span><select id="g1_7" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>⑧</span><select id="g1_8" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>⑨</span><select id="g1_9" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+      <div class="answer-box"><span>⑩</span><select id="g1_10" class="g1-ans"><option value="">-</option><option>牛乳</option><option>野菜</option><option>魚</option><option>肉</option><option>卵</option><option>やま</option><option>せんぷうき</option><option>スプーン</option><option>でんち</option><option>バレーボール</option></select></div>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-block">
+    <div class="q-title">問題２．Chuyển sang tiếng Nhật（日本語で書いてください）　＜各3点×8問＝24点＞</div>
+    <table class="qa-table" style="width:100%">
+      <tr>
+        <td style="text-align:center;width:25%"><img src="images/goii/image11.png" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image12.png" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image13.png" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center;width:25%"><img src="images/goii/image14.png" style="max-height:60px;max-width:100%"></td>
+      </tr>
+      <tr>
+        <td>１）<select id="g2_1" style="width:100%;font-size:11px"><option value="">--</option><option value="すし">すし</option><option value="すうし">すうし</option><option value="すじ">すじ</option><option value="しす">しす</option></select></td>
+        <td>２）<select id="g2_2" style="width:100%;font-size:11px"><option value="">--</option><option value="サッカー">サッカー</option><option value="サカー">サカー</option><option value="サーカー">サーカー</option><option value="サツカー">サツカー</option></select></td>
+        <td>３）<select id="g2_3" style="width:100%;font-size:11px"><option value="">--</option><option value="スイッチ">スイッチ</option><option value="スイチ">スイチ</option><option value="スウィッチ">スウィッチ</option><option value="スイツチ">スイツチ</option></select></td>
+        <td>４）<select id="g2_4" style="width:100%;font-size:11px"><option value="">--</option><option value="セロテープ">セロテープ</option><option value="セロテプ">セロテプ</option><option value="セロープ">セロープ</option><option value="セローテプ">セローテプ</option></select></td>
+      </tr>
+      <tr>
+        <td style="text-align:center"><img src="images/goii/image15.png" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center"><img src="images/goii/image16.png" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center"><img src="images/goii/image17.png" style="max-height:60px;max-width:100%"></td>
+        <td style="text-align:center"><img src="images/goii/image18.png" style="max-height:60px;max-width:100%"></td>
+      </tr>
+      <tr>
+        <td>５）<select id="g2_5" style="width:100%;font-size:11px"><option value="">--</option><option value="はさみ">はさみ</option><option value="はしみ">はしみ</option><option value="はざみ">はざみ</option><option value="はさび">はさび</option></select></td>
+        <td>６）<select id="g2_6" style="width:100%;font-size:11px"><option value="">--</option><option value="じでんしゃ">じでんしゃ</option><option value="じてんしゃ">じてんしゃ</option><option value="じてんしや">じてんしや</option><option value="してんしゃ">してんしゃ</option></select></td>
+        <td>７）<select id="g2_7" style="width:100%;font-size:11px"><option value="">--</option><option value="アイスクリーム">アイスクリーム</option><option value="アイスクリム">アイスクリム</option><option value="アスクリーム">アスクリーム</option><option value="アイスクーリム">アイスクーリム</option></select></td>
+        <td>８）<select id="g2_8" style="width:100%;font-size:11px"><option value="">--</option><option value="ビール">ビール</option><option value="ビル">ビル</option><option value="ピール">ピール</option><option value="ビイル">ビイル</option></select></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-block">
+    <div class="q-title">問題３．読み方を書いてください　＜各1点×13問＝13点＞</div>
+    <div class="q-instruction">Hãy viết cách đọc bằng Hiragana.</div>
+
+    <!-- 月の読み方 -->
+    <div style="font-weight:bold;font-size:13px;color:#1a5276;margin-bottom:6px">月の読み方</div>
+    <div class="table-scroll">
+    <table class="qa-table" style="width:100%">
+      <tr>
+        <th>4月</th><th>5月</th><th>6月</th><th>7月</th><th>8月</th>
+      </tr>
+      <tr>
+        <td><input type="text" id="g3_1" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td class="already" style="text-align:center;font-size:12px">ごがつ</td>
+        <td class="already" style="text-align:center;font-size:12px">ろくがつ</td>
+        <td><input type="text" id="g3_2" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td class="already" style="text-align:center;font-size:12px">はちがつ</td>
+      </tr>
+    </table>
+    </div>
+
+    <!-- 時の言葉 -->
+    <div style="font-weight:bold;font-size:13px;color:#1a5276;margin:12px 0 6px">時の言葉</div>
+    <div class="table-scroll">
+    <table class="qa-table" style="width:100%">
+      <tr>
+        <th>おととい</th><th>きのう</th><th>今日</th><th>明日</th><th>あさって</th>
+      </tr>
+      <tr>
+        <td class="already" style="text-align:center;font-size:12px">おととい</td>
+        <td class="already" style="text-align:center;font-size:12px">きのう</td>
+        <td><input type="text" id="g3_4" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td class="already" style="text-align:center;font-size:12px">あした</td>
+        <td class="already" style="text-align:center;font-size:12px">あさって</td>
+      </tr>
+    </table>
+    </div>
+    <div class="table-scroll" style="margin-top:8px">
+    <table class="qa-table" style="width:100%">
+      <tr>
+        <th>一昨年</th><th>去年</th><th>今年</th><th>来年</th><th>再来年</th>
+      </tr>
+      <tr>
+        <td class="already" style="text-align:center;font-size:12px">おととし</td>
+        <td><input type="text" id="g3_5" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td><input type="text" id="g3_6" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td class="already" style="text-align:center;font-size:12px">らいねん</td>
+        <td><input type="text" id="g3_3" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+      </tr>
+    </table>
+    </div>
+
+    <!-- 日の読み方 -->
+    <div style="font-weight:bold;font-size:13px;color:#1a5276;margin:12px 0 6px">日の読み方</div>
+    <div class="table-scroll">
+    <table class="qa-table" style="width:100%">
+      <tr>
+        <th>1日</th><th>5日</th><th>7日</th><th>8日</th><th>9日</th><th>14日</th><th>20日</th><th>31日</th>
+      </tr>
+      <tr>
+        <td class="already" style="text-align:center;font-size:11px">ついたち</td>
+        <td><input type="text" id="g3_7" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+        <td><input type="text" id="g3_8" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+        <td><input type="text" id="g3_9" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+        <td><input type="text" id="g3_10" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+        <td><input type="text" id="g3_11" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+        <td><input type="text" id="g3_12" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+        <td><input type="text" id="g3_13" style="width:100%;font-size:11px;padding:3px" placeholder="?"></td>
+      </tr>
+    </table>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-block">
+    <div class="q-title">問題４．正しいものを選んでください　＜各2点×5問＝10点＞</div>
+    <div class="q-instruction">Hãy chọn đáp án đúng.</div>
+    <div style="margin:8px 0;line-height:3">
+      <p class="sentence">１）　けさ9時に（　）を食べました。</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:14px">
+        <label><input type="radio" name="g4_1" value="①"> ① 朝ごはん</label>
+        <label><input type="radio" name="g4_1" value="②"> ② 昼ごはん</label>
+        <label><input type="radio" name="g4_1" value="③"> ③ 晩ごはん</label>
+        <label><input type="radio" name="g4_1" value="④"> ④ ジュース</label>
+      </div>
+      <p class="sentence">２）　きのうスーパーで（　）を買いました。</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:14px">
+        <label><input type="radio" name="g4_2" value="①"> ① 野菜</label>
+        <label><input type="radio" name="g4_2" value="②"> ② テレビ</label>
+        <label><input type="radio" name="g4_2" value="③"> ③ 電車</label>
+        <label><input type="radio" name="g4_2" value="④"> ④ 公園</label>
+      </div>
+      <p class="sentence">３）　毎朝7時に（　）。</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:14px">
+        <label><input type="radio" name="g4_3" value="①"> ① おきます</label>
+        <label><input type="radio" name="g4_3" value="②"> ② ねます</label>
+        <label><input type="radio" name="g4_3" value="③"> ③ たべます</label>
+        <label><input type="radio" name="g4_3" value="④"> ④ かえります</label>
+      </div>
+      <p class="sentence">４）　日曜日に友だちと（　）を見ました。</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:14px">
+        <label><input type="radio" name="g4_4" value="①"> ① 映画</label>
+        <label><input type="radio" name="g4_4" value="②"> ② 手紙</label>
+        <label><input type="radio" name="g4_4" value="③"> ③ 音楽</label>
+        <label><input type="radio" name="g4_4" value="④"> ④ 勉強</label>
+      </div>
+      <p class="sentence">５）　母の誕生日に花を（　）。</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:14px">
+        <label><input type="radio" name="g4_5" value="①"> ① あげました</label>
+        <label><input type="radio" name="g4_5" value="②"> ② もらいました</label>
+        <label><input type="radio" name="g4_5" value="③"> ③ かりました</label>
+        <label><input type="radio" name="g4_5" value="④"> ④ かえしました</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-block">
+    <div class="q-title">問題５．反対の意味の言葉を書いてください　＜各1点×7問＝7点＞</div>
+    <div class="q-instruction">Hãy viết từ có nghĩa ngược lại bằng Hiragana.</div>
+    <div class="table-scroll">
+    <table class="qa-table" style="width:100%">
+      <tr><th>形容詞</th><th>反対の言葉</th></tr>
+      <tr><td>１）大きい</td><td><input type="text" id="g5_1" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+      <tr><td>２）やさしい</td><td><input type="text" id="g5_2" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+      <tr><td>３）安い</td><td><input type="text" id="g5_3" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+      <tr><td>４）忙しい</td><td><input type="text" id="g5_4" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+      <tr><td>５）悪い</td><td><input type="text" id="g5_5" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+      <tr><td>６）古い</td><td><input type="text" id="g5_6" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+      <tr><td>７）にぎやかな</td><td><input type="text" id="g5_7" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td></tr>
+    </table>
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="q-block">
+    <div class="q-title">問題６．Tiếng Nhật ⇔ Tiếng Việt　＜各2点×18問＝36点＞</div>
+    <div class="q-instruction">Hãy chọn nghĩa đúng.</div>
+    <div class="table-scroll">
+    <table class="qa-table" style="width:100%">
+      <tr><th colspan="2">Nhật → Việt（左）</th><th colspan="2">Nhật → Việt（右）</th></tr>
+      <tr>
+        <td style="white-space:nowrap">１．たな</td><td><select id="g6_1"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">１．もらいます</td><td><select id="g6_10"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">２．やくそく</td><td><select id="g6_2"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">２．むすめ</td><td><select id="g6_11"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">３．からい</td><td><select id="g6_3"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">３．せいかつ</td><td><select id="g6_12"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">４．忙しい</td><td><select id="g6_4"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">４．のみもの</td><td><select id="g6_13"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">５．りょう</td><td><select id="g6_5"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">５．れいぞうこ</td><td><select id="g6_14"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">６．にもつ</td><td><select id="g6_6"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">６．きょうだい</td><td><select id="g6_15"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">７．かします</td><td><select id="g6_7"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">７．となり</td><td><select id="g6_16"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">８．仕事</td><td><select id="g6_8"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">８．わかります</td><td><select id="g6_17"><option value="">--</option></select></td>
+      </tr>
+      <tr>
+        <td style="white-space:nowrap">９．じょうずな</td><td><select id="g6_9"><option value="">--</option></select></td>
+        <td style="white-space:nowrap">９．のりば</td><td><select id="g6_18"><option value="">--</option></select></td>
+      </tr>
+    </table>
+    </div>
+  </div>
+  <div style="text-align:center;margin:28px 0 8px">
+    <button class="btn btn-primary" onclick="showTab('bunpo')" style="font-size:15px;padding:14px 32px">Sang phần Ngữ pháp →</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 文法テスト -->
+<!-- ============================================================ -->
+<div id="tab-bunpo" class="section">
+  <div class="section-title">文法テスト（Bài kiểm tra ngữ pháp）</div>
+
+  <!-- B-Q1 -->
+  <div class="q-block">
+    <div class="q-title">問題１．Hãy điền trợ từ thích hợp　＜各1点×13問＝13点＞</div>
+    <div class="q-instruction">Hãy điền trợ từ đúng vào（　　）.</div>
+
+    <div class="sentence">Ví dụ）　きのう（<span class="already">は</span>）日曜日でした。</div>
+    <div class="sentence">１）　時間（<span class="fill-inline"><select id="b1_1" class="sel-particle"><option value="">-</option><option>が</option><option>を</option><option>に</option><option>は</option><option>から</option></select></span>）ありません（<span class="fill-inline"><select id="b1_2" class="sel-particle"><option value="">-</option><option>が</option><option>に</option><option>から</option><option>で</option><option>を</option></select></span>）、新聞を読みません。</div>
+    <div class="sentence">２）　かばんの（<span class="fill-inline"><select id="b1_3" class="sel-particle"><option value="">-</option><option>に</option><option>で</option><option>を</option><option>が</option><option>は</option></select></span>）財布がありますか。</div>
+    <div class="sentence">３）　ベトナム語（<span class="fill-inline"><select id="b1_4" class="sel-particle"><option value="">-</option><option>で</option><option>に</option><option>は</option><option>を</option><option>が</option></select></span>）「ありがとう」は何ですか。― ベトナム語（<span class="fill-inline"><select id="b1_5" class="sel-particle"><option value="">-</option><option>が</option><option>を</option><option>は</option><option>で</option><option>に</option></select></span>）わかりません。</div>
+    <div class="sentence">４）　母（<span class="fill-inline"><select id="b1_6" class="sel-particle"><option value="">-</option><option>に</option><option>を</option><option>で</option><option>が</option><option>は</option></select></span>）電話（<span class="fill-inline"><select id="b1_7" class="sel-particle"><option value="">-</option><option>を</option><option>に</option><option>が</option><option>で</option><option>は</option></select></span>）かけます。</div>
+    <div class="sentence">５）　いつ日本（<span class="fill-inline"><select id="b1_8" class="sel-particle"><option value="">-</option><option>へ</option><option>に</option><option>を</option><option>で</option><option>が</option></select></span>）行きますか。― 3月18日（<span class="fill-inline"><select id="b1_9" class="sel-particle"><option value="">-</option><option>に</option><option>の</option><option>で</option><option>を</option><option>は</option></select></span>）飛行機（<span class="fill-inline"><select id="b1_10" class="sel-particle"><option value="">-</option><option>で</option><option>に</option><option>を</option><option>が</option><option>は</option></select></span>）行きます。</div>
+    <div class="sentence">６）　スーパー（<span class="fill-inline"><select id="b1_11" class="sel-particle"><option value="">-</option><option>で</option><option>に</option><option>を</option><option>が</option><option>は</option></select></span>）ジュースを買いました。おいしくないです（<span class="fill-inline"><select id="b1_12" class="sel-particle"><option value="">-</option><option>が</option><option>から</option><option>に</option><option>で</option><option>を</option></select></span>）、安いです。</div>
+    <div class="sentence">７）　1年（<span class="fill-inline"><select id="b1_13" class="sel-particle"><option value="">-</option><option>に</option><option>で</option><option>を</option><option>が</option><option>は</option></select></span>）1回ベトナムを旅行します。</div>
+  </div>
+
+  <!-- B-Q2 -->
+  <div class="q-block">
+    <div class="q-title">問題２．Hãy chọn từ đúng　＜各2点×5問＝10点＞</div>
+    <div class="q-instruction">正しい言葉を選んでください。</div>
+    <div style="margin:8px 0;line-height:3">
+      <p class="sentence">１）　きのう何を（　<span class="fill-inline">
+        <select id="b2_1" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
+          <option value="">Chọn</option>
+          <option value="しませんでしたか">しませんでしたか</option>
+          <option value="しますか">しますか</option>
+          <option value="しましたか">しましたか</option>
+          <option value="しませんか">しませんか</option>
+        </select>
+      </span>　）。</p>
+      <p class="sentence">２）　日本の生活は（　<span class="fill-inline">
+        <select id="b2_2" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
+          <option value="">Chọn</option>
+          <option value="どうですか">どうですか</option>
+          <option value="なんですか">なんですか</option>
+          <option value="だれですか">だれですか</option>
+          <option value="どこですか">どこですか</option>
+        </select>
+      </span>　）。</p>
+      <p class="sentence">３）　うちから会社まで（　<span class="fill-inline">
+        <select id="b2_3" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
+          <option value="">Chọn</option>
+          <option value="どのくらい">どのくらい</option>
+          <option value="いくら">いくら</option>
+          <option value="なんじ">なんじ</option>
+          <option value="どこ">どこ</option>
+        </select>
+      </span>　）かかりますか。</p>
+      <p class="sentence">４）　あそこに郵便局が（　<span class="fill-inline">
+        <select id="b2_4" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
+          <option value="">Chọn</option>
+          <option value="あります">あります</option>
+          <option value="います">います</option>
+          <option value="いきます">いきます</option>
+          <option value="です">です</option>
+        </select>
+      </span>　）。</p>
+      <p class="sentence">５）　友だちに本を（　<span class="fill-inline">
+        <select id="b2_5" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
+          <option value="">Chọn</option>
+          <option value="もらいました">もらいました</option>
+          <option value="あげました">あげました</option>
+          <option value="かしました">かしました</option>
+          <option value="かいました">かいました</option>
+        </select>
+      </span>　）。</p>
+    </div>
+  </div>
+
+  <!-- B-Q3 -->
+  <div class="q-block">
+    <div class="q-title">問題３．Sắp xếp theo thứ tự đúng　＜各3点×5問＝15点＞</div>
+    <div class="q-instruction">タイルをタップして正しい順に並べてください。もう一度タップすると戻ります。</div>
+    <div id="bq3-puzzles"></div>
+    <input type="hidden" id="b3_1">
+    <input type="hidden" id="b3_2">
+    <input type="hidden" id="b3_3">
+    <input type="hidden" id="b3_4">
+    <input type="hidden" id="b3_5">
+  </div>
+
+  <!-- B-Q4 -->
+  <div class="q-block">
+    <div class="q-title">問題４．会話を完成してください　＜各2点×7問＝14点＞</div>
+    <div class="q-instruction">Chọn từ A-H để điền vào chỗ trống.</div>
+    <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;font-size:13px;line-height:2">
+      A: いただきます　　B: すみません　　C: どこですか　　D: すみません。用事がありますから…<br>
+      E: 読みました　　F: いいですね　　G: 読みましたか　　H: 行きましょう
+    </div>
+    <div class="sentence" style="margin-top:10px">①　A：グエンさん、日本語でどんな本を（<select id="b4_1" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：『ハリー・ポッター』です。</div>
+    <div class="sentence" style="margin-top:10px">②　A：いらっしゃい。コーヒーは（<select id="b4_2" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：ありがとうございます。</div>
+    <div class="sentence" style="margin-top:10px">③　A：日曜日にお花見をしませんか。<br>　　B：（<select id="b4_3" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。行きましょう。</div>
+    <div class="sentence" style="margin-top:10px">④　A：今度の土曜日、いっしょに京都へ（<select id="b4_4" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。</div>
+    <div class="sentence" style="margin-top:10px">⑤　A：（<select id="b4_5" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）、ちょっと写真を撮ってください。</div>
+    <div class="sentence" style="margin-top:10px">⑥　A：あした映画を見ませんか。<br>　　B：（<select id="b4_6" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）</div>
+    <div class="sentence" style="margin-top:10px">⑦　A：すみません、トイレは（<select id="b4_7" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：あちらです。</div>
+  </div>
+
+  <!-- B-Q5 -->
+  <div class="q-block">
+    <div class="q-title">問題５．⚠ 絵を見て位置を書いてください　＜各3点×4問＝12点＞</div>
+    <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
+      ※ この問題は先生が採点します。絵を見て、答えを書いてください。
+    </div>
+    <div style="text-align:center;margin:12px 0">
+      <img src="images/bunpo/image1.png" alt="位置の問題" style="max-width:100%;max-height:280px;object-fit:contain;border:2px solid #333;border-radius:8px">
+    </div>
+    <div style="margin-top:10px">
+      <p style="font-size:13px;color:#555">１）　いすはどこにありますか。</p>
+      <input type="text" id="b5_1" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="例：机の前にあります。">
+      <p style="font-size:13px;color:#555;margin-top:12px">２）　プレゼントはどこにありますか。</p>
+      <input type="text" id="b5_2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="">
+      <p style="font-size:13px;color:#555;margin-top:12px">３）　ぬいぐるみはどこにありますか。</p>
+      <input type="text" id="b5_3" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="">
+      <p style="font-size:13px;color:#555;margin-top:12px">４）　犬はどこにいますか。</p>
+      <input type="text" id="b5_4" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="">
+    </div>
+  </div>
+
+  <!-- B-Q6 -->
+  <div class="q-block">
+    <div class="q-title">問題６．○/× で答えてください（読解）　＜各2点×5問＝10点＞</div>
+    <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
+      ※ 下の文章を読んで、○か×を選んでください。
+    </div>
+    <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;font-size:14px;line-height:2.2">
+      <b>ミラーさんの いちにち</b><br>
+      ミラーさん は まいあさ 8じごろ おきます。あさごはん を たべてから、あるいて かいしゃ へ いきます。かいしゃ は げつようび から きんようび まで 9じ から 5じ まで です。ひるやすみ は 12じ から 1じ まで です。きんようび の よる、ときどき ともだち と おさけ を のみます。しごと は たいへんですが、たのしいです。
+    </div>
+    <div style="margin-top:10px">
+      <p style="font-size:13px;color:#555">１）ミラーさんは8時ごろ起きます。</p>
+      <select id="b6_1" style="font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+      <p style="font-size:13px;color:#555;margin-top:10px">２）ミラーさんは電車で会社へ行きます。</p>
+      <select id="b6_2" style="font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+      <p style="font-size:13px;color:#555;margin-top:10px">３）会社は月曜日から金曜日までです。</p>
+      <select id="b6_3" style="font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+      <p style="font-size:13px;color:#555;margin-top:10px">４）金曜日の夜、毎週友だちとお酒を飲みます。</p>
+      <select id="b6_4" style="font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+      <p style="font-size:13px;color:#555;margin-top:10px">５）仕事はたいへんですから、楽しくないです。</p>
+      <select id="b6_5" style="font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+    </div>
+  </div>
+
+  <!-- B-Q7 -->
+  <div class="q-block">
+    <div class="q-title">問題７．○/× で答えてください（文の意味）　＜各2点×10問＝10点＞</div>
+    <div class="q-instruction">元の文と同じ意味なら○、違う意味なら×を選んでください。</div>
+    <div style="margin-top:10px">
+
+      <div style="margin-bottom:16px;padding:10px;background:#f8f9fa;border-radius:6px">
+        <p style="font-size:13px;font-weight:bold;margin-bottom:8px">１）クインは母に花をあげました。</p>
+        <p style="font-size:13px;margin-bottom:4px">a）母はクインに花をもらいました。 →
+          <select id="b7_1a" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+        <p style="font-size:13px">b）クインは母に花を買いました。 →
+          <select id="b7_1b" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+      </div>
+
+      <div style="margin-bottom:16px;padding:10px;background:#f8f9fa;border-radius:6px">
+        <p style="font-size:13px;font-weight:bold;margin-bottom:8px">２）アインさんに本を借りました。</p>
+        <p style="font-size:13px;margin-bottom:4px">a）アインさんは私に本を貸しました。 →
+          <select id="b7_2a" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+        <p style="font-size:13px">b）アインさんと本を読みました。 →
+          <select id="b7_2b" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+      </div>
+
+      <div style="margin-bottom:16px;padding:10px;background:#f8f9fa;border-radius:6px">
+        <p style="font-size:13px;font-weight:bold;margin-bottom:8px">３）ターニャさんは料理が好きじゃありません。</p>
+        <p style="font-size:13px;margin-bottom:4px">a）ターニャさんはごはんが嫌いです。 →
+          <select id="b7_3a" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+        <p style="font-size:13px">b）ターニャさんの料理はおいしくないです。 →
+          <select id="b7_3b" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+      </div>
+
+      <div style="margin-bottom:16px;padding:10px;background:#f8f9fa;border-radius:6px">
+        <p style="font-size:13px;font-weight:bold;margin-bottom:8px">４）A「映画を見ましょう。」B「明日は友だちと約束がありますから…。」</p>
+        <p style="font-size:13px;margin-bottom:4px">a）Bさんは映画を見ません。 →
+          <select id="b7_4a" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+        <p style="font-size:13px">b）Bさんは友だちがいません。 →
+          <select id="b7_4b" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+      </div>
+
+      <div style="margin-bottom:16px;padding:10px;background:#f8f9fa;border-radius:6px">
+        <p style="font-size:13px;font-weight:bold;margin-bottom:8px">５）A「何日読みましたか。」B「4日読みました。」</p>
+        <p style="font-size:13px;margin-bottom:4px">a）11月14日の新聞を読みました。 →
+          <select id="b7_5a" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+        <p style="font-size:13px">b）月曜日から木曜日まで読みました。 →
+          <select id="b7_5b" style="font-size:13px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option value="○">○</option><option value="×">×</option></select>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- B-Q8 -->
+  <div class="q-block">
+    <div class="q-title">問題８．⚠ 質問に答えてください　＜各4点×4問＝16点＞</div>
+    <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
+      ※ この問題は先生が採点します。日本語で答えてください。
+    </div>
+    <div style="margin-top:10px">
+      <p style="font-size:13px;color:#555">１）　1か月に何回うちへ帰りますか。</p>
+      <textarea id="b8_1" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
+      <p style="font-size:13px;color:#555;margin-top:12px">２）　あなたはどのくらい日本語を勉強しましたか。</p>
+      <textarea id="b8_2" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
+      <p style="font-size:13px;color:#555;margin-top:12px">３）　あなたのクラスに何人の学生がいますか。</p>
+      <textarea id="b8_3" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
+      <p style="font-size:13px;color:#555;margin-top:12px">４）　もう日本の服を買いましたか。</p>
+      <textarea id="b8_4" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:28px 0 8px">
+    <button class="btn btn-primary" onclick="showTab('chokkai')" style="font-size:15px;padding:14px 32px">Sang phần Nghe hiểu →</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 聴解テスト -->
+<!-- ============================================================ -->
+<div id="tab-chokkai" class="section">
+  <div class="section-title">聴解テスト（Bài kiểm tra nghe hiểu）</div>
+  <div style="background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:13px;color:#555">🔊 Tốc độ phát:</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="setAudioSpeed(0.75)" id="spd075" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×0.75</button>
+      <button onclick="setAudioSpeed(1.0)" id="spd100" style="padding:5px 12px;border-radius:6px;border:2px solid #1a5276;background:#eaf0fb;font-size:13px;cursor:pointer;font-weight:bold">×1.0</button>
+      <button onclick="setAudioSpeed(1.25)" id="spd125" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×1.25</button>
+    </div>
+  </div>
+
+  <!-- C-Q1 -->
+  <div class="q-block">
+    <div class="q-title">問題１．カリーナさんは今日何をしますか　＜各4点×2問＝8点＞</div>
+    <div class="q-instruction">Nghe và chọn đáp án đúng.</div>
+    <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:10px;margin:8px 0;font-size:13px">
+      a. 友だちに会います　　b. 花見をします　　c. 日本語を勉強します<br>
+      d. 昼ごはんを食べます　　e. お酒を飲みます　　f. 映画を見ます
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
+      <audio controls src="audio/1-0.mp3"></audio>
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/1-1.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">答え：<select id="c1_1"><option value="">--</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option><option value="f">f</option></select></div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/1-2.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">答え：<select id="c1_2"><option value="">--</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option><option value="f">f</option></select></div>
+    </div>
+  </div>
+
+  <!-- C-Q2 -->
+  <div class="q-block">
+    <div class="q-title">問題２．A or B？　＜各3点×2問＝6点＞</div>
+    <div class="audio-q">
+      <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
+      <audio controls src="audio/2-0.mp3"></audio>
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/2-1.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c2_1"><option value="">--</option><option value="a">a. もらいました</option><option value="b">b. あげました</option></select>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/2-2.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c2_2"><option value="">--</option><option value="a">a. 借りました</option><option value="b">b. 貸しました</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q3 -->
+  <div class="q-block">
+    <div class="q-title">問題３．どうして？　＜各2点×2×2問＝8点＞</div>
+    <div class="q-instruction">理由を聞いて選んでください。</div>
+    <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:10px;margin:8px 0;font-size:13px">
+      a. お金　　b. 仕事　　c. 休み　　d. 用事　　e. 約束　　f. 時間
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
+      <audio controls src="audio/3-0.mp3"></audio>
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/3-1.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        理由：<select id="c3_1r"><option value="">--</option><option value="a">a. お金</option><option value="b">b. 仕事</option><option value="c">c. 休み</option><option value="d">d. 用事</option><option value="e">e. 約束</option><option value="f">f. 時間</option></select>
+        　→　<select id="c3_1v"><option value="">--</option><option value="飲みません">飲みません</option><option value="行きません">行きません</option><option value="買いません">買いません</option><option value="食べません">食べません</option></select>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/3-2.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        理由：<select id="c3_2r"><option value="">--</option><option value="a">a. お金</option><option value="b">b. 仕事</option><option value="c">c. 休み</option><option value="d">d. 用事</option><option value="e">e. 約束</option><option value="f">f. 時間</option></select>
+        　→　<select id="c3_2v"><option value="">--</option><option value="タクシーで行きます">タクシーで行きます</option><option value="バスで行きます">バスで行きます</option><option value="歩いて行きます">歩いて行きます</option><option value="電車で行きます">電車で行きます</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q4 -->
+  <div class="q-block">
+    <div class="q-title">問題４．リーさんは今何をしますか　＜各3点×2問＝6点＞</div>
+    <div class="audio-q">
+      <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
+      <audio controls src="audio/4-0.mp3"></audio>
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/4-1.mp3"></audio>
+      <div class="img-choice-row">
+        <div class="img-choice"><img src="images/chokkai/image1.png"><p><label><input type="radio" name="c4_1" value="a"> ａ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image2.png"><p><label><input type="radio" name="c4_1" value="b"> ｂ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image3.png"><p><label><input type="radio" name="c4_1" value="c"> ｃ</label></p></div>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:10px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/4-2.mp3"></audio>
+      <div class="img-choice-row">
+        <div class="img-choice"><img src="images/chokkai/image4.png"><p><label><input type="radio" name="c4_2" value="a"> ａ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image5.png"><p><label><input type="radio" name="c4_2" value="b"> ｂ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image6.png"><p><label><input type="radio" name="c4_2" value="c"> ｃ</label></p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q5 -->
+  <div class="q-block">
+    <div class="q-title">問題５．何を買いましたか　＜各3点×2問＝6点＞</div>
+    <div class="audio-q">
+      <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
+      <audio controls src="audio/5-0.mp3"></audio>
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/5-1.mp3"></audio>
+      <div class="img-choice-row">
+        <div class="img-choice"><img src="images/chokkai/image7.png"><p><label><input type="radio" name="c5_1" value="a"> ａ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image8.png"><p><label><input type="radio" name="c5_1" value="b"> ｂ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image9.png"><p><label><input type="radio" name="c5_1" value="c"> ｃ</label></p></div>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:10px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/5-2.mp3"></audio>
+      <div class="img-choice-row">
+        <div class="img-choice"><img src="images/chokkai/image10.png"><p><label><input type="radio" name="c5_2" value="a"> ａ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image11.png"><p><label><input type="radio" name="c5_2" value="b"> ｂ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image12.png"><p><label><input type="radio" name="c5_2" value="c"> ｃ</label></p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q6 -->
+  <div class="q-block">
+    <div class="q-title">問題６．グプタさんは何と言いましたか　＜各3点×2問＝6点＞</div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/6-1.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c6_1"><option value="">--</option><option value="a">a. 大きい町です</option><option value="b">b. 小さい町です</option><option value="c">c. きれいな町です</option></select>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/6-2.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c6_2"><option value="">--</option><option value="a">a. やさしい人です</option><option value="b">b. ハンサムな人です</option><option value="c">c. おもしろい人です</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q7 -->
+  <div class="q-block">
+    <div class="q-title">問題７．どうやって行きますか　＜各2点×6問＝12点＞</div>
+    <div class="q-instruction">ルートごとに交通手段を選んでください。</div>
+    <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:10px;margin:8px 0;font-size:13px">
+      a. バス　　b. 地下鉄　　c. 船　　d. 新幹線　　e. 飛行機　　f. タクシー
+    </div>
+    <div class="audio-q">
+      <audio controls src="audio/7-0.mp3"></audio>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <audio controls src="audio/7-1.mp3"></audio>
+      <div style="margin-top:10px;font-size:13px;line-height:2.5">
+        <p>① 学校 → 地下鉄の駅：<select id="c7_1"><option value="">--</option><option value="a">a. バス</option><option value="b">b. 地下鉄</option><option value="c">c. 船</option><option value="d">d. 新幹線</option><option value="e">e. 飛行機</option><option value="f">f. タクシー</option></select></p>
+        <p>② 駅 → 新大阪：<select id="c7_2"><option value="">--</option><option value="a">a. バス</option><option value="b">b. 地下鉄</option><option value="c">c. 船</option><option value="d">d. 新幹線</option><option value="e">e. 飛行機</option><option value="f">f. タクシー</option></select></p>
+        <p>③ 新大阪 → 広島：<select id="c7_3"><option value="">--</option><option value="a">a. バス</option><option value="b">b. 地下鉄</option><option value="c">c. 船</option><option value="d">d. 新幹線</option><option value="e">e. 飛行機</option><option value="f">f. タクシー</option></select></p>
+        <p>④ 広島 → 松山：<select id="c7_4"><option value="">--</option><option value="a">a. バス</option><option value="b">b. 地下鉄</option><option value="c">c. 船</option><option value="d">d. 新幹線</option><option value="e">e. 飛行機</option><option value="f">f. タクシー</option></select></p>
+        <p>⑤ 松山 → 大阪：<select id="c7_5"><option value="">--</option><option value="a">a. バス</option><option value="b">b. 地下鉄</option><option value="c">c. 船</option><option value="d">d. 新幹線</option><option value="e">e. 飛行機</option><option value="f">f. タクシー</option></select></p>
+        <p>⑥ 大阪 → 学校：<select id="c7_6"><option value="">--</option><option value="a">a. バス</option><option value="b">b. 地下鉄</option><option value="c">c. 船</option><option value="d">d. 新幹線</option><option value="e">e. 飛行機</option><option value="f">f. タクシー</option></select></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q8 -->
+  <div class="q-block">
+    <div class="q-title">問題８．女の人は今どこにいますか　＜各3点×2問＝6点＞</div>
+    <div class="audio-q">
+      <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
+      <audio controls src="audio/8-0.mp3"></audio>
+    </div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/8-1.mp3"></audio>
+      <div class="img-choice-row">
+        <div class="img-choice"><img src="images/chokkai/image13.png"><p><label><input type="radio" name="c8_1" value="a"> ａ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image14.png"><p><label><input type="radio" name="c8_1" value="b"> ｂ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image15.png"><p><label><input type="radio" name="c8_1" value="c"> ｃ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image16.png"><p><label><input type="radio" name="c8_1" value="d"> ｄ</label></p></div>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:10px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/8-2.mp3"></audio>
+      <div class="img-choice-row">
+        <div class="img-choice"><img src="images/chokkai/image17.png"><p><label><input type="radio" name="c8_2" value="a"> ａ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image18.png"><p><label><input type="radio" name="c8_2" value="b"> ｂ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image19.png"><p><label><input type="radio" name="c8_2" value="c"> ｃ</label></p></div>
+        <div class="img-choice"><img src="images/chokkai/image20.png"><p><label><input type="radio" name="c8_2" value="d"> ｄ</label></p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q9 -->
+  <div class="q-block">
+    <div class="q-title">問題９．スケジュールを聞いて答えてください　＜各3点×3問＝9点＞</div>
+    <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
+      ※ 下のスケジュール表を見て、音声を聞いて答えてください。
+    </div>
+    <div class="table-scroll">
+    <table class="qa-table" style="width:100%;font-size:12px;text-align:center">
+      <tr>
+        <th></th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th>
+      </tr>
+      <tr>
+        <td style="font-weight:bold">午前</td>
+        <td>授業<br>9:00-12:00</td>
+        <td>授業</td>
+        <td>授業</td>
+        <td>授業</td>
+        <td>授業</td>
+        <td>美容院</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold">午後</td>
+        <td>授業<br>1:00-3:00</td>
+        <td>図書館</td>
+        <td>横浜</td>
+        <td></td>
+        <td>図書館</td>
+        <td>アルバイト<br>3:00-8:00</td>
+        <td></td>
+      </tr>
+    </table>
+    </div>
+    <div class="audio-q" style="margin-top:10px">
+      <audio controls src="audio/9.mp3"></audio>
+      <div style="margin-top:10px;font-size:13px">
+        <p style="margin-bottom:8px">① <select id="c9_1"><option value="">--</option><option value="a">a. 月曜日</option><option value="b">b. 火曜日</option><option value="c">c. 水曜日</option><option value="d">d. 木曜日</option><option value="e">e. 金曜日</option><option value="f">f. 土曜日</option><option value="g">g. 日曜日</option></select></p>
+        <p style="margin-bottom:8px">② <select id="c9_2"><option value="">--</option><option value="a">a. 月曜日</option><option value="b">b. 火曜日</option><option value="c">c. 水曜日</option><option value="d">d. 木曜日</option><option value="e">e. 金曜日</option><option value="f">f. 土曜日</option><option value="g">g. 日曜日</option></select></p>
+        <p style="margin-bottom:8px">③ <select id="c9_3"><option value="">--</option><option value="a">a. 月曜日</option><option value="b">b. 火曜日</option><option value="c">c. 水曜日</option><option value="d">d. 木曜日</option><option value="e">e. 金曜日</option><option value="f">f. 土曜日</option><option value="g">g. 日曜日</option></select></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q10 -->
+  <div class="q-block">
+    <div class="q-title">問題１０．絵と音声を合わせてください　＜各2点×4問＝8点＞</div>
+    <div class="q-instruction">音声を聞いて、正しい絵を選んでください。</div>
+    <div class="audio-q">
+      <div class="qlabel">① 問１</div>
+      <audio controls src="audio/10-1.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c10_1"><option value="">--</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option></select>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">② 問２</div>
+      <audio controls src="audio/10-2.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c10_2"><option value="">--</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option></select>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">③ 問３</div>
+      <audio controls src="audio/10-3.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c10_3"><option value="">--</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option></select>
+      </div>
+    </div>
+    <div class="audio-q" style="margin-top:8px">
+      <div class="qlabel">④ 問４</div>
+      <audio controls src="audio/10-4.mp3"></audio>
+      <div class="answer-box" style="margin-top:6px">
+        <select id="c10_4"><option value="">--</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- C-Q11 -->
+  <div class="q-block">
+    <div class="q-title">問題１１．○・✕で答えてください　＜各2点×5問＝10点＞</div>
+    <div class="q-instruction">Nghe đoạn hội thoại, xem câu kế tiếp đúng hay sai → ○（đúng）/ ✕（sai）</div>
+    <div class="audio-q">
+      <audio controls src="audio/11-1.mp3"></audio>
+      <p style="font-size:13px;margin-top:4px">① <select id="c11_1"><option value="">--</option><option value="○">○</option><option value="✕">✕</option></select></p>
+    </div>
+    <div class="audio-q">
+      <audio controls src="audio/11-2.mp3"></audio>
+      <p style="font-size:13px;margin-top:4px">② <select id="c11_2"><option value="">--</option><option value="○">○</option><option value="✕">✕</option></select></p>
+    </div>
+    <div class="audio-q">
+      <audio controls src="audio/11-3.mp3"></audio>
+      <p style="font-size:13px;margin-top:4px">③ <select id="c11_3"><option value="">--</option><option value="○">○</option><option value="✕">✕</option></select></p>
+    </div>
+    <div class="audio-q">
+      <audio controls src="audio/11-4.mp3"></audio>
+      <p style="font-size:13px;margin-top:4px">④ <select id="c11_4"><option value="">--</option><option value="○">○</option><option value="✕">✕</option></select></p>
+    </div>
+    <div class="audio-q">
+      <audio controls src="audio/11-5.mp3"></audio>
+      <p style="font-size:13px;margin-top:4px">⑤ <select id="c11_5"><option value="">--</option><option value="○">○</option><option value="✕">✕</option></select></p>
+    </div>
+  </div>
+
+  <!-- C-Q12 -->
+  <div class="q-block">
+    <div class="q-title">問題１２．⚠ 質問を聞いて答えてください　＜各3点×5問＝15点＞</div>
+    <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
+      ※ この問題は先生が採点します。音声の質問を聞いて、日本語で答えてください。
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">① あなたはタバコを吸いますか。</p>
+      <audio controls src="audio/12-1.mp3" style="width:100%;margin-bottom:6px"></audio>
+      <input type="text" id="c12_1" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください">
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">② あなたの国は今暑いですか。</p>
+      <audio controls src="audio/12-2.mp3" style="width:100%;margin-bottom:6px"></audio>
+      <input type="text" id="c12_2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください">
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">③ あなたの国から日本まで飛行機で何時間かかりますか。</p>
+      <audio controls src="audio/12-3.mp3" style="width:100%;margin-bottom:6px"></audio>
+      <input type="text" id="c12_3" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください">
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">④ お母さんの誕生日に何をあげますか。</p>
+      <audio controls src="audio/12-4.mp3" style="width:100%;margin-bottom:6px"></audio>
+      <input type="text" id="c12_4" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください">
+    </div>
+    <div style="margin:14px 0;padding:10px;background:#f8f9fa;border-radius:8px">
+      <p style="font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:6px">⑤ どうして日本語を勉強しますか。</p>
+      <audio controls src="audio/12-5.mp3" style="width:100%;margin-bottom:6px"></audio>
+      <input type="text" id="c12_5" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください">
+    </div>
+  </div>
+</div>
+
+<!-- 終了ボタン（聴解のみ） -->
+<div class="submit-bar" id="finish-btn-wrap" style="display:none">
+  <button class="btn btn-primary" onclick="finishTest()" style="background:#27ae60;box-shadow:0 3px 8px rgba(39,174,96,.4)">✓ Hoàn thành bài kiểm tra</button>
+</div>
+
+<!-- 結果表示 -->
+<div class="result-box" id="result-box">
+  <h2 style="color:#1a5276;margin-bottom:12px">✅ Đã hoàn thành bài kiểm tra</h2>
+  <p style="color:#555;margin-bottom:12px;font-size:14px">Hãy nhấn nút bên dưới để gửi kết quả cho giáo viên.</p>
+  <div class="score-summary" id="score-summary-area" style="display:none">
+    <div class="score-card"><h3>語彙テスト</h3><div class="pts" id="r-goii">-</div><div style="font-size:12px;color:#888">/ 100点（自動採点分）</div></div>
+    <div class="score-card"><h3>文法テスト</h3><div class="pts" id="r-bunpo">-</div><div style="font-size:12px;color:#888">/ 100点（自動採点分）</div></div>
+    <div class="score-card"><h3>聴解テスト</h3><div class="pts" id="r-chokkai">-</div><div style="font-size:12px;color:#888">/ 100点（自動採点分）</div></div>
+  </div>
+  <div id="result-detail"></div>
+  <div style="margin-top:16px;padding:12px;background:#fffde7;border-radius:6px;font-size:13px">
+    ⚠ 黄色マーク（⚠）の問題は先生が採点します。上記スコアには含まれていません。
+  </div>
+
+  <!-- 送信ボタン -->
+  <div style="margin-top:20px;text-align:center;border-top:1px solid #ddd;padding-top:16px">
+    <p style="font-size:14px;margin-bottom:12px;color:#333">採点が終わったら、結果を先生に送信してください。</p>
+    <button class="btn btn-send" onclick="submitResults()" id="send-btn">
+      📤 結果を先生に送信する
+    </button>
+    <div id="send-status" style="margin-top:10px;font-size:14px"></div>
+  </div>
+</div>
+
+<script src="../common/framework.js?v=2"></script>
+<script>
+// ===== フレームワーク初期化 =====
+TestFramework.init({
+  gasUrl: 'YOUR_GAS_URL_HERE',
+  tabs: ['goii', 'bunpo', 'chokkai'],
+  antiCheatTrigger: 'name_kata'
+});
+
+// グローバル関数（HTMLのonclick等から呼ばれる）
+const normalize = TestFramework.normalize;
+const levenshtein = TestFramework.levenshtein;
+function showTab(name) { TestFramework.showTab(name); }
+function setAudioSpeed(rate) { TestFramework.setAudioSpeed(rate); }
+function finishTest() { TestFramework.finishTest(); }
+function submitResults() { TestFramework.submitResults(); }
+function resetAll() { TestFramework.resetAll(); }
+
+// ===== 解答キー =====
+const ANS = {
+  // 語彙Q1 (各1点×10)
+  g1: ['牛乳','野菜','魚','肉','卵','やま','せんぷうき','スプーン','でんち','バレーボール'],
+  // 語彙Q2 (各3点×8)
+  g2: ['すし','サッカー','スイッチ','セロテープ','はさみ','じてんしゃ','アイスクリーム','ビール'],
+  // 語彙Q3 (各1点×13)
+  g3: {
+    g3_1: 'しがつ',
+    g3_2: 'しちがつ',
+    g3_3: 'さらいねん',
+    g3_4: 'きょう',
+    g3_5: 'きょねん',
+    g3_6: 'ことし',
+    g3_7: 'いつか',
+    g3_8: 'なのか',
+    g3_9: 'ようか',
+    g3_10: 'ここのか',
+    g3_11: 'じゅうよっか',
+    g3_12: 'はつか',
+    g3_13: 'さんじゅういちにち',
+  },
+  // 語彙Q4 (各2点×5) - radio buttons
+  g4: ['①','①','①','①','①'],
+  // 語彙Q5 (各1点×7)
+  g5: ['ちいさい','むずかしい','たかい','ひまな／ひま','いい／よい','あたらしい','しずかな／しずか'],
+  // 語彙Q6 (各2点×18) - left side answers
+  g6_left: [
+    'Gia, kệ',             // 1. たな
+    'Lời hứa, cuộc hẹn',   // 2. やくそく
+    'Cay',                  // 3. からい
+    'Bận',                  // 4. 忙しい
+    'Ký túc xá',            // 5. りょう
+    'Hành lý, đồ đạc',     // 6. にもつ
+    'Cho mượn, cho vay',    // 7. かします
+    'Công việc',            // 8. 仕事
+    'Giỏi',                 // 9. じょうずな
+  ],
+  // 語彙Q6 right side answers
+  g6_right: [
+    'Nhận',                 // 1. もらいます
+    'Con gái',              // 2. むすめ
+    'Cuộc sống',            // 3. せいかつ
+    'Đồ uống',             // 4. のみもの
+    'Tủ lạnh',             // 5. れいぞうこ
+    'Anh em',               // 6. きょうだい
+    'Bên cạnh',             // 7. となり
+    'Hiểu',                 // 8. わかります
+    'Điểm lên xe',          // 9. のりば
+  ],
+  // 文法Q1 (各1点×13)
+  b1: ['が','から','に','で','が','に','を','へ','に','で','で','が','に'],
+  // 文法Q2 (各2点×5)
+  b2: ['しませんでしたか','どうですか','どのくらい','あります','もらいました'],
+  // 文法Q3 (各3点×5) - word ordering puzzle answers
+  b3: [
+    'それから友だちと映画を見ました',
+    'このバスは大阪駅へ行きますか',
+    'どんな料理が好きですか',
+    'りんごを2つと切手を2枚ください',
+    'この近くにVP銀行がありますか',
+  ],
+  // 文法Q4 (各2点×7)
+  b4: ['G','A','F','H','B','D','C'],
+  // 文法Q6 読解 (各2点×5)
+  b6: ['○','×','○','×','×'],
+  // 文法Q7 文の意味 (各2点×10)
+  b7: {
+    b7_1a:'○', b7_1b:'×',
+    b7_2a:'○', b7_2b:'×',
+    b7_3a:'×', b7_3b:'×',
+    b7_4a:'○', b7_4b:'×',
+    b7_5a:'×', b7_5b:'○',
+  },
+  // 聴解Q1 (各4点×2)
+  c1: ['a','c'],
+  // 聴解Q2 (各3点×2)
+  c2: ['a','a'],
+  // 聴解Q3 (各2点×2×2)
+  c3: {c3_1r:'d', c3_1v:'飲みません', c3_2r:'f', c3_2v:'タクシーで行きます'},
+  // 聴解Q6 (各3点×2)
+  c6: ['a','b'],
+  // 聴解Q7 (各2点×6)
+  c7: ['b','d','f','c','e','a'],
+  // 聴解Q8 (各3点×2)
+  c8: ['c','a'],
+  // 聴解Q11 (各2点×5)
+  c11: ['○','✕','✕','✕','○'],
+};
+
+// ===== 語彙Q6 セレクト初期化 =====
+function initG6Selects() {
+  const allAnswersLeft = [...ANS.g6_left];
+  const allAnswersRight = [...ANS.g6_right];
+  for (let i = 0; i < 9; i++) {
+    const selL = document.getElementById('g6_' + (i + 1));
+    const selR = document.getElementById('g6_' + (i + 10));
+    if (selL) {
+      const shuffled = [...allAnswersLeft].sort(() => Math.random() - 0.5);
+      shuffled.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        selL.appendChild(o);
+      });
+    }
+    if (selR) {
+      const shuffled = [...allAnswersRight].sort(() => Math.random() - 0.5);
+      shuffled.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        selR.appendChild(o);
+      });
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', initG6Selects);
+
+// ===== 採点関数 =====
+function gradeAll(){
+  let gScore=0, bScore=0, cScore=0;
+  let detail = '';
+  const _fieldStatus = {};
+
+  // --- 語彙Q1 (各1点×10) ---
+  let g1s=0;
+  ANS.g1.forEach((ans,i)=>{
+    const el = document.getElementById('g1_'+(i+1));
+    const val = (el.value||'').trim();
+    const ok = val===ans;
+    _fieldStatus['g1_'+(i+1)] = ok?'correct':'wrong';
+    if(ok){g1s+=1;}
+  });
+  gScore+=g1s;
+  detail+=`<p><b>語彙Q1:</b> ${g1s}/10点</p>`;
+
+  // --- 語彙Q2 (各3点×8) ---
+  let g2s=0;
+  ANS.g2.forEach((ans,i)=>{
+    const el=document.getElementById(`g2_${i+1}`);
+    const val=el?el.value:'';
+    const pts=val===ans?3:0;
+    g2s+=pts;
+    _fieldStatus['g2_'+(i+1)] = pts===3?'correct':'wrong';
+  });
+  gScore+=g2s;
+  detail+=`<p><b>語彙Q2:</b> ${g2s}/24点</p>`;
+
+  // --- 語彙Q3 (各1点×13) ---
+  let g3s=0;
+  Object.keys(ANS.g3).forEach(id=>{
+    const el=document.getElementById(id);
+    const val=normalize(el.value);
+    const ok=normalize(ANS.g3[id])===val;
+    _fieldStatus[id]=ok?'correct':'wrong';
+    if(ok){g3s+=1;}
+  });
+  gScore+=g3s;
+  detail+=`<p><b>語彙Q3:</b> ${g3s}/13点</p>`;
+
+  // --- 語彙Q4 (各2点×5) - radio ---
+  let g4s=0;
+  ANS.g4.forEach((ans,i)=>{
+    const el=document.querySelector(`input[name="g4_${i+1}"]:checked`);
+    const ok=el && el.value===ans;
+    _fieldStatus['g4_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){g4s+=2;}
+  });
+  gScore+=g4s;
+  detail+=`<p><b>語彙Q4:</b> ${g4s}/10点</p>`;
+
+  // --- 語彙Q5 (各1点×7) ---
+  let g5s=0;
+  ANS.g5.forEach((ans,i)=>{
+    const el=document.getElementById('g5_'+(i+1));
+    const val=normalize(el.value).replace(/な$/, '');
+    const accepted=ans.split('／').map(s=>normalize(s.trim()).replace(/な$/, ''));
+    const ok=val && accepted.some(a=>a===val);
+    _fieldStatus['g5_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){g5s+=1;}
+  });
+  gScore+=g5s;
+  detail+=`<p><b>語彙Q5:</b> ${g5s}/7点</p>`;
+
+  // --- 語彙Q6 (各2点×18) ---
+  let g6s=0;
+  for(let i=0;i<9;i++){
+    const elL=document.getElementById('g6_'+(i+1));
+    const valL=(elL.value||'').trim();
+    const okL=valL===ANS.g6_left[i];
+    _fieldStatus['g6_'+(i+1)]=okL?'correct':'wrong';
+    if(okL){g6s+=2;}
+
+    const elR=document.getElementById('g6_'+(i+10));
+    const valR=(elR.value||'').trim();
+    const okR=valR===ANS.g6_right[i];
+    _fieldStatus['g6_'+(i+10)]=okR?'correct':'wrong';
+    if(okR){g6s+=2;}
+  }
+  gScore+=g6s;
+  detail+=`<p><b>語彙Q6:</b> ${g6s}/36点</p>`;
+
+  // --- 文法Q1 (各1点×13) ---
+  let b1s=0;
+  ANS.b1.forEach((ans,i)=>{
+    const el=document.getElementById('b1_'+(i+1));
+    const v=normalize(el.value);
+    const ok=normalize(ans)===v;
+    _fieldStatus['b1_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b1s+=1;}
+  });
+  bScore+=b1s;
+  detail+=`<p><b>文法Q1:</b> ${b1s}/13点</p>`;
+
+  // --- 文法Q2 (各2点×5) ---
+  let b2s=0;
+  ANS.b2.forEach((ans,i)=>{
+    const el=document.getElementById('b2_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['b2_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b2s+=2;}
+  });
+  bScore+=b2s;
+  detail+=`<p><b>文法Q2:</b> ${b2s}/10点</p>`;
+
+  // --- 文法Q3 (模範解答表示) ---
+  let b3html='<p><b>文法Q3（模範解答）:</b></p><ul>';
+  ANS.b3.forEach((ans,i)=>{
+    const el=document.getElementById('b3_'+(i+1));
+    b3html+=`<li>問${i+1}：「${ans}」→ 記入：「${el.value||'（未記入）'}」</li>`;
+  });
+  b3html+='</ul>';
+  detail+=b3html;
+
+  // --- 文法Q4 (各2点×7) ---
+  let b4s=0;
+  ANS.b4.forEach((ans,i)=>{
+    const el=document.getElementById('b4_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['b4_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b4s+=2;}
+  });
+  bScore+=b4s;
+  detail+=`<p><b>文法Q4:</b> ${b4s}/14点</p>`;
+
+  // --- 文法Q5 (先生採点) ---
+  ['b5_1','b5_2','b5_3','b5_4'].forEach(id=>{_fieldStatus[id]='manual';});
+  detail+='<p><b>文法Q5:</b> ⚠ 先生採点（12点）</p>';
+
+  // --- 文法Q6 読解 (各2点×5) ---
+  let b6s=0;
+  ANS.b6.forEach((ans,i)=>{
+    const el=document.getElementById('b6_'+(i+1));
+    const v=(el.value||'').trim();
+    const ok=v===ans;
+    _fieldStatus['b6_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b6s+=2;}
+  });
+  bScore+=b6s;
+  detail+=`<p><b>文法Q6:</b> ${b6s}/10点</p>`;
+
+  // --- 文法Q7 文の意味 (各2点×10) ---
+  let b7s=0;
+  Object.keys(ANS.b7).forEach(id=>{
+    const el=document.getElementById(id);
+    const v=(el.value||'').trim();
+    const ok=v===ANS.b7[id];
+    _fieldStatus[id]=ok?'correct':'wrong';
+    if(ok){b7s+=2;}
+  });
+  bScore+=b7s;
+  detail+=`<p><b>文法Q7:</b> ${b7s}/10点</p>`;
+
+  // --- 文法Q8 (先生採点) ---
+  ['b8_1','b8_2','b8_3','b8_4'].forEach(id=>{_fieldStatus[id]='manual';});
+  detail+='<p><b>文法Q8:</b> ⚠ 先生採点（16点）</p>';
+
+  // --- 聴解Q1 (各4点×2) ---
+  let c1s=0;
+  ANS.c1.forEach((ans,i)=>{
+    const el=document.getElementById('c1_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['c1_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c1s+=4;}
+  });
+  cScore+=c1s;
+  detail+=`<p><b>聴解Q1:</b> ${c1s}/8点</p>`;
+
+  // --- 聴解Q2 (各3点×2) ---
+  let c2s=0;
+  ANS.c2.forEach((ans,i)=>{
+    const el=document.getElementById('c2_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['c2_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c2s+=3;}
+  });
+  cScore+=c2s;
+  detail+=`<p><b>聴解Q2:</b> ${c2s}/6点</p>`;
+
+  // --- 聴解Q3 (各2点×4) ---
+  let c3s=0;
+  ['c3_1r','c3_1v','c3_2r','c3_2v'].forEach(id=>{
+    const el=document.getElementById(id);
+    const v=(el.value||'').trim();
+    const ok=v===ANS.c3[id];
+    _fieldStatus[id]=ok?'correct':'wrong';
+    if(ok){c3s+=2;}
+  });
+  cScore+=c3s;
+  detail+=`<p><b>聴解Q3:</b> ${c3s}/8点</p>`;
+
+  // --- 聴解Q4 (先生採点) ---
+  ['c4_1','c4_2'].forEach(id=>{
+    const el=document.querySelector(`input[name="${id}"]:checked`);
+    _fieldStatus[id]='manual';
+  });
+  detail+='<p><b>聴解Q4:</b> ⚠ 先生採点（6点）</p>';
+
+  // --- 聴解Q5 (先生採点) ---
+  ['c5_1','c5_2'].forEach(id=>{
+    const el=document.querySelector(`input[name="${id}"]:checked`);
+    _fieldStatus[id]='manual';
+  });
+  detail+='<p><b>聴解Q5:</b> ⚠ 先生採点（6点）</p>';
+
+  // --- 聴解Q6 (各3点×2) ---
+  let c6s=0;
+  ANS.c6.forEach((ans,i)=>{
+    const el=document.getElementById('c6_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['c6_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c6s+=3;}
+  });
+  cScore+=c6s;
+  detail+=`<p><b>聴解Q6:</b> ${c6s}/6点</p>`;
+
+  // --- 聴解Q7 (各2点×6) ---
+  let c7s=0;
+  ANS.c7.forEach((ans,i)=>{
+    const el=document.getElementById('c7_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['c7_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c7s+=2;}
+  });
+  cScore+=c7s;
+  detail+=`<p><b>聴解Q7:</b> ${c7s}/12点</p>`;
+
+  // --- 聴解Q8 (各3点×2) ---
+  let c8s=0;
+  ANS.c8.forEach((ans,i)=>{
+    const el=document.querySelector(`input[name="c8_${i+1}"]:checked`);
+    const ok=el && el.value===ans;
+    _fieldStatus['c8_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c8s+=3;}
+  });
+  cScore+=c8s;
+  detail+=`<p><b>聴解Q8:</b> ${c8s}/6点</p>`;
+
+  // --- 聴解Q9 (先生採点) ---
+  ['c9_1','c9_2','c9_3'].forEach(id=>{_fieldStatus[id]='manual';});
+  detail+='<p><b>聴解Q9:</b> ⚠ 先生採点（9点）</p>';
+
+  // --- 聴解Q10 (先生採点) ---
+  ['c10_1','c10_2','c10_3','c10_4'].forEach(id=>{_fieldStatus[id]='manual';});
+  detail+='<p><b>聴解Q10:</b> ⚠ 先生採点（8点）</p>';
+
+  // --- 聴解Q11 (各2点×5) ---
+  let c11s=0;
+  ANS.c11.forEach((ans,i)=>{
+    const el=document.getElementById('c11_'+(i+1));
+    const v=(el.value||'').trim();
+    const ok=v===ans||v==='○'&&ans==='○'||v==='x'&&ans==='✕'||v.toLowerCase()==='x'&&ans==='✕'||normalize(v)===normalize(ans);
+    _fieldStatus['c11_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c11s+=2;}
+  });
+  cScore+=c11s;
+  detail+=`<p><b>聴解Q11:</b> ${c11s}/10点</p>`;
+
+  // --- 聴解Q12 (先生採点) ---
+  ['c12_1','c12_2','c12_3','c12_4','c12_5'].forEach(id=>{_fieldStatus[id]='manual';});
+  detail+='<p><b>聴解Q12:</b> ⚠ 先生採点（15点）</p>';
+
+  // スコア保存
+  TestFramework.scores = {goii: gScore, bunpo: bScore, chokkai: cScore};
+  TestFramework.fieldStatus = _fieldStatus;
+
+  // 結果表示
+  document.getElementById('score-summary-area').style.display = 'none';
+  document.getElementById('result-detail').style.display = 'none';
+  document.getElementById('send-status').textContent = '';
+  document.getElementById('send-btn').disabled = false;
+  const rb=document.getElementById('result-box');
+  rb.style.display='block';
+  rb.scrollIntoView({behavior:'smooth'});
+}
+
+// ===== ペイロード収集（finishTest用） =====
+function collectPayload() {
+  const getVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const getRadio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+  return {
+    // 語彙Q1
+    g1_1:getVal('g1_1'),g1_2:getVal('g1_2'),g1_3:getVal('g1_3'),g1_4:getVal('g1_4'),g1_5:getVal('g1_5'),
+    g1_6:getVal('g1_6'),g1_7:getVal('g1_7'),g1_8:getVal('g1_8'),g1_9:getVal('g1_9'),g1_10:getVal('g1_10'),
+    // 語彙Q2
+    g2_1:getVal('g2_1'),g2_2:getVal('g2_2'),g2_3:getVal('g2_3'),g2_4:getVal('g2_4'),
+    g2_5:getVal('g2_5'),g2_6:getVal('g2_6'),g2_7:getVal('g2_7'),g2_8:getVal('g2_8'),
+    // 語彙Q3
+    g3_1:getVal('g3_1'),g3_2:getVal('g3_2'),g3_3:getVal('g3_3'),g3_4:getVal('g3_4'),
+    g3_5:getVal('g3_5'),g3_6:getVal('g3_6'),g3_7:getVal('g3_7'),g3_8:getVal('g3_8'),
+    g3_9:getVal('g3_9'),g3_10:getVal('g3_10'),g3_11:getVal('g3_11'),g3_12:getVal('g3_12'),g3_13:getVal('g3_13'),
+    // 語彙Q4
+    g4_1:getRadio('g4_1'),g4_2:getRadio('g4_2'),g4_3:getRadio('g4_3'),g4_4:getRadio('g4_4'),g4_5:getRadio('g4_5'),
+    // 語彙Q5
+    g5_1:getVal('g5_1'),g5_2:getVal('g5_2'),g5_3:getVal('g5_3'),g5_4:getVal('g5_4'),
+    g5_5:getVal('g5_5'),g5_6:getVal('g5_6'),g5_7:getVal('g5_7'),
+    // 語彙Q6
+    g6_1:getVal('g6_1'),g6_2:getVal('g6_2'),g6_3:getVal('g6_3'),g6_4:getVal('g6_4'),g6_5:getVal('g6_5'),
+    g6_6:getVal('g6_6'),g6_7:getVal('g6_7'),g6_8:getVal('g6_8'),g6_9:getVal('g6_9'),
+    g6_10:getVal('g6_10'),g6_11:getVal('g6_11'),g6_12:getVal('g6_12'),g6_13:getVal('g6_13'),g6_14:getVal('g6_14'),
+    g6_15:getVal('g6_15'),g6_16:getVal('g6_16'),g6_17:getVal('g6_17'),g6_18:getVal('g6_18'),
+    // 文法Q1
+    b1_1:getVal('b1_1'),b1_2:getVal('b1_2'),b1_3:getVal('b1_3'),b1_4:getVal('b1_4'),b1_5:getVal('b1_5'),
+    b1_6:getVal('b1_6'),b1_7:getVal('b1_7'),b1_8:getVal('b1_8'),b1_9:getVal('b1_9'),b1_10:getVal('b1_10'),
+    b1_11:getVal('b1_11'),b1_12:getVal('b1_12'),b1_13:getVal('b1_13'),
+    // 文法Q2
+    b2_1:getVal('b2_1'),b2_2:getVal('b2_2'),b2_3:getVal('b2_3'),b2_4:getVal('b2_4'),b2_5:getVal('b2_5'),
+    // 文法Q3
+    b3_1:getVal('b3_1'),b3_2:getVal('b3_2'),b3_3:getVal('b3_3'),b3_4:getVal('b3_4'),b3_5:getVal('b3_5'),
+    // 文法Q4
+    b4_1:getVal('b4_1'),b4_2:getVal('b4_2'),b4_3:getVal('b4_3'),b4_4:getVal('b4_4'),
+    b4_5:getVal('b4_5'),b4_6:getVal('b4_6'),b4_7:getVal('b4_7'),
+    // 文法Q5
+    b5_1:getVal('b5_1'),b5_2:getVal('b5_2'),b5_3:getVal('b5_3'),b5_4:getVal('b5_4'),
+    // 文法Q6
+    b6_1:getVal('b6_1'),b6_2:getVal('b6_2'),b6_3:getVal('b6_3'),b6_4:getVal('b6_4'),b6_5:getVal('b6_5'),
+    // 文法Q7
+    b7_1a:getVal('b7_1a'),b7_1b:getVal('b7_1b'),
+    b7_2a:getVal('b7_2a'),b7_2b:getVal('b7_2b'),
+    b7_3a:getVal('b7_3a'),b7_3b:getVal('b7_3b'),
+    b7_4a:getVal('b7_4a'),b7_4b:getVal('b7_4b'),
+    b7_5a:getVal('b7_5a'),b7_5b:getVal('b7_5b'),
+    // 文法Q8
+    b8_1:getVal('b8_1'),b8_2:getVal('b8_2'),b8_3:getVal('b8_3'),b8_4:getVal('b8_4'),
+    // 聴解Q1
+    c1_1:getVal('c1_1'),c1_2:getVal('c1_2'),
+    // 聴解Q2
+    c2_1:getVal('c2_1'),c2_2:getVal('c2_2'),
+    // 聴解Q3
+    c3_1r:getVal('c3_1r'),c3_1v:getVal('c3_1v'),c3_2r:getVal('c3_2r'),c3_2v:getVal('c3_2v'),
+    // 聴解Q4
+    c4_1:getRadio('c4_1'),c4_2:getRadio('c4_2'),
+    // 聴解Q5
+    c5_1:getRadio('c5_1'),c5_2:getRadio('c5_2'),
+    // 聴解Q6
+    c6_1:getVal('c6_1'),c6_2:getVal('c6_2'),
+    // 聴解Q7
+    c7_1:getVal('c7_1'),c7_2:getVal('c7_2'),c7_3:getVal('c7_3'),c7_4:getVal('c7_4'),c7_5:getVal('c7_5'),c7_6:getVal('c7_6'),
+    // 聴解Q8
+    c8_1:getRadio('c8_1'),c8_2:getRadio('c8_2'),
+    // 聴解Q9
+    c9_1:getVal('c9_1'),c9_2:getVal('c9_2'),c9_3:getVal('c9_3'),
+    // 聴解Q10
+    c10_1:getVal('c10_1'),c10_2:getVal('c10_2'),c10_3:getVal('c10_3'),c10_4:getVal('c10_4'),
+    // 聴解Q11
+    c11_1:getVal('c11_1'),c11_2:getVal('c11_2'),c11_3:getVal('c11_3'),c11_4:getVal('c11_4'),c11_5:getVal('c11_5'),
+    // 聴解Q12
+    c12_1:getVal('c12_1'),c12_2:getVal('c12_2'),c12_3:getVal('c12_3'),c12_4:getVal('c12_4'),c12_5:getVal('c12_5'),
+  };
+}
+
+// ===== 自由記述収集（submitResults用） =====
+function collectFreeAnswers() {
+  const freeIds = ['b5_1','b5_2','b5_3','b5_4','b8_1','b8_2','b8_3','b8_4','c12_1','c12_2','c12_3','c12_4','c12_5'];
+  const result = {};
+  freeIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) result[id] = el.value.trim();
+  });
+  return result;
+}
+
+// ===== リセット時のテスト固有処理 =====
+window.onTestReset = function() {
+  initB3Puzzles();
+};
+
+// ===== 文法Q3 パズル =====
+const b3Words = [
+  ['友','だち','と','映画','を','見ました','それから'],
+  ['は','大阪駅','へ','バス','行きますか','この'],
+  ['料理','が','好き','ですか','どんな'],
+  ['りんご','を','2つ','と','切手','を','2枚','ください'],
+  ['近く','に','VP銀行','が','ありますか','この'],
+];
+
+function initB3Puzzles(){
+  const container = document.getElementById('bq3-puzzles');
+  if(!container) return;
+  container.innerHTML='';
+  b3Words.forEach((words,qi)=>{
+    const n=qi+1;
+    const wrap=document.createElement('div');
+    wrap.className='puzzle-wrap';
+    wrap.innerHTML=`
+      <div style="font-weight:bold;font-size:13px;color:#1a5276;margin-bottom:6px">${n}）</div>
+      <div class="puzzle-label">Nhấn để chọn từ</div>
+      <div class="puzzle-pool" id="pool3_${n}"></div>
+      <div class="puzzle-label">Câu trả lời &nbsp;<button type="button" onclick="clearPuzzle(${n})" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555">↺ Xóa</button></div>
+      <div class="puzzle-answer" id="ans3_${n}"></div>
+    `;
+    container.appendChild(wrap);
+    [...words].sort(()=>Math.random()-.5).forEach(word=>{
+      const tile=document.createElement('button');
+      tile.type='button';
+      tile.className='word-tile';
+      tile.textContent=word;
+      tile.onclick=()=>moveToAnswer(tile,n);
+      document.getElementById('pool3_'+n).appendChild(tile);
+    });
+  });
+}
+
+function moveToAnswer(tile,n){
+  document.getElementById('ans3_'+n).appendChild(tile);
+  tile.onclick=()=>moveToPool(tile,n);
+  updateB3(n);
+}
+function moveToPool(tile,n){
+  document.getElementById('pool3_'+n).appendChild(tile);
+  tile.onclick=()=>moveToAnswer(tile,n);
+  updateB3(n);
+}
+function clearPuzzle(n){
+  const pool=document.getElementById('pool3_'+n);
+  Array.from(document.getElementById('ans3_'+n).querySelectorAll('.word-tile')).forEach(t=>{
+    t.onclick=()=>moveToAnswer(t,n);
+    pool.appendChild(t);
+  });
+  updateB3(n);
+}
+function updateB3(n){
+  const tiles=document.getElementById('ans3_'+n).querySelectorAll('.word-tile');
+  document.getElementById('b3_'+n).value=Array.from(tiles).map(t=>t.textContent).join('');
+}
+
+document.addEventListener('DOMContentLoaded', initB3Puzzles);
+</script>
+</body>
+</html>
