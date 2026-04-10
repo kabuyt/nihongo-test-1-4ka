@@ -162,7 +162,7 @@
         <th>おととい</th><th>きのう</th><th><ruby>今日<rt>きょう</rt></ruby></th><th><ruby>明日<rt>あした</rt></ruby></th><th>あさって</th>
       </tr>
       <tr>
-        <td class="already" style="text-align:center;font-size:12px">おととい</td>
+        <td><input type="text" id="g3_3" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
         <td class="already" style="text-align:center;font-size:12px">きのう</td>
         <td><input type="text" id="g3_4" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
         <td class="already" style="text-align:center;font-size:12px">あした</td>
@@ -178,9 +178,9 @@
       <tr>
         <td class="already" style="text-align:center;font-size:12px">おととし</td>
         <td><input type="text" id="g3_5" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td class="already" style="text-align:center;font-size:12px">ことし</td>
         <td><input type="text" id="g3_6" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
-        <td class="already" style="text-align:center;font-size:12px">らいねん</td>
-        <td><input type="text" id="g3_3" style="width:100%;font-size:12px;padding:4px" placeholder="?"></td>
+        <td class="already" style="text-align:center;font-size:12px">さらいねん</td>
       </tr>
     </table>
     </div>
@@ -291,7 +291,7 @@
       </tr>
       <tr>
         <td style="white-space:nowrap">２．やくそく</td><td><input type="text" id="g6_2" style="width:100%;font-size:13px;padding:4px"></td>
-        <td style="white-space:nowrap">２．むすめ</td><td><input type="text" id="g6_11" style="width:100%;font-size:13px;padding:4px"></td>
+        <td style="white-space:nowrap">２．おんなのこ</td><td><input type="text" id="g6_11" style="width:100%;font-size:13px;padding:4px"></td>
       </tr>
       <tr>
         <td style="white-space:nowrap">３．からい</td><td><input type="text" id="g6_3" style="width:100%;font-size:13px;padding:4px"></td>
@@ -355,49 +355,43 @@
     <div class="q-title"><ruby>問題<rt>もんだい</rt></ruby>２．Hãy chọn từ đúng　＜<ruby>各<rt>かく</rt></ruby>2<ruby>点<rt>てん</rt></ruby>×5<ruby>問<rt>もん</rt></ruby>＝10<ruby>点<rt>てん</rt></ruby>＞</div>
     <div class="q-instruction"><ruby>正<rt>ただ</rt></ruby>しい<ruby>言葉<rt>ことば</rt></ruby>を<ruby>選<rt>えら</rt></ruby>んでください。</div>
     <div style="margin:8px 0;line-height:3">
-      <p class="sentence">１）　きのう<ruby>何<rt>なに</rt></ruby>を（　<span class="fill-inline">
+      <p class="sentence">１）　<ruby>日曜日<rt>にちようび</rt></ruby>いっしょにテニスを（　<span class="fill-inline">
         <select id="b2_1" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
-          <option value="しませんでしたか">しませんでしたか</option>
-          <option value="しますか">しますか</option>
           <option value="しましたか">しましたか</option>
           <option value="しませんか">しませんか</option>
+          <option value="しませんでしたか">しませんでしたか</option>
         </select>
       </span>　）。</p>
-      <p class="sentence">２）　<ruby>日本<rt>にほん</rt></ruby>の<ruby>生活<rt>せいかつ</rt></ruby>は（　<span class="fill-inline">
+      <p class="sentence">２）　<ruby>寮<rt>りょう</rt></ruby>の<ruby>生活<rt>せいかつ</rt></ruby>は（　<span class="fill-inline">
         <select id="b2_2" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
           <option value="どうですか">どうですか</option>
+          <option value="どうしてですか">どうしてですか</option>
           <option value="なんですか">なんですか</option>
-          <option value="だれですか">だれですか</option>
-          <option value="どこですか">どこですか</option>
         </select>
       </span>　）。</p>
-      <p class="sentence">３）　うちから<ruby>会社<rt>かいしゃ</rt></ruby>まで（　<span class="fill-inline">
+      <p class="sentence">３）　<ruby>加藤<rt>かとう</rt></ruby>さんは（　<span class="fill-inline">
         <select id="b2_3" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
+          <option value="どうして">どうして</option>
           <option value="どのくらい">どのくらい</option>
-          <option value="いくら">いくら</option>
-          <option value="なんじ">なんじ</option>
-          <option value="どこ">どこ</option>
+          <option value="どんな">どんな</option>
         </select>
-      </span>　）かかりますか。</p>
-      <p class="sentence">４）　あそこに<ruby>郵便局<rt>ゆうびんきょく</rt></ruby>が（　<span class="fill-inline">
+      </span>　）ベトナムを<ruby>旅行<rt>りょこう</rt></ruby>しますか。―1か<ruby>月<rt>げつ</rt></ruby><ruby>旅行<rt>りょこう</rt></ruby>します。</p>
+      <p class="sentence">４）　すみません、<ruby>牛乳<rt>ぎゅうにゅう</rt></ruby>はどこに（　<span class="fill-inline">
         <select id="b2_4" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
-          <option value="あります">あります</option>
           <option value="います">います</option>
-          <option value="いきます">いきます</option>
-          <option value="です">です</option>
+          <option value="あります">あります</option>
+          <option value="みます">みます</option>
         </select>
-      </span>　）。</p>
-      <p class="sentence">５）　<ruby>友<rt>とも</rt></ruby>だちに<ruby>本<rt>ほん</rt></ruby>を（　<span class="fill-inline">
+      </span>　）か。</p>
+      <p class="sentence">５）　<ruby>山口<rt>やまぐち</rt></ruby>さんから<ruby>花<rt>はな</rt></ruby>を（　<span class="fill-inline">
         <select id="b2_5" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa">
           <option value="">Chọn</option>
-          <option value="もらいました">もらいました</option>
           <option value="あげました">あげました</option>
-          <option value="かしました">かしました</option>
-          <option value="かいました">かいました</option>
+          <option value="もらいました">もらいました</option>
         </select>
       </span>　）。</p>
     </div>
@@ -420,16 +414,13 @@
     <div class="q-title"><ruby>問題<rt>もんだい</rt></ruby>４．<ruby>会話<rt>かいわ</rt></ruby>を<ruby>完成<rt>かんせい</rt></ruby>してください　＜<ruby>各<rt>かく</rt></ruby>2<ruby>点<rt>てん</rt></ruby>×7<ruby>問<rt>もん</rt></ruby>＝14<ruby>点<rt>てん</rt></ruby>＞</div>
     <div class="q-instruction">Chọn từ A-H để điền vào chỗ trống.</div>
     <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;font-size:13px;line-height:2">
-      A: いただきます　　B: すみません　　C: どこですか　　D: すみません。<ruby>用事<rt>ようじ</rt></ruby>がありますから…<br>
-      E: <ruby>読<rt>よ</rt></ruby>みました　　F: いいですね　　G: <ruby>読<rt>よ</rt></ruby>みましたか　　H: <ruby>行<rt>い</rt></ruby>きましょう
+      A: いかがですか　　B: <ruby>行<rt>い</rt></ruby>きましょう　　C: ちょっと　　D: <ruby>残念<rt>ざんねん</rt></ruby>ですが<br>
+      E: はい。どうぞ　　F: いただきます　　G: <ruby>借<rt>か</rt></ruby>りましたか　　H: <ruby>行<rt>い</rt></ruby>きませんか
     </div>
-    <div class="sentence" style="margin-top:10px">①　A：グエンさん、<ruby>日本語<rt>にほんご</rt></ruby>でどんな<ruby>本<rt>ほん</rt></ruby>を（<select id="b4_1" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：『ハリー・ポッター』です。</div>
-    <div class="sentence" style="margin-top:10px">②　A：いらっしゃい。コーヒーは（<select id="b4_2" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：ありがとうございます。</div>
-    <div class="sentence" style="margin-top:10px">③　A：<ruby>日曜日<rt>にちようび</rt></ruby>にお<ruby>花見<rt>はなみ</rt></ruby>をしませんか。<br>　　B：（<select id="b4_3" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<ruby>行<rt>い</rt></ruby>きましょう。</div>
-    <div class="sentence" style="margin-top:10px">④　A：<ruby>今度<rt>こんど</rt></ruby>の<ruby>土曜日<rt>どようび</rt></ruby>、いっしょに<ruby>京都<rt>きょうと</rt></ruby>へ（<select id="b4_4" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。</div>
-    <div class="sentence" style="margin-top:10px">⑤　A：（<select id="b4_5" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）、ちょっと<ruby>写真<rt>しゃしん</rt></ruby>を<ruby>撮<rt>と</rt></ruby>ってください。</div>
-    <div class="sentence" style="margin-top:10px">⑥　A：あした<ruby>映画<rt>えいが</rt></ruby>を<ruby>見<rt>み</rt></ruby>ませんか。<br>　　B：（<select id="b4_6" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）</div>
-    <div class="sentence" style="margin-top:10px">⑦　A：すみません、トイレは（<select id="b4_7" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：あちらです。</div>
+    <div class="sentence" style="margin-top:10px">①　A：グエンさん、<ruby>図書館<rt>としょかん</rt></ruby>でどんな<ruby>本<rt>ほん</rt></ruby>を（<select id="b4_1" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：『ハリー・ポッター』です。</div>
+    <div class="sentence" style="margin-top:10px">②　A：いらっしゃい。コーヒーは（<select id="b4_2" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：ありがとうございます。（<select id="b4_3" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。</div>
+    <div class="sentence" style="margin-top:10px">③　A：ここに<ruby>映画<rt>えいが</rt></ruby>のチケットがあります。<ruby>今週<rt>こんしゅう</rt></ruby>の<ruby>日曜日<rt>にちようび</rt></ruby>（<select id="b4_4" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。<br>　　B：いいですね、（<select id="b4_5" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）。</div>
+    <div class="sentence" style="margin-top:10px">④　A：<ruby>加藤<rt>かとう</rt></ruby>さん、<ruby>昼<rt>ひる</rt></ruby>に<ruby>一緒<rt>いっしょ</rt></ruby>にごはんを<ruby>食<rt>た</rt></ruby>べましょう。<br>　　B：（<select id="b4_6" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）、<ruby>用事<rt>ようじ</rt></ruby>がありますから…。<ruby>晩<rt>ばん</rt></ruby>にごはんを<ruby>食<rt>た</rt></ruby>べましょう。<br>　　A：すみません。<ruby>晩<rt>ばん</rt></ruby>は（<select id="b4_7" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa"><option value="">--</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option></select>）…。<ruby>友<rt>とも</rt></ruby>だちとサッカーをしますから。</div>
   </div>
 
   <!-- B-Q5 -->
@@ -547,9 +538,9 @@
       <textarea id="b8_1" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
       <p style="font-size:13px;color:#555;margin-top:12px">２）　あなたはどのくらい<ruby>日本語<rt>にほんご</rt></ruby>を<ruby>勉強<rt>べんきょう</rt></ruby>しましたか。</p>
       <textarea id="b8_2" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:12px">３）　あなたのクラスに<ruby>何<rt>なに</rt></ruby><ruby>人<rt>ひと</rt></ruby>の<ruby>学生<rt>がくせい</rt></ruby>がいますか。</p>
+      <p style="font-size:13px;color:#555;margin-top:12px">３）　あなたのクラスに<ruby>女<rt>おんな</rt></ruby>の<ruby>人<rt>ひと</rt></ruby>が<ruby>何<rt>なん</rt></ruby><ruby>人<rt>にん</rt></ruby>いますか。</p>
       <textarea id="b8_3" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
-      <p style="font-size:13px;color:#555;margin-top:12px">４）　もう<ruby>日本<rt>にほん</rt></ruby>の<ruby>服<rt>ふく</rt></ruby>を<ruby>買<rt>か</rt></ruby>いましたか。</p>
+      <p style="font-size:13px;color:#555;margin-top:12px">４）　もう<ruby>日本語<rt>にほんご</rt></ruby>の<ruby>辞書<rt>じしょ</rt></ruby>を<ruby>買<rt>か</rt></ruby>いましたか。</p>
       <textarea id="b8_4" rows="2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="日本語で答えてください"></textarea>
     </div>
   </div>
@@ -579,7 +570,7 @@
     <div class="q-instruction">Nghe và chọn đáp án đúng.</div>
     <div style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:10px;margin:8px 0;font-size:13px">
       a. <ruby>友<rt>とも</rt></ruby>だちに<ruby>会<rt>あ</rt></ruby>います　　b. <ruby>花見<rt>はなみ</rt></ruby>をします　　c. <ruby>日本語<rt>にほんご</rt></ruby>を<ruby>勉強<rt>べんきょう</rt></ruby>します<br>
-      d. <ruby>昼<rt>ひる</rt></ruby>ごはんを<ruby>食<rt>た</rt></ruby>べます　　e. お<ruby>酒<rt>さけ</rt></ruby>を<ruby>飲<rt>の</rt></ruby>みます　　f. <ruby>映画<rt>えいが</rt></ruby>を<ruby>見<rt>み</rt></ruby>ます
+      d. <ruby>昼<rt>ひる</rt></ruby>ごはんを<ruby>食<rt>た</rt></ruby>べます　　e. ビールを<ruby>飲<rt>の</rt></ruby>みます　　f. <ruby>映画<rt>えいが</rt></ruby>を<ruby>見<rt>み</rt></ruby>ます
     </div>
     <div class="audio-q">
       <div class="qlabel">しつもん（Câu hỏi mẫu）</div>
@@ -710,14 +701,14 @@
       <div class="qlabel">① <ruby>問<rt>もん</rt></ruby>１</div>
       <audio controls src="audio/6-1.mp3"></audio>
       <div class="answer-box" style="margin-top:6px">
-        <select id="c6_1"><option value="">--</option><option value="a">a. <ruby>大<rt>おお</rt></ruby>きい<ruby>町<rt>まち</rt></ruby>です</option><option value="b">b. <ruby>小<rt>ちい</rt></ruby>さい<ruby>町<rt>まち</rt></ruby>です</option><option value="c">c. きれいな<ruby>町<rt>まち</rt></ruby>です</option></select>
+        <select id="c6_1"><option value="">--</option><option value="a">a. <ruby>大<rt>おお</rt></ruby>きい<ruby>町<rt>まち</rt></ruby>です</option><option value="b">b. にぎやかな<ruby>町<rt>まち</rt></ruby>です</option><option value="c">c. <ruby>古<rt>ふる</rt></ruby>い<ruby>町<rt>まち</rt></ruby>です</option></select>
       </div>
     </div>
     <div class="audio-q" style="margin-top:8px">
       <div class="qlabel">② <ruby>問<rt>もん</rt></ruby>２</div>
       <audio controls src="audio/6-2.mp3"></audio>
       <div class="answer-box" style="margin-top:6px">
-        <select id="c6_2"><option value="">--</option><option value="a">a. やさしい<ruby>人<rt>ひと</rt></ruby>です</option><option value="b">b. ハンサムな<ruby>人<rt>ひと</rt></ruby>です</option><option value="c">c. おもしろい<ruby>人<rt>ひと</rt></ruby>です</option></select>
+        <select id="c6_2"><option value="">--</option><option value="a">a. おもしろい<ruby>人<rt>ひと</rt></ruby>です</option><option value="b">b. ハンサムな<ruby>人<rt>ひと</rt></ruby>です</option></select>
       </div>
     </div>
   </div>
@@ -968,10 +959,10 @@ const ANS = {
   g3: {
     g3_1: 'しがつ',
     g3_2: 'しちがつ',
-    g3_3: 'さらいねん',
+    g3_3: 'おととい',
     g3_4: 'きょう',
     g3_5: 'きょねん',
-    g3_6: 'ことし',
+    g3_6: 'らいねん',
     g3_7: 'いつか',
     g3_8: 'なのか',
     g3_9: 'ようか',
@@ -999,7 +990,7 @@ const ANS = {
   // 語彙Q6 right side answers
   g6_right: [
     'Nhận',                 // 1. もらいます
-    'Con gái',              // 2. むすめ
+    'Con gái, bé gái',      // 2. おんなのこ
     'Cuộc sống',            // 3. せいかつ
     'Đồ uống',             // 4. のみもの
     'Tủ lạnh',             // 5. れいぞうこ
@@ -1009,9 +1000,9 @@ const ANS = {
     'Điểm lên xe',          // 9. のりば
   ],
   // 文法Q1 (各1点×13)
-  b1: ['が','から','に','で','が','に','を','へ','に','で','で','が','に'],
+  b1: ['が','から','に','で','が','に','を',['へ','に'],['に','の'],'で','で',['が','から'],'に'],
   // 文法Q2 (各2点×5)
-  b2: ['しませんでしたか','どうですか','どのくらい','あります','もらいました'],
+  b2: ['しませんか','どうですか','どのくらい','あります','もらいました'],
   // 文法Q3 (各3点×5) - word ordering puzzle answers
   b3: [
     'それから友だちと映画を見ました',
@@ -1148,7 +1139,7 @@ function gradeAll(){
   ANS.b1.forEach((ans,i)=>{
     const el=document.getElementById('b1_'+(i+1));
     const v=normalize(el.value);
-    const ok=normalize(ans)===v;
+    const ok=Array.isArray(ans)?ans.some(a=>normalize(a)===v):normalize(ans)===v;
     _fieldStatus['b1_'+(i+1)]=ok?'correct':'wrong';
     if(ok){b1s+=1;}
   });
