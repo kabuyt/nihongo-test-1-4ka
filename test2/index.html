@@ -1157,14 +1157,17 @@ function gradeAll(){
   bScore+=b2s;
   detail+=`<p><b>文法Q2:</b> ${b2s}/10点</p>`;
 
-  // --- 文法Q3 (模範解答表示) ---
-  let b3html='<p><b>文法Q3（模範解答）:</b></p><ul>';
+  // --- 文法Q3 (各3点×5=15点 自動採点) ---
+  let b3s=0;
   ANS.b3.forEach((ans,i)=>{
     const el=document.getElementById('b3_'+(i+1));
-    b3html+=`<li>問${i+1}：「${ans}」→ 記入：「${el.value||'（未記入）'}」</li>`;
+    const val=normalize(el.value);
+    const ok=normalize(ans)===val;
+    _fieldStatus['b3_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b3s+=3;}
   });
-  b3html+='</ul>';
-  detail+=b3html;
+  bScore+=b3s;
+  detail+=`<p><b>文法Q3:</b> ${b3s}/15点</p>`;
 
   // --- 文法Q4 (各2点×7) ---
   let b4s=0;
