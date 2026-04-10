@@ -1035,8 +1035,16 @@ const ANS = {
   c7: ['b','d','f','c','e','a'],
   // 聴解Q8 (各3点×2)
   c8: ['c','a'],
+  // 聴解Q9 (各3点×3)
+  c9: ['a','b','c'],
+  // 聴解Q10 (各2点×4)
+  c10: ['a','b','c','d'],
   // 聴解Q11 (各2点×5)
   c11: ['○','✕','✕','✕','○'],
+  // 聴解Q4 (各3点×2)
+  c4: ['a','b'],
+  // 聴解Q5 (各3点×2)
+  c5: ['a','b'],
 };
 
 // 語彙Q6は記述式のため初期化不要（先生採点）
@@ -1127,12 +1135,26 @@ function gradeAll(){
   gScore+=g5s;
   detail+=`<p><b>語彙Q5:</b> ${g5s}/7点</p>`;
 
-  // --- 語彙Q6 (先生採点 各2点×18=36点) ---
+  // --- 語彙Q6 (各2点×18=36点 自動採点) ---
+  let g6s=0;
+  const g6norm = s => s.trim().toLowerCase().replace(/[\s,./、。，．]+/g,' ').replace(/\s+/g,' ');
   for(let i=0;i<9;i++){
-    _fieldStatus['g6_'+(i+1)]='manual';
-    _fieldStatus['g6_'+(i+10)]='manual';
+    const elL=document.getElementById('g6_'+(i+1));
+    const valL=g6norm(elL.value);
+    const ansL=ANS.g6_left[i].split(',').map(a=>g6norm(a));
+    const okL=ansL.some(a=>valL.includes(a)||a.includes(valL)&&valL.length>2);
+    _fieldStatus['g6_'+(i+1)]=okL?'correct':'wrong';
+    if(okL){g6s+=2;}
+
+    const elR=document.getElementById('g6_'+(i+10));
+    const valR=g6norm(elR.value);
+    const ansR=ANS.g6_right[i].split(',').map(a=>g6norm(a));
+    const okR=ansR.some(a=>valR.includes(a)||a.includes(valR)&&valR.length>2);
+    _fieldStatus['g6_'+(i+10)]=okR?'correct':'wrong';
+    if(okR){g6s+=2;}
   }
-  detail+=`<p><b>語彙Q6:</b> ⚠ 先生採点（36点）</p>`;
+  gScore+=g6s;
+  detail+=`<p><b>語彙Q6:</b> ${g6s}/36点</p>`;
 
   // --- 文法Q1 (各1点×13) ---
   let b1s=0;
@@ -1180,9 +1202,23 @@ function gradeAll(){
   bScore+=b4s;
   detail+=`<p><b>文法Q4:</b> ${b4s}/14点</p>`;
 
-  // --- 文法Q5 (先生採点) ---
-  ['b5_1','b5_2','b5_3','b5_4'].forEach(id=>{_fieldStatus[id]='manual';});
-  detail+='<p><b>文法Q5:</b> ⚠ 先生採点（12点）</p>';
+  // --- 文法Q5 (各3点×4=12点 自動採点 キーワード判定) ---
+  const b5ans = [
+    ['机','前'],           // いすはどこ→机の前にあります
+    ['箱','上'],           // プレゼントはどこ→箱の上にあります
+    ['ベッド','上'],       // ぬいぐるみはどこ→ベッドの上にあります
+    ['箱','中','下','横','となり','隣'], // 黄色い箱はどこ
+  ];
+  let b5s=0;
+  b5ans.forEach((keywords,i)=>{
+    const el=document.getElementById('b5_'+(i+1));
+    const v=normalize(el.value);
+    const ok=keywords.some(k=>v.includes(normalize(k))) && v.length>3;
+    _fieldStatus['b5_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b5s+=3;}
+  });
+  bScore+=b5s;
+  detail+=`<p><b>文法Q5:</b> ${b5s}/12点</p>`;
 
   // --- 文法Q6 読解 (各2点×5) ---
   let b6s=0;
@@ -1208,9 +1244,23 @@ function gradeAll(){
   bScore+=b7s;
   detail+=`<p><b>文法Q7:</b> ${b7s}/10点</p>`;
 
-  // --- 文法Q8 (先生採点) ---
-  ['b8_1','b8_2','b8_3','b8_4'].forEach(id=>{_fieldStatus[id]='manual';});
-  detail+='<p><b>文法Q8:</b> ⚠ 先生採点（16点）</p>';
+  // --- 文法Q8 (各4点×4=16点 自動採点 キーワード判定) ---
+  const b8ans = [
+    ['回','かい','帰','かえ'],                   // 1か月に何回うちへ帰りますか
+    ['勉強','べんきょう','か月','かげつ','年','ねん'], // どのくらい日本語を勉強しましたか
+    ['人','にん','り'],                           // 女の人が何人いますか
+    ['はい','いいえ','もう','まだ','買','か'],     // もう日本語の辞書を買いましたか
+  ];
+  let b8s=0;
+  b8ans.forEach((keywords,i)=>{
+    const el=document.getElementById('b8_'+(i+1));
+    const v=normalize(el.value);
+    const ok=v.length>2 && keywords.some(k=>v.includes(normalize(k)));
+    _fieldStatus['b8_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){b8s+=4;}
+  });
+  bScore+=b8s;
+  detail+=`<p><b>文法Q8:</b> ${b8s}/16点</p>`;
 
   // --- 聴解Q1 (各4点×2) ---
   let c1s=0;
@@ -1246,19 +1296,27 @@ function gradeAll(){
   cScore+=c3s;
   detail+=`<p><b>聴解Q3:</b> ${c3s}/8点</p>`;
 
-  // --- 聴解Q4 (先生採点) ---
-  ['c4_1','c4_2'].forEach(id=>{
-    const el=document.querySelector(`input[name="${id}"]:checked`);
-    _fieldStatus[id]='manual';
+  // --- 聴解Q4 (各3点×2) ---
+  let c4s=0;
+  ANS.c4.forEach((ans,i)=>{
+    const el=document.querySelector(`input[name="c4_${i+1}"]:checked`);
+    const ok=el && el.value===ans;
+    _fieldStatus['c4_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c4s+=3;}
   });
-  detail+='<p><b>聴解Q4:</b> ⚠ 先生採点（6点）</p>';
+  cScore+=c4s;
+  detail+=`<p><b>聴解Q4:</b> ${c4s}/6点</p>`;
 
-  // --- 聴解Q5 (先生採点) ---
-  ['c5_1','c5_2'].forEach(id=>{
-    const el=document.querySelector(`input[name="${id}"]:checked`);
-    _fieldStatus[id]='manual';
+  // --- 聴解Q5 (各3点×2) ---
+  let c5s=0;
+  ANS.c5.forEach((ans,i)=>{
+    const el=document.querySelector(`input[name="c5_${i+1}"]:checked`);
+    const ok=el && el.value===ans;
+    _fieldStatus['c5_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c5s+=3;}
   });
-  detail+='<p><b>聴解Q5:</b> ⚠ 先生採点（6点）</p>';
+  cScore+=c5s;
+  detail+=`<p><b>聴解Q5:</b> ${c5s}/6点</p>`;
 
   // --- 聴解Q6 (各3点×2) ---
   let c6s=0;
@@ -1293,13 +1351,27 @@ function gradeAll(){
   cScore+=c8s;
   detail+=`<p><b>聴解Q8:</b> ${c8s}/6点</p>`;
 
-  // --- 聴解Q9 (先生採点) ---
-  ['c9_1','c9_2','c9_3'].forEach(id=>{_fieldStatus[id]='manual';});
-  detail+='<p><b>聴解Q9:</b> ⚠ 先生採点（9点）</p>';
+  // --- 聴解Q9 (各3点×3) ---
+  let c9s=0;
+  ANS.c9.forEach((ans,i)=>{
+    const el=document.getElementById('c9_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['c9_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c9s+=3;}
+  });
+  cScore+=c9s;
+  detail+=`<p><b>聴解Q9:</b> ${c9s}/9点</p>`;
 
-  // --- 聴解Q10 (先生採点) ---
-  ['c10_1','c10_2','c10_3','c10_4'].forEach(id=>{_fieldStatus[id]='manual';});
-  detail+='<p><b>聴解Q10:</b> ⚠ 先生採点（8点）</p>';
+  // --- 聴解Q10 (各2点×4) ---
+  let c10s=0;
+  ANS.c10.forEach((ans,i)=>{
+    const el=document.getElementById('c10_'+(i+1));
+    const ok=(el.value||'')===ans;
+    _fieldStatus['c10_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c10s+=2;}
+  });
+  cScore+=c10s;
+  detail+=`<p><b>聴解Q10:</b> ${c10s}/8点</p>`;
 
   // --- 聴解Q11 (各2点×5) ---
   let c11s=0;
@@ -1313,9 +1385,24 @@ function gradeAll(){
   cScore+=c11s;
   detail+=`<p><b>聴解Q11:</b> ${c11s}/10点</p>`;
 
-  // --- 聴解Q12 (先生採点) ---
-  ['c12_1','c12_2','c12_3','c12_4','c12_5'].forEach(id=>{_fieldStatus[id]='manual';});
-  detail+='<p><b>聴解Q12:</b> ⚠ 先生採点（15点）</p>';
+  // --- 聴解Q12 (各3点×5=15点 自動採点 キーワード判定) ---
+  const c12ans = [
+    ['吸','す','はい','いいえ'],          // タバコを吸いますか
+    ['暑','あつ','寒','さむ','涼','すず'], // あなたの国は今暑いですか
+    ['時間','じかん'],                    // 飛行機で何時間かかりますか
+    ['あげ','花','はな','プレゼント'],     // お母さんの誕生日に何をあげますか
+    ['勉強','べんきょう','仕事','しごと','働','はたら'], // どうして日本語を勉強しますか
+  ];
+  let c12s=0;
+  c12ans.forEach((keywords,i)=>{
+    const el=document.getElementById('c12_'+(i+1));
+    const v=normalize(el.value);
+    const ok=v.length>2 && keywords.some(k=>v.includes(normalize(k)));
+    _fieldStatus['c12_'+(i+1)]=ok?'correct':'wrong';
+    if(ok){c12s+=3;}
+  });
+  cScore+=c12s;
+  detail+=`<p><b>聴解Q12:</b> ${c12s}/15点</p>`;
 
   // スコア保存
   TestFramework.scores = {goii: gScore, bunpo: bScore, chokkai: cScore};
