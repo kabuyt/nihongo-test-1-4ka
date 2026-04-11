@@ -425,22 +425,53 @@
 
   <!-- B-Q5 -->
   <div class="q-block">
-    <div class="q-title"><ruby>問題<rt>もんだい</rt></ruby>５．⚠ <ruby>絵<rt>え</rt></ruby>を<ruby>見<rt>み</rt></ruby>て<ruby>位置<rt>いち</rt></ruby>を<ruby>書<rt>か</rt></ruby>いてください　＜<ruby>各<rt>かく</rt></ruby>3<ruby>点<rt>てん</rt></ruby>×4<ruby>問<rt>もん</rt></ruby>＝12<ruby>点<rt>てん</rt></ruby>＞</div>
-    <div class="q-instruction" style="background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12">
-      ※ この<ruby>問題<rt>もんだい</rt></ruby>は<ruby>先生<rt>せんせい</rt></ruby>が<ruby>採点<rt>さいてん</rt></ruby>します。<ruby>絵<rt>え</rt></ruby>を<ruby>見<rt>み</rt></ruby>て、<ruby>答<rt>こた</rt></ruby>えを<ruby>書<rt>か</rt></ruby>いてください。
-    </div>
+    <div class="q-title"><ruby>問題<rt>もんだい</rt></ruby>５．<ruby>絵<rt>え</rt></ruby>を<ruby>見<rt>み</rt></ruby>て<ruby>位置<rt>いち</rt></ruby>を<ruby>答<rt>こた</rt></ruby>えてください　＜<ruby>各<rt>かく</rt></ruby>3<ruby>点<rt>てん</rt></ruby>×4<ruby>問<rt>もん</rt></ruby>＝12<ruby>点<rt>てん</rt></ruby>＞</div>
+    <div class="q-instruction"><ruby>絵<rt>え</rt></ruby>を<ruby>見<rt>み</rt></ruby>て、<ruby>正<rt>ただ</rt></ruby>しい<ruby>言葉<rt>ことば</rt></ruby>を<ruby>選<rt>えら</rt></ruby>んでください。</div>
     <div style="text-align:center;margin:12px 0">
       <img src="images/bunpo/image1.jpeg" alt="位置の問題" style="max-width:100%;max-height:280px;object-fit:contain;border:2px solid #333;border-radius:8px">
     </div>
     <div style="margin-top:10px">
+      <p style="font-size:13px;color:#999;margin-bottom:8px"><ruby>例<rt>れい</rt></ruby>）いすはどこにありますか。→　<ruby>机<rt>つくえ</rt></ruby>　の　<ruby>前<rt>まえ</rt></ruby>　にあります。</p>
+
       <p style="font-size:13px;color:#555">１）　いすはどこにありますか。</p>
-      <input type="text" id="b5_1" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="例：机の前にあります。">
-      <p style="font-size:13px;color:#555;margin-top:12px">２）　プレゼントはどこにありますか。</p>
-      <input type="text" id="b5_2" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="">
-      <p style="font-size:13px;color:#555;margin-top:12px">３）　ぬいぐるみはどこにありますか。　<span style="color:#888;font-size:11px">（*ぬいぐるみ = thú nhồi bông）</span></p>
-      <input type="text" id="b5_3" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="">
-      <p style="font-size:13px;color:#555;margin-top:12px">４）　<ruby>黄色<rt>きいろ</rt></ruby>い<ruby>箱<rt>はこ</rt></ruby>はどこにありますか。</p>
-      <input type="text" id="b5_4" style="width:100%;font-size:13px;padding:6px;border-radius:4px;border:1px solid #aaa" placeholder="">
+      <div style="display:flex;gap:6px;align-items:center;margin:6px 0 14px;flex-wrap:wrap;font-size:13px">
+        <select id="b5_1a" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="机">机</option><option value="ベッド">ベッド</option><option value="箱">箱</option><option value="棚">棚</option><option value="テーブル">テーブル</option>
+        </select><span>の</span>
+        <select id="b5_1b" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="前">前</option><option value="上">上</option><option value="中">中</option><option value="下">下</option><option value="横">横</option><option value="後ろ">後ろ</option>
+        </select><span>にあります。</span>
+      </div>
+
+      <p style="font-size:13px;color:#555">２）　プレゼントはどこにありますか。</p>
+      <div style="display:flex;gap:6px;align-items:center;margin:6px 0 14px;flex-wrap:wrap;font-size:13px">
+        <select id="b5_2a" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="机">机</option><option value="ベッド">ベッド</option><option value="箱">箱</option><option value="棚">棚</option><option value="テーブル">テーブル</option>
+        </select><span>の</span>
+        <select id="b5_2b" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="前">前</option><option value="上">上</option><option value="中">中</option><option value="下">下</option><option value="横">横</option><option value="後ろ">後ろ</option>
+        </select><span>にあります。</span>
+      </div>
+
+      <p style="font-size:13px;color:#555">３）　ぬいぐるみはどこにありますか。　<span style="color:#888;font-size:11px">（*ぬいぐるみ = thú nhồi bông）</span></p>
+      <div style="display:flex;gap:6px;align-items:center;margin:6px 0 14px;flex-wrap:wrap;font-size:13px">
+        <select id="b5_3a" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="机">机</option><option value="ベッド">ベッド</option><option value="箱">箱</option><option value="棚">棚</option><option value="テーブル">テーブル</option>
+        </select><span>の</span>
+        <select id="b5_3b" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="前">前</option><option value="上">上</option><option value="中">中</option><option value="下">下</option><option value="横">横</option><option value="後ろ">後ろ</option>
+        </select><span>にあります。</span>
+      </div>
+
+      <p style="font-size:13px;color:#555">４）　<ruby>黄色<rt>きいろ</rt></ruby>い<ruby>箱<rt>はこ</rt></ruby>はどこにありますか。</p>
+      <div style="display:flex;gap:6px;align-items:center;margin:6px 0 14px;flex-wrap:wrap;font-size:13px">
+        <select id="b5_4a" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="机">机</option><option value="ベッド">ベッド</option><option value="箱">箱</option><option value="棚">棚</option><option value="テーブル">テーブル</option>
+        </select><span>の</span>
+        <select id="b5_4b" style="font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa">
+          <option value="">--</option><option value="前">前</option><option value="上">上</option><option value="中">中</option><option value="下">下</option><option value="横">横</option><option value="後ろ">後ろ</option>
+        </select><span>にあります。</span>
+      </div>
     </div>
   </div>
 
@@ -1203,19 +1234,22 @@ function gradeAll(){
   bScore+=b4s;
   detail+=`<p><b>文法Q4:</b> ${b4s}/14点</p>`;
 
-  // --- 文法Q5 (各3点×4=12点 自動採点 キーワード判定) ---
+  // --- 文法Q5 (各3点×4=12点 選択式自動採点) ---
   const b5ans = [
-    ['机','前'],           // いすはどこ→机の前にあります
-    ['箱','上'],           // プレゼントはどこ→箱の上にあります
-    ['ベッド','上'],       // ぬいぐるみはどこ→ベッドの上にあります
-    ['箱','中','下','横','となり','隣'], // 黄色い箱はどこ
+    {a:'机', b:'前'},
+    {a:'箱', b:'上'},
+    {a:'ベッド', b:'上'},
+    {a:'棚', b:'中'},
   ];
   let b5s=0;
-  b5ans.forEach((keywords,i)=>{
-    const el=document.getElementById('b5_'+(i+1));
-    const v=normalize(el.value);
-    const ok=keywords.some(k=>v.includes(normalize(k))) && v.length>3;
-    _fieldStatus['b5_'+(i+1)]=ok?'correct':'wrong';
+  b5ans.forEach((ans,i)=>{
+    const elA=document.getElementById('b5_'+(i+1)+'a');
+    const elB=document.getElementById('b5_'+(i+1)+'b');
+    const okA=(elA.value||'')===ans.a;
+    const okB=(elB.value||'')===ans.b;
+    const ok=okA && okB;
+    _fieldStatus['b5_'+(i+1)+'a']=okA?'correct':'wrong';
+    _fieldStatus['b5_'+(i+1)+'b']=okB?'correct':'wrong';
     if(ok){b5s+=3;}
   });
   bScore+=b5s;
@@ -1456,7 +1490,8 @@ function collectPayload() {
     b4_1:getVal('b4_1'),b4_2:getVal('b4_2'),b4_3:getVal('b4_3'),b4_4:getVal('b4_4'),
     b4_5:getVal('b4_5'),b4_6:getVal('b4_6'),b4_7:getVal('b4_7'),
     // 文法Q5
-    b5_1:getVal('b5_1'),b5_2:getVal('b5_2'),b5_3:getVal('b5_3'),b5_4:getVal('b5_4'),
+    b5_1a:getVal('b5_1a'),b5_1b:getVal('b5_1b'),b5_2a:getVal('b5_2a'),b5_2b:getVal('b5_2b'),
+    b5_3a:getVal('b5_3a'),b5_3b:getVal('b5_3b'),b5_4a:getVal('b5_4a'),b5_4b:getVal('b5_4b'),
     // 文法Q6
     b6_1:getVal('b6_1'),b6_2:getVal('b6_2'),b6_3:getVal('b6_3'),b6_4:getVal('b6_4'),b6_5:getVal('b6_5'),
     // 文法Q7
