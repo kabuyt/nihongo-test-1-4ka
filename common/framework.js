@@ -17,6 +17,7 @@ let _audioSpeed = 1.0;
 let _scores = {goii:0, bunpo:0, chokkai:0};
 let _fieldStatus = {};
 let _gasUrl = '';
+let _testName = '';
 let _tabs = ['goii', 'bunpo', 'chokkai'];
 
 // ----- 外部からアクセス用プロパティ -----
@@ -33,6 +34,7 @@ Object.defineProperty(TF, 'fieldStatus', {
 // ===== 初期化 =====
 TF.init = function(config) {
   _gasUrl = config.gasUrl || '';
+  _testName = config.testName || '';
   _tabs = config.tabs || ['goii', 'bunpo', 'chokkai'];
   const triggerField = config.antiCheatTrigger || 'name_kata';
 
@@ -208,39 +210,7 @@ TF.finishTest = async function() {
   btn.textContent = '⏳ Đang gửi...';
 
   try {
-    // Supabaseに送信（学生IDがある場合）
-    const studentIdEl = document.getElementById('student_id');
-    const studentId = studentIdEl ? studentIdEl.value.trim().toUpperCase() : '';
-    if (studentId) {
-      const findRes = await fetch(
-        SUPABASE_URL + '/rest/v1/trainees?student_id=eq.' + encodeURIComponent(studentId) + '&select=id,name_romaji',
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
-      );
-      const trainees = await findRes.json();
-      if (trainees && trainees.length > 0) {
-        const testDate = document.getElementById('test_date').value || new Date().toISOString().slice(0,10);
-        await fetch(SUPABASE_URL + '/rest/v1/test_results', {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            trainee_id: trainees[0].id,
-            test_name: 'みんなの日本語 第1-4課',
-            test_date: testDate,
-            score_vocab: _scores.goii,
-            score_grammar: _scores.bunpo,
-            score_listening: _scores.chokkai,
-            score_conversation: null
-          })
-        });
-      }
-    }
-
-    // GASにも送信
+    // GASに送信
     await fetch(_gasUrl, {
       method: 'POST',
       mode: 'no-cors',
@@ -291,7 +261,6 @@ TF.submitResults = async function() {
 
     const trainee = trainees[0];
     const testDate = document.getElementById('test_date').value || new Date().toISOString().slice(0,10);
-    const testName = document.title.replace('みんなの日本語 ', '').replace('月間テスト', '').trim() || 'テスト';
 
     // テスト結果を登録
     const insertRes = await fetch(
@@ -306,12 +275,13 @@ TF.submitResults = async function() {
         },
         body: JSON.stringify({
           trainee_id:        trainee.id,
-          test_name:         document.title.replace('みんなの日本語 月間テスト', '').replace('（', '').replace('）', '').trim() || 'テスト',
+          test_name:         _testName,
           test_date:         testDate,
           score_vocab:       _scores.goii,
           score_grammar:     _scores.bunpo,
           score_listening:   _scores.chokkai,
-          score_conversation: null
+          score_conversation: null,
+          answers_json:      typeof window.collectPayload === 'function' ? window.collectPayload() : null
         })
       }
     );
