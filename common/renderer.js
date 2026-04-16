@@ -88,10 +88,19 @@ R.render_image_select_grid = function(q, container) {
     table.appendChild(imgTr);
     // 選択行
     const selTr = document.createElement('tr');
-    row.items.forEach(item => {
+    row.items.forEach((item, idx) => {
       const td = document.createElement('td');
       td.textContent = item.label;
-      td.appendChild(makeSelect(item.field_id, item.options, 'width:100%;font-size:11px'));
+      let opts = item.options;
+      // dynamic_options の場合: correct_pool + extra_pool から選択肢を生成
+      if (!opts && q.dynamic_options && q.correct_pool) {
+        const correct = q.correct_pool[row.items.indexOf(item) + (q.rows.indexOf(row) * row.items.length)];
+        const others = [...q.correct_pool.filter(x => x !== correct), ...(q.extra_pool || [])];
+        const n = q.distractors_per_item || 3;
+        const shuffled = others.sort(() => Math.random() - 0.5).slice(0, n);
+        opts = [correct, ...shuffled].sort(() => Math.random() - 0.5);
+      }
+      td.appendChild(makeSelect(item.field_id, opts || [], 'width:100%;font-size:11px'));
       selTr.appendChild(td);
     });
     table.appendChild(selTr);
@@ -674,7 +683,15 @@ R.renderSection = function(questions, container) {
   questions.forEach(q => {
     const fn = R['render_' + q.type];
     if (fn) {
-      fn(q, container);
+      try {
+        fn(q, container);
+      } catch (e) {
+        console.error('Render error:', q.id, q.type, e);
+        const div = document.createElement('div');
+        div.className = 'q-block';
+        div.innerHTML = `<div class="q-title">${q.title_html || q.id}</div><p style="color:red">レンダリングエラー: ${q.type} — ${e.message}</p>`;
+        container.appendChild(div);
+      }
     } else {
       console.warn('Unknown question type:', q.type);
       const div = document.createElement('div');
