@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a5276">
+<title>みんなの日本語 月間テスト</title>
+<link rel="stylesheet" href="common/style.css">
+</head>
+<body>
+
+<header>
+  <h1 id="test-title">みんなの日本語 第2版　月間テスト</h1>
+  <p id="test-subtitle"></p>
+</header>
+
+<!-- 受験者情報（自動入力、読み取り専用） -->
+<div class="student-info" id="student-info" style="display:none">
+  <table>
+    <tr>
+      <td style="width:50%">名前（カタカナ）：<input type="text" id="name_kata" readonly></td>
+      <td>クラス：<input type="text" id="class_name" readonly></td>
+    </tr>
+    <tr>
+      <td>名前（ローマ字）：<input type="text" id="name_latin" readonly></td>
+      <td>受験日：<input type="date" id="test_date"></td>
+    </tr>
+    <tr>
+      <td colspan="2">会社名：<input type="text" id="company" readonly></td>
+    </tr>
+    <tr>
+      <td colspan="2" style="padding-top:6px">
+        <label style="font-weight:bold;color:#1a5276">学生ID：<input type="text" id="student_id" readonly style="width:160px;margin-left:8px;background:#f0f0f0"></label>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- タブ -->
+<div class="tab-bar" id="tab-bar" style="display:none"></div>
+
+<!-- カンニング防止バナー -->
+<div id="cheat-banner" style="display:none;background:#c0392b;color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:bold;position:sticky;top:42px;z-index:99">
+  ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
+</div>
+
+<!-- セクションコンテナ（動的生成） -->
+<div id="sections-container"></div>
+
+<!-- 終了ボタン -->
+<div class="submit-bar" id="finish-btn-wrap" style="display:none">
+  <button class="btn btn-primary" onclick="doFinish()" style="background:#27ae60;box-shadow:0 3px 8px rgba(39,174,96,.4)">✓ Hoàn thành bài kiểm tra</button>
+</div>
+
+<!-- 結果表示 -->
+<div class="result-box" id="result-box">
+  <h2 style="color:#1a5276;margin-bottom:12px">✅ Đã hoàn thành bài kiểm tra</h2>
+  <p style="color:#555;margin-bottom:12px;font-size:14px">結果を先生に送信してください。</p>
+  <div class="score-summary" id="score-summary-area" style="display:none"></div>
+  <div id="result-detail"></div>
+  <div style="margin-top:20px;text-align:center;border-top:1px solid #ddd;padding-top:16px">
+    <button class="btn btn-send" onclick="doSubmit()" id="send-btn">
+      📤 結果を先生に送信する
+    </button>
+    <div id="send-status" style="margin-top:10px;font-size:14px"></div>
+  </div>
+</div>
+
+<!-- ローディング -->
+<div id="loading" style="text-align:center;padding:60px;color:#888;font-size:16px">
+  問題を読み込み中...
+</div>
+
+<!-- エラー表示 -->
+<div id="error-page" style="display:none;text-align:center;padding:60px">
+  <div style="font-size:48px;margin-bottom:16px">🔒</div>
+  <h2 style="color:#c0392b" id="error-title">アクセスできません</h2>
+  <p style="color:#777;margin-top:8px" id="error-detail"></p>
+  <a href="index.html" style="display:inline-block;margin-top:20px;padding:10px 24px;background:#1a5276;color:#fff;border-radius:8px;text-decoration:none">テスト一覧に戻る</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script src="common/auth.js"></script>
+<script src="common/renderer.js"></script>
+<script>
+// ===== テストページ メイン =====
+
+const params = new URLSearchParams(location.search);
+const TEST_ID = params.get('id');
+let _sections = [];
+let _testDef = null;
+
+function showError(title, detail) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error-page').style.display = 'block';
+  document.getElementById('error-title').textContent = title;
+  document.getElementById('error-detail').textContent = detail || '';
+}
+
+(async function() {
+  if (!TEST_ID) {
+    showError('テストが指定されていません', 'URLに ?id=test1 のようにテストIDを指定してください。');
+    return;
+  }
+
+  // 認証チェック
+  const auth = await checkStudentAuth();
+  if (!auth) return;
+  const profile = auth.profile;
+
+  // テスト定義を取得
+  const { data: testDef, error: defErr } = await supabase
+    .from('test_definitions')
+    .select('*')
+    .eq('id', TEST_ID)
+    .single();
+
+  if (defErr || !testDef) {
+    showError('テストが見つかりません', 'テストID: ' + TEST_ID);
+    return;
+  }
+  _testDef = testDef;
+  _sections = testDef.sections || ['goii', 'bunpo', 'chokkai'];
+
+  // アクセス権チェック
+  const access = await checkTestAccess(TEST_ID);
+  if (!access) {
+    showError('このテストはまだ受験できません', '前のテストを提出すると自動的に解放されます。');
+    return;
+  }
+
+  // タイトル設定
+  document.title = testDef.display_name + ' - みんなの日本語 月間テスト';
+  document.getElementById('test-title').textContent = 'みんなの日本語 第2版　月間テスト（' + testDef.display_name + '）';
+  document.getElementById('test-subtitle').textContent = 'Bài kiểm tra hàng tháng';
+
+  // 受験者情報を自動入力
+  const infoDiv = document.getElementById('student-info');
+  infoDiv.style.display = 'block';
+  document.getElementById('name_kata').value = profile.name_katakana || '';
+  document.getElementById('name_latin').value = profile.name_romaji || '';
+  document.getElementById('class_name').value = profile.class_group || '';
+  document.getElementById('company').value = profile.company || '';
+  document.getElementById('student_id').value = profile.student_id || '';
+  document.getElementById('test_date').value = new Date().toISOString().slice(0, 10);
+
+  // アセットパス設定
+  TestRenderer.setBasePath(TEST_ID);
+
+  // タブ生成
+  const sectionNames = { goii: 'Từ vựng', bunpo: 'Ngữ pháp', chokkai: 'Nghe hiểu' };
+  const tabBar = document.getElementById('tab-bar');
+  tabBar.style.display = 'flex';
+  _sections.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.innerHTML = (sectionNames[sec] || sec) + '<br><small>/100点</small>';
+    btn.onclick = () => showTab(sec);
+    tabBar.appendChild(btn);
+  });
+
+  // セクション読み込み
+  const container = document.getElementById('sections-container');
+  for (const sec of _sections) {
+    const questions = await getTestQuestions(TEST_ID, sec);
+    const secDiv = document.createElement('div');
+    secDiv.id = 'tab-' + sec;
+    secDiv.className = 'section' + (sec === _sections[0] ? ' active' : '');
+    const sTitle = document.createElement('div');
+    sTitle.className = 'section-title';
+    const titleMap = { goii: '語彙テスト（Bài kiểm tra từ vựng）', bunpo: '文法テスト（Bài kiểm tra ngữ pháp）', chokkai: '聴解テスト（Bài kiểm tra nghe hiểu）' };
+    sTitle.textContent = titleMap[sec] || sec;
+    secDiv.appendChild(sTitle);
+
+    // 聴解の場合は速度コントロールを追加
+    if (sec === 'chokkai') {
+      const speedBar = document.createElement('div');
+      speedBar.style.cssText = 'background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap';
+      speedBar.innerHTML = `
+        <span style="font-size:13px;color:#555">🔊 Tốc độ phát:</span>
+        <div style="display:flex;gap:6px">
+          <button onclick="setSpeed(0.75)" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×0.75</button>
+          <button onclick="setSpeed(1.0)" style="padding:5px 12px;border-radius:6px;border:2px solid #1a5276;background:#eaf0fb;font-size:13px;cursor:pointer;font-weight:bold">×1.0</button>
+          <button onclick="setSpeed(1.25)" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×1.25</button>
+        </div>
+      `;
+      secDiv.appendChild(speedBar);
+    }
+
+    if (questions) {
+      TestRenderer.renderSection(questions, secDiv);
+    } else {
+      secDiv.innerHTML += '<p style="color:#c0392b;padding:20px">問題の読み込みに失敗しました。</p>';
+    }
+
+    // 次のセクションへボタン（最後のセクション以外）
+    const secIdx = _sections.indexOf(sec);
+    if (secIdx < _sections.length - 1) {
+      const nextBtn = document.createElement('div');
+      nextBtn.style.cssText = 'text-align:center;margin:28px 0 8px';
+      const nextSec = _sections[secIdx + 1];
+      nextBtn.innerHTML = `<button class="btn btn-primary" onclick="showTab('${nextSec}')" style="font-size:15px;padding:14px 32px">Sang phần ${sectionNames[nextSec] || nextSec} →</button>`;
+      secDiv.appendChild(nextBtn);
+    }
+
+    container.appendChild(secDiv);
+  }
+
+  // ローディング非表示、終了ボタン表示
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('finish-btn-wrap').style.display = 'block';
+
+  // カンニング防止を有効化
+  setupAntiCheat();
+})();
+
+// ===== タブ切替 =====
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('tab-' + name);
+  if (target) target.classList.add('active');
+  // タブボタンのアクティブ表示
+  const btns = document.querySelectorAll('.tab-btn');
+  btns.forEach((btn, i) => {
+    btn.classList.toggle('active', _sections[i] === name);
+  });
+  // 最後のタブなら終了ボタン表示
+  document.getElementById('finish-btn-wrap').style.display =
+    name === _sections[_sections.length - 1] ? 'block' : 'none';
+  window.scrollTo(0, 0);
+}
+
+// ===== 音声速度制御 =====
+let _audioSpeed = 1.0;
+function setSpeed(rate) {
+  _audioSpeed = rate;
+  document.querySelectorAll('audio').forEach(a => { a.playbackRate = rate; });
+}
+document.addEventListener('play', e => {
+  if (e.target.tagName === 'AUDIO') e.target.playbackRate = _audioSpeed;
+}, true);
+
+// ===== カンニング防止 =====
+let _leaveCount = 0;
+function setupAntiCheat() {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _leaveCount++;
+      document.getElementById('cheat-banner').style.display = 'block';
+    }
+  });
+  // 右クリック・コピー防止
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('copy', e => e.preventDefault());
+}
+
+// ===== テスト完了 =====
+function doFinish() {
+  const rb = document.getElementById('result-box');
+  rb.style.display = 'block';
+  rb.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ===== 結果送信 =====
+async function doSubmit() {
+  const btn = document.getElementById('send-btn');
+  const status = document.getElementById('send-status');
+  btn.disabled = true;
+  status.textContent = '送信中...';
+
+  // 全回答を収集
+  const answers = {};
+  document.querySelectorAll('select, input[type=text], input[type=hidden]').forEach(el => {
+    if (el.id && !['student_id', 'name_kata', 'name_latin', 'class_name', 'company', 'test_date'].includes(el.id)) {
+      answers[el.id] = el.value || '';
+    }
+  });
+  document.querySelectorAll('input[type=radio]:checked').forEach(el => {
+    answers[el.name] = el.value;
+  });
+
+  const profile = getStudentProfile();
+  const testDate = document.getElementById('test_date').value;
+
+  // Supabaseに結果を保存（RPC関数経由）
+  const { error } = await supabase.rpc('submit_test_result', {
+    p_test_id: TEST_ID,
+    p_test_date: testDate || new Date().toISOString().slice(0, 10),
+    p_answers: answers
+  });
+
+  if (error) {
+    console.error('送信エラー:', error);
+    if (error.message && error.message.includes('duplicate')) {
+      status.textContent = '⚠ このテストは既に提出済みです。';
+      status.style.color = '#e67e22';
+    } else {
+      status.textContent = '❌ 送信に失敗しました: ' + error.message;
+      status.style.color = '#c0392b';
+      btn.disabled = false;
+    }
+    return;
+  }
+
+  status.textContent = '✅ 送信完了！結果は先生が採点します。';
+  status.style.color = '#27ae60';
+  btn.textContent = '送信済み';
+
+  // 3秒後にテスト一覧へ
+  setTimeout(() => {
+    window.location.href = 'index.html';
+  }, 3000);
+}
+</script>
+</body>
+</html>

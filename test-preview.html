@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>テストプレビュー（Admin）</title>
+<link rel="stylesheet" href="common/style.css">
+<style>
+  .preview-nav { background:#2c3e50; color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; position:sticky; top:0; z-index:100; }
+  .preview-nav select { padding:6px 12px; border-radius:6px; border:none; font-size:14px; }
+  .preview-nav .badge { background:#e74c3c; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; }
+  .preview-nav .info { font-size:13px; color:#bdc3c7; margin-left:auto; }
+  .login-box { max-width:400px; margin:80px auto; padding:32px; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,.1); text-align:center; }
+  .login-box h2 { color:#2c3e50; margin-bottom:16px; }
+  .login-box input { width:100%; padding:10px; margin:6px 0; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; }
+  .login-box button { width:100%; padding:12px; margin-top:12px; background:#2c3e50; color:#fff; border:none; border-radius:6px; font-size:15px; cursor:pointer; }
+  .login-box button:hover { background:#34495e; }
+  .q-count { background:#27ae60; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px; margin-left:6px; }
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="login-page">
+  <div class="login-box">
+    <h2>🔑 Admin テストプレビュー</h2>
+    <p style="color:#777;font-size:13px;margin-bottom:16px">管理者アカウントでログインしてください</p>
+    <input type="email" id="admin-email" placeholder="メールアドレス" value="admin@trainee.local">
+    <input type="password" id="admin-pass" placeholder="パスワード">
+    <button onclick="doLogin()">ログイン</button>
+    <p id="login-error" style="color:#e74c3c;font-size:13px;margin-top:8px"></p>
+  </div>
+</div>
+
+<!-- プレビュー画面 -->
+<div id="preview-page" style="display:none">
+  <div class="preview-nav">
+    <span class="badge">ADMIN PREVIEW</span>
+    <select id="test-select" onchange="loadTest(this.value)">
+      <option value="">-- テストを選択 --</option>
+    </select>
+    <span id="nav-info" class="info"></span>
+    <button onclick="doLogout()" style="padding:4px 12px;border-radius:4px;border:1px solid #fff;background:transparent;color:#fff;cursor:pointer;font-size:12px">ログアウト</button>
+  </div>
+
+  <!-- タブ -->
+  <div class="tab-bar" id="tab-bar" style="display:none"></div>
+
+  <!-- セクションコンテナ -->
+  <div id="sections-container"></div>
+
+  <!-- ローディング -->
+  <div id="loading" style="display:none;text-align:center;padding:60px;color:#888;font-size:16px">
+    問題を読み込み中...
+  </div>
+
+  <!-- 初期メッセージ -->
+  <div id="initial-msg" style="text-align:center;padding:80px;color:#aaa;font-size:16px">
+    ↑ テストを選択してプレビューできます
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script src="common/renderer.js"></script>
+<script>
+let _token = null;
+let _currentSections = [];
+
+async function doLogin() {
+  const email = document.getElementById('admin-email').value;
+  const pass = document.getElementById('admin-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    errEl.textContent = 'ログイン失敗: ' + error.message;
+    return;
+  }
+  _token = data.session.access_token;
+
+  // admin/orgロールか確認
+  const { data: profile, error: pErr } = await supabase
+    .from('user_profiles')
+    .select('role')
+    .eq('id', data.user.id)
+    .single();
+
+  if (pErr || !profile || !['admin', 'org'].includes(profile.role)) {
+    errEl.textContent = '管理者アカウントではありません';
+    await supabase.auth.signOut();
+    return;
+  }
+
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('preview-page').style.display = 'block';
+  await loadTestList();
+}
+
+async function doLogout() {
+  await supabase.auth.signOut();
+  _token = null;
+  document.getElementById('login-page').style.display = 'block';
+  document.getElementById('preview-page').style.display = 'none';
+}
+
+async function loadTestList() {
+  const { data, error } = await supabase
+    .from('test_definitions')
+    .select('id, display_name, sections, sort_order')
+    .order('sort_order');
+
+  if (error) { console.error(error); return; }
+
+  const sel = document.getElementById('test-select');
+  sel.innerHTML = '<option value="">-- テストを選択 --</option>';
+  data.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = `${t.display_name} (${t.sections.join('+')})`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadTest(testId) {
+  if (!testId) return;
+
+  const container = document.getElementById('sections-container');
+  container.innerHTML = '';
+  document.getElementById('initial-msg').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  // テスト定義取得
+  const { data: testDef } = await supabase
+    .from('test_definitions')
+    .select('*')
+    .eq('id', testId)
+    .single();
+
+  if (!testDef) {
+    container.innerHTML = '<p style="color:red;padding:20px">テスト定義が見つかりません</p>';
+    document.getElementById('loading').style.display = 'none';
+    return;
+  }
+
+  _currentSections = testDef.sections || ['goii', 'bunpo', 'chokkai'];
+
+  // アセットパス設定
+  TestRenderer.setBasePath(testId);
+
+  // タブ生成
+  const sectionNames = { goii: 'Từ vựng（語彙）', bunpo: 'Ngữ pháp（文法）', chokkai: 'Nghe hiểu（聴解）' };
+  const tabBar = document.getElementById('tab-bar');
+  tabBar.innerHTML = '';
+  tabBar.style.display = 'flex';
+
+  // 全セクション読み込み（admin は test_sections を直接読める）
+  let totalQuestions = 0;
+  for (const sec of _currentSections) {
+    const { data: secData, error: secErr } = await supabase
+      .from('test_sections')
+      .select('questions, answer_key, scoring_rules')
+      .eq('test_id', testId)
+      .eq('section_type', sec)
+      .single();
+
+    const questions = secData ? secData.questions : [];
+    const qCount = Array.isArray(questions) ? questions.length : 0;
+    totalQuestions += qCount;
+
+    // タブボタン
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (sec === _currentSections[0] ? ' active' : '');
+    btn.innerHTML = `${sectionNames[sec] || sec}<span class="q-count">${qCount}問</span>`;
+    btn.onclick = () => showTab(sec);
+    tabBar.appendChild(btn);
+
+    // セクションdiv
+    const secDiv = document.createElement('div');
+    secDiv.id = 'tab-' + sec;
+    secDiv.className = 'section' + (sec === _currentSections[0] ? ' active' : '');
+
+    const sTitle = document.createElement('div');
+    sTitle.className = 'section-title';
+    sTitle.textContent = (sectionNames[sec] || sec);
+    secDiv.appendChild(sTitle);
+
+    // 聴解の速度コントロール
+    if (sec === 'chokkai') {
+      const speedBar = document.createElement('div');
+      speedBar.style.cssText = 'background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap';
+      speedBar.innerHTML = `
+        <span style="font-size:13px;color:#555">🔊 Tốc độ phát:</span>
+        <div style="display:flex;gap:6px">
+          <button onclick="setSpeed(0.75)" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×0.75</button>
+          <button onclick="setSpeed(1.0)" style="padding:5px 12px;border-radius:6px;border:2px solid #1a5276;background:#eaf0fb;font-size:13px;cursor:pointer;font-weight:bold">×1.0</button>
+          <button onclick="setSpeed(1.25)" style="padding:5px 12px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:13px;cursor:pointer">×1.25</button>
+        </div>
+      `;
+      secDiv.appendChild(speedBar);
+    }
+
+    if (secErr || !questions || questions.length === 0) {
+      secDiv.innerHTML += '<p style="color:#e67e22;padding:20px">問題データが未投入です。</p>';
+    } else {
+      TestRenderer.renderSection(questions, secDiv);
+    }
+
+    container.appendChild(secDiv);
+  }
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('nav-info').textContent =
+    `${testDef.display_name} — ${totalQuestions} question blocks — ${_currentSections.length} sections`;
+}
+
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('tab-' + name);
+  if (target) target.classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  btns.forEach((btn, i) => {
+    btn.classList.toggle('active', _currentSections[i] === name);
+  });
+  window.scrollTo(0, 0);
+}
+
+let _audioSpeed = 1.0;
+function setSpeed(rate) {
+  _audioSpeed = rate;
+  document.querySelectorAll('audio').forEach(a => { a.playbackRate = rate; });
+}
+document.addEventListener('play', e => {
+  if (e.target.tagName === 'AUDIO') e.target.playbackRate = _audioSpeed;
+}, true);
+
+// 自動ログインチェック
+(async function() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    if (profile && ['admin', 'org'].includes(profile.role)) {
+      _token = session.access_token;
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('preview-page').style.display = 'block';
+      await loadTestList();
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -13,13 +13,23 @@
 .test-card:active{transform:scale(.98)}
 .test-card.active-card:hover{box-shadow:0 4px 12px rgba(26,82,118,.25);border-left:5px solid #1a5276}
 .test-card.active-card{border-left:5px solid #1a5276;cursor:pointer}
-.test-card.disabled{opacity:.5;pointer-events:none;border-left:5px solid #ccc}
+.test-card.locked{opacity:.5;pointer-events:none;border-left:5px solid #ccc}
+.test-card.submitted{border-left:5px solid #27ae60}
 .test-card h2{font-size:16px;color:#1a5276;margin-bottom:4px}
 .test-card p{font-size:13px;color:#777}
 .test-card .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:bold}
-.badge-ready{background:#27ae60;color:#fff}
-.badge-soon{background:#f39c12;color:#fff}
+.badge-ready{background:#3498db;color:#fff}
+.badge-done{background:#27ae60;color:#fff}
+.badge-locked{background:#bbb;color:#fff}
+.score-line{font-size:12px;color:#555;margin-top:6px}
+.score-line span{font-weight:bold;color:#1a5276}
+.student-bar{background:#fff;border-bottom:2px solid #1a5276;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.student-bar .name{font-size:14px;font-weight:bold;color:#1a5276}
+.student-bar .id{font-size:12px;color:#888}
+.btn-logout{padding:6px 14px;border:1px solid #c0392b;border-radius:6px;background:#fff;color:#c0392b;font-size:12px;cursor:pointer}
+.btn-logout:hover{background:#c0392b;color:#fff}
 .footer-note{text-align:center;font-size:12px;color:#aaa;margin:32px 0 16px}
+.loading{text-align:center;padding:40px;color:#888;font-size:14px}
 </style>
 </head>
 <body>
@@ -29,51 +39,96 @@
   <p>Bài kiểm tra hàng tháng - Minna no Nihongo</p>
 </header>
 
-<div class="test-list">
+<div class="student-bar" id="student-bar" style="display:none">
+  <div>
+    <span class="name" id="student-name"></span>
+    <span class="id" id="student-id-display"></span>
+  </div>
+  <button class="btn-logout" onclick="studentLogout()">ログアウト</button>
+</div>
 
-  <a href="test1/index.html" class="test-card active-card">
-    <h2>第1回　第1-4課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 1-4 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test2/index.html" class="test-card active-card">
-    <h2>第2回　第5-11課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 5-11 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test3/index.html" class="test-card active-card">
-    <h2>第3回　第12-18課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 12-18 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test4/index.html" class="test-card active-card">
-    <h2>第4回　第19-25課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 19-25 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test5/index.html" class="test-card active-card">
-    <h2>第5回　第26-33課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 26-33 ｜ 文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test6/index.html" class="test-card active-card">
-    <h2>第6回　第34-40課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 34-40 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test7/index.html" class="test-card active-card">
-    <h2>第7回　第41-45課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 41-45 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
-  <a href="test8/index.html" class="test-card active-card">
-    <h2>第8回　第46-50課 <span class="badge badge-ready">受験可能</span></h2>
-    <p>Bài 46-50 ｜ 語彙・文法・聴解（各100点）</p>
-  </a>
-
+<div class="test-list" id="test-list">
+  <div class="loading" id="loading">読み込み中...</div>
 </div>
 
 <div class="footer-note">みんなの日本語 第2版 全50課対応</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script src="common/auth.js"></script>
+<script>
+(async function() {
+  // 認証チェック
+  const auth = await checkStudentAuth();
+  if (!auth) return;
+
+  const profile = auth.profile;
+
+  // 学生情報バー表示
+  const bar = document.getElementById('student-bar');
+  bar.style.display = 'flex';
+  document.getElementById('student-name').textContent =
+    profile.name_katakana || profile.name_romaji || '';
+  document.getElementById('student-id-display').textContent =
+    '（' + (profile.student_id || '') + '）';
+
+  // テスト一覧取得
+  const tests = await getStudentTestList();
+  const listEl = document.getElementById('test-list');
+  const loadingEl = document.getElementById('loading');
+  loadingEl.style.display = 'none';
+
+  if (!tests || tests.length === 0) {
+    listEl.innerHTML = '<div class="loading">テストが見つかりません</div>';
+    return;
+  }
+
+  // セクション表示テキスト
+  function sectionText(sections) {
+    const map = {goii:'語彙', bunpo:'文法', chokkai:'聴解'};
+    if (!sections) return '';
+    return sections.map(s => map[s] || s).join('・') + '（各100点）';
+  }
+
+  tests.forEach(t => {
+    const card = document.createElement('a');
+
+    if (t.is_submitted) {
+      // 受験済み
+      card.className = 'test-card submitted';
+      card.href = '#';
+      card.onclick = e => e.preventDefault();
+      const scores = [];
+      if (t.score_vocab !== null && t.score_vocab !== undefined) scores.push('語彙:' + t.score_vocab);
+      if (t.score_grammar !== null && t.score_grammar !== undefined) scores.push('文法:' + t.score_grammar);
+      if (t.score_listening !== null && t.score_listening !== undefined) scores.push('聴解:' + t.score_listening);
+      card.innerHTML = `
+        <h2>${t.display_name} <span class="badge badge-done">提出済み</span></h2>
+        <p>${sectionText(t.sections)}</p>
+        ${scores.length ? '<div class="score-line">スコア: <span>' + scores.join(' / ') + '</span></div>' : ''}
+      `;
+    } else if (t.is_accessible) {
+      // 受験可能
+      card.className = 'test-card active-card';
+      card.href = 'test.html?id=' + t.test_id;
+      card.innerHTML = `
+        <h2>${t.display_name} <span class="badge badge-ready">受験可能</span></h2>
+        <p>${sectionText(t.sections)}</p>
+      `;
+    } else {
+      // 未解放
+      card.className = 'test-card locked';
+      card.href = '#';
+      card.onclick = e => e.preventDefault();
+      card.innerHTML = `
+        <h2>${t.display_name} <span class="badge badge-locked">🔒</span></h2>
+        <p>${sectionText(t.sections)}</p>
+      `;
+    }
+
+    listEl.appendChild(card);
+  });
+})();
+</script>
 </body>
 </html>
