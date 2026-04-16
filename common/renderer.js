@@ -168,31 +168,68 @@ R.render_tile_sort_buckets = function(q, container) {
 // table_fill: 表の穴埋め
 R.render_table_fill = function(q, container) {
   const block = createQBlock(q.title_html);
+  if (q.instruction) {
+    const note = document.createElement('div');
+    note.className = 'q-instruction';
+    note.textContent = q.instruction;
+    block.appendChild(note);
+  }
   q.tables.forEach((tbl, ti) => {
     const table = document.createElement('table');
     table.className = 'qa-table';
     table.style.width = '100%';
     if (ti > 0) table.style.marginTop = '10px';
-    const headTr = document.createElement('tr');
-    tbl.headers.forEach(h => {
-      const th = document.createElement('th');
-      th.textContent = h;
-      headTr.appendChild(th);
-    });
-    table.appendChild(headTr);
-    const bodyTr = document.createElement('tr');
-    tbl.items.forEach(item => {
-      const td = document.createElement('td');
-      if (item.field_id === null) {
-        td.className = 'already';
-        td.style.cssText = 'text-align:center;font-size:11px';
-        td.textContent = item.fixed_value;
-      } else {
-        td.appendChild(makeSelect(item.field_id, item.options, 'width:100%;font-size:11px;padding:4px 2px'));
-      }
-      bodyTr.appendChild(td);
-    });
-    table.appendChild(bodyTr);
+    if (tbl.headers) {
+      const headTr = document.createElement('tr');
+      tbl.headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headTr.appendChild(th);
+      });
+      table.appendChild(headTr);
+    }
+    // 行構造: items が col を持つ場合は1行に配置、label を持つ場合は行ごとに配置
+    const hasCol = tbl.items.some(item => item.col !== undefined);
+    if (hasCol) {
+      const bodyTr = document.createElement('tr');
+      tbl.items.forEach(item => {
+        const td = document.createElement('td');
+        if (item.field_id === null) {
+          td.className = 'already';
+          td.style.cssText = 'text-align:center;font-size:11px';
+          td.textContent = item.fixed_value;
+        } else if (item.input_type === 'text') {
+          const inp = document.createElement('input');
+          inp.type = 'text'; inp.id = item.field_id;
+          inp.style.cssText = 'width:100%;font-size:11px;padding:4px 2px';
+          td.appendChild(inp);
+        } else {
+          td.appendChild(makeSelect(item.field_id, item.options || [], 'width:100%;font-size:11px;padding:4px 2px'));
+        }
+        bodyTr.appendChild(td);
+      });
+      table.appendChild(bodyTr);
+    } else {
+      // label + input per row
+      tbl.items.forEach(item => {
+        const tr = document.createElement('tr');
+        const tdLabel = document.createElement('td');
+        tdLabel.textContent = item.label || '';
+        tdLabel.style.cssText = 'font-size:13px;padding:6px 8px;white-space:nowrap';
+        tr.appendChild(tdLabel);
+        const tdInput = document.createElement('td');
+        if (item.input_type === 'text') {
+          const inp = document.createElement('input');
+          inp.type = 'text'; inp.id = item.field_id;
+          inp.style.cssText = 'width:100%;font-size:13px;padding:4px 6px;border:1px solid #ccc;border-radius:4px';
+          tdInput.appendChild(inp);
+        } else {
+          tdInput.appendChild(makeSelect(item.field_id, item.options || [], 'width:100%;font-size:13px'));
+        }
+        tr.appendChild(tdInput);
+        table.appendChild(tr);
+      });
+    }
     block.appendChild(table);
   });
   container.appendChild(block);
@@ -372,12 +409,44 @@ R.render_reading_comprehension = function(q, container) {
   const qDiv = document.createElement('div');
   qDiv.style.marginTop = '10px';
   q.items.forEach(item => {
-    const p = document.createElement('p');
-    p.style.cssText = 'font-size:13px;color:#555;margin-top:12px';
-    p.textContent = item.question;
-    qDiv.appendChild(p);
-    const sel = makeSelect(item.field_id, item.options, 'font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa');
-    qDiv.appendChild(sel);
+    if (item.group_sentence && item.sub_items) {
+      // グループ構造: 文 + サブ問題
+      const gp = document.createElement('div');
+      gp.style.cssText = 'margin-top:14px;padding:10px;background:#f8f9fa;border-radius:6px';
+      const gs = document.createElement('p');
+      gs.style.cssText = 'font-size:14px;font-weight:bold;color:#1a5276;margin-bottom:8px';
+      gs.textContent = item.group_sentence;
+      gp.appendChild(gs);
+      item.sub_items.forEach(sub => {
+        const sp = document.createElement('p');
+        sp.style.cssText = 'font-size:13px;color:#555;margin-top:6px';
+        sp.textContent = sub.question + ' ';
+        if (sub.input_type === 'text') {
+          const inp = document.createElement('input');
+          inp.type = 'text'; inp.id = sub.field_id;
+          inp.style.cssText = 'font-size:13px;width:80px;padding:4px;border:1px solid #aaa;border-radius:4px';
+          sp.appendChild(inp);
+        } else {
+          sp.appendChild(makeSelect(sub.field_id, sub.options || [], 'font-size:13px;padding:4px;border-radius:4px;border:1px solid #aaa'));
+        }
+        gp.appendChild(sp);
+      });
+      qDiv.appendChild(gp);
+    } else {
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:13px;color:#555;margin-top:12px';
+      p.textContent = item.question;
+      qDiv.appendChild(p);
+      if (item.input_type === 'text') {
+        const inp = document.createElement('input');
+        inp.type = 'text'; inp.id = item.field_id;
+        inp.style.cssText = 'font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa';
+        qDiv.appendChild(inp);
+      } else {
+        const sel = makeSelect(item.field_id, item.options || [], 'font-size:13px;width:100%;padding:6px;border-radius:4px;border:1px solid #aaa');
+        qDiv.appendChild(sel);
+      }
+    }
   });
   block.appendChild(qDiv);
   container.appendChild(block);
