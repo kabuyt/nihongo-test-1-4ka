@@ -188,9 +188,11 @@ R.render_table_fill = function(q, container) {
       });
       table.appendChild(headTr);
     }
-    // 行構造: items が col を持つ場合は1行に配置、label を持つ場合は行ごとに配置
-    const hasCol = tbl.items.some(item => item.col !== undefined);
-    if (hasCol) {
+    // 行構造判定: items 数 ≤ headers 数 かつ col が一意なら1行配置、それ以外は行ごとに配置
+    const headerCount = (tbl.headers || []).length;
+    const colSet = new Set(tbl.items.map(item => item.col).filter(c => c !== undefined));
+    const isSingleRow = headerCount > 0 && tbl.items.length <= headerCount && colSet.size === tbl.items.filter(i => i.col !== undefined).length;
+    if (isSingleRow) {
       const bodyTr = document.createElement('tr');
       tbl.items.forEach(item => {
         const td = document.createElement('td');
