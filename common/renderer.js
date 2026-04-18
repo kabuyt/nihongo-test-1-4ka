@@ -732,6 +732,323 @@ R.render_audio_tanaka = function(q, container) {
   container.appendChild(block);
 };
 
+// ===== test5-8 で使われる追加タイプ =====
+
+// 共通: 指示・音声・画像・選択肢プールを描画
+function renderIntro(q, block) {
+  if (q.instruction) {
+    const inst = document.createElement('div');
+    inst.className = 'q-instruction';
+    inst.innerHTML = q.instruction;
+    block.appendChild(inst);
+  }
+  if (q.word_bank_html) {
+    const wb = document.createElement('div');
+    wb.style.cssText = 'background:#fffde7;padding:10px;border-radius:6px;border-left:4px solid #f39c12;margin:8px 0;font-size:13px;line-height:1.8';
+    wb.innerHTML = q.word_bank_html;
+    block.appendChild(wb);
+  }
+  if (q.choice_pool_html) {
+    const cp = document.createElement('div');
+    cp.style.cssText = 'background:#eaf0fb;padding:10px;border-radius:6px;border-left:4px solid #1a5276;margin:8px 0;font-size:13px;line-height:1.8';
+    cp.innerHTML = q.choice_pool_html;
+    block.appendChild(cp);
+  }
+  if (q.example_html) {
+    const ex = document.createElement('div');
+    ex.style.cssText = 'background:#f0f4f8;padding:8px;border-radius:4px;font-size:12px;color:#666;margin:6px 0';
+    ex.innerHTML = '例：' + q.example_html;
+    block.appendChild(ex);
+  }
+  if (q.image_src) {
+    const img = document.createElement('div');
+    img.style.cssText = 'text-align:center;margin:10px 0';
+    img.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;border:1px solid #ddd;border-radius:6px">`;
+    block.appendChild(img);
+  }
+  if (q.audio_src) {
+    const a = document.createElement('div');
+    a.style.cssText = 'margin:10px 0';
+    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    block.appendChild(a);
+  }
+}
+
+// 画像ギャラリーを描画
+function renderImageGallery(images, block) {
+  if (!images) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0';
+  images.forEach(im => {
+    const cell = document.createElement('div');
+    cell.style.cssText = 'text-align:center';
+    cell.innerHTML = `<img src="${asset(im.image_src)}" style="max-width:120px;max-height:100px;border:1px solid #ccc;border-radius:4px"><div style="font-size:12px;font-weight:bold">${im.label || im.value}</div>`;
+    row.appendChild(cell);
+  });
+  block.appendChild(row);
+}
+
+// 1つのフィールドを描画して要素を返す
+function makeField(f, parentEl) {
+  if (f.prefix) parentEl.appendChild(document.createTextNode(f.prefix));
+  if (f.label) {
+    const sp = document.createElement('span');
+    sp.style.cssText = 'font-weight:bold;color:#555;margin-right:4px';
+    sp.textContent = f.label;
+    parentEl.appendChild(sp);
+  }
+  let el;
+  if (f.input_type === 'text') {
+    el = document.createElement('input');
+    el.type = 'text'; el.id = f.field_id;
+    el.style.cssText = 'font-size:13px;padding:4px 8px;border:1px solid #aaa;border-radius:4px;min-width:200px;margin:2px';
+  } else {
+    el = makeSelect(f.field_id, f.options || [], 'font-size:13px;margin:2px');
+  }
+  parentEl.appendChild(el);
+  if (f.suffix) parentEl.appendChild(document.createTextNode(f.suffix));
+}
+
+// free_text / word_conjugation: テキスト入力リスト
+R.render_free_text = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  q.items.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin:10px 0;padding:8px;background:#f8f9fa;border-radius:6px';
+    if (item.prompt_html || item.label) {
+      const p = document.createElement('div');
+      p.style.cssText = 'font-size:14px;margin-bottom:6px';
+      p.innerHTML = item.prompt_html || item.label;
+      row.appendChild(p);
+    }
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.id = item.field_id;
+    inp.style.cssText = 'width:100%;padding:6px;border:1px solid #aaa;border-radius:4px;font-size:14px;box-sizing:border-box';
+    row.appendChild(inp);
+    block.appendChild(row);
+  });
+  container.appendChild(block);
+};
+R.render_word_conjugation = R.render_free_text;
+R.render_image_text_answer = R.render_free_text;
+
+// audio_free_text / audio_image_select: 音声 + テキスト入力リスト
+R.render_audio_free_text = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  if (q.images) renderImageGallery(q.images, block);
+  q.items.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:13px;font-weight:bold;min-width:160px';
+    lbl.innerHTML = item.label || item.prompt_html || '';
+    row.appendChild(lbl);
+    if (item.audio_src) {
+      const a = document.createElement('audio');
+      a.controls = true; a.src = asset(item.audio_src);
+      a.style.cssText = 'height:32px';
+      row.appendChild(a);
+    }
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.id = item.field_id;
+    inp.style.cssText = 'flex:1;min-width:200px;padding:5px;border:1px solid #aaa;border-radius:4px;font-size:13px';
+    row.appendChild(inp);
+    block.appendChild(row);
+  });
+  container.appendChild(block);
+};
+R.render_audio_image_select = R.render_audio_free_text;
+
+// audio_table_ox_text: 音声 + 表（複数フィールド/行）
+R.render_audio_table_ox_text = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  const table = document.createElement('table');
+  table.className = 'qa-table';
+  table.style.width = '100%';
+  if (q.columns) {
+    const headTr = document.createElement('tr');
+    const blank = document.createElement('th'); blank.textContent = ''; headTr.appendChild(blank);
+    q.columns.forEach(c => {
+      const th = document.createElement('th'); th.textContent = c; headTr.appendChild(th);
+    });
+    table.appendChild(headTr);
+  }
+  q.items.forEach(item => {
+    const tr = document.createElement('tr');
+    const tdLabel = document.createElement('td');
+    tdLabel.style.cssText = 'font-size:13px;padding:6px';
+    tdLabel.innerHTML = item.label || '';
+    tr.appendChild(tdLabel);
+    (item.fields || []).forEach(f => {
+      const td = document.createElement('td');
+      td.style.cssText = 'padding:4px';
+      makeField(f, td);
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+  block.appendChild(table);
+  container.appendChild(block);
+};
+
+// audio_text_image_select: 音声付きitem + テキスト入力 + 画像選択
+R.render_audio_text_image_select = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  if (q.image_choices) renderImageGallery(q.image_choices, block);
+  q.items.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin:14px 0;padding:10px;background:#f8f9fa;border-radius:6px';
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-weight:bold;color:#1a5276;font-size:14px';
+    lbl.innerHTML = item.label || '';
+    head.appendChild(lbl);
+    if (item.audio_src) {
+      const a = document.createElement('audio');
+      a.controls = true; a.src = asset(item.audio_src);
+      a.style.cssText = 'height:32px';
+      head.appendChild(a);
+    }
+    row.appendChild(head);
+    (item.fields || []).forEach(f => {
+      const fr = document.createElement('div');
+      fr.style.cssText = 'margin:4px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap';
+      makeField(f, fr);
+      row.appendChild(fr);
+    });
+    block.appendChild(row);
+  });
+  container.appendChild(block);
+};
+
+// audio_double_select: 音声 + 画像ギャラリー + 各itemに2つの選択
+R.render_audio_double_select = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  if (q.condition_images) renderImageGallery(q.condition_images, block);
+  if (q.reason_choices_html) {
+    const rc = document.createElement('div');
+    rc.style.cssText = 'background:#eaf0fb;padding:8px;border-radius:4px;font-size:13px;margin:8px 0';
+    rc.innerHTML = q.reason_choices_html;
+    block.appendChild(rc);
+  }
+  q.items.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin:8px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-weight:bold;min-width:50px';
+    lbl.innerHTML = item.label || '';
+    row.appendChild(lbl);
+    if (item.audio_src) {
+      const a = document.createElement('audio');
+      a.controls = true; a.src = asset(item.audio_src);
+      a.style.cssText = 'height:32px';
+      row.appendChild(a);
+    }
+    (item.fields || []).forEach(f => {
+      const fr = document.createElement('span');
+      fr.style.cssText = 'display:inline-flex;align-items:center;gap:4px';
+      makeField(f, fr);
+      row.appendChild(fr);
+    });
+    block.appendChild(row);
+  });
+  container.appendChild(block);
+};
+
+// audio_select_text: 音声 + 画像 + テンプレート文（{field_id}埋め込み）
+R.render_audio_select_text = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  q.items.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin:10px 0;padding:8px;background:#f8f9fa;border-radius:6px;font-size:14px;line-height:2';
+    if (item.template_html) {
+      // テンプレートを展開: {field_id} → 入力要素
+      let html = item.template_html;
+      const placeholders = [];
+      (item.fields || []).forEach(f => {
+        const ph = `__FIELD_${f.field_id}__`;
+        placeholders.push({ph, f});
+        html = html.replace(`{${f.field_id}}`, ph);
+      });
+      // 一旦HTMLを設定してからプレースホルダを実要素に置換
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      placeholders.forEach(({ph, f}) => {
+        const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          if (node.nodeValue.includes(ph)) {
+            const parent = node.parentNode;
+            const before = node.nodeValue.substring(0, node.nodeValue.indexOf(ph));
+            const after = node.nodeValue.substring(node.nodeValue.indexOf(ph) + ph.length);
+            const span = document.createElement('span');
+            makeField(f, span);
+            parent.insertBefore(document.createTextNode(before), node);
+            parent.insertBefore(span, node);
+            parent.insertBefore(document.createTextNode(after), node);
+            parent.removeChild(node);
+            break;
+          }
+        }
+      });
+      while (tmp.firstChild) row.appendChild(tmp.firstChild);
+    } else {
+      (item.fields || []).forEach(f => makeField(f, row));
+    }
+    block.appendChild(row);
+  });
+  container.appendChild(block);
+};
+
+// select_from_pool: プールから選択
+R.render_select_from_pool = function(q, container) {
+  const block = createQBlock(q.title_html);
+  renderIntro(q, block);
+  q.items.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin:8px 0;font-size:14px;line-height:2';
+    if (item.sentence_html) {
+      let html = item.sentence_html;
+      (item.fields || [item]).forEach(f => {
+        const fid = f.field_id;
+        if (html.includes(`{${fid}}`)) {
+          html = html.replace(`{${fid}}`, `<select id="${fid}" data-pool="1"></select>`);
+        }
+      });
+      row.innerHTML = html;
+      // optionsを設定
+      (item.fields || [item]).forEach(f => {
+        const sel = row.querySelector(`#${f.field_id}`);
+        if (sel) {
+          const blank = document.createElement('option'); blank.value=''; blank.textContent='--';
+          sel.appendChild(blank);
+          (f.options || q.pool_options || []).forEach(o => {
+            const op = document.createElement('option');
+            if (typeof o === 'object') { op.value=o.value; op.textContent=o.label; }
+            else { op.value=o; op.textContent=o; }
+            sel.appendChild(op);
+          });
+        }
+      });
+    } else if (item.prompt_html || item.label) {
+      const p = document.createElement('span');
+      p.innerHTML = (item.prompt_html || item.label) + ' ';
+      row.appendChild(p);
+      const opts = item.options || q.pool_options || [];
+      row.appendChild(makeSelect(item.field_id, opts));
+    }
+    block.appendChild(row);
+  });
+  container.appendChild(block);
+};
+
 // ===== ユーティリティ =====
 
 function createQBlock(titleHtml) {
