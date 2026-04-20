@@ -967,7 +967,8 @@ R.render_audio_multi_select = function(q, container) {
     const aq = document.createElement('div');
     aq.className = 'audio-q';
     aq.style.marginTop = '10px';
-    aq.innerHTML = `<div class="qlabel">${item.label}</div><audio controls src="${asset(item.audio_src)}"></audio>`;
+    aq.innerHTML = `<div class="qlabel">${item.label || ''}</div>`;
+    if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
     if (item.image_src) aq.innerHTML += `<div style="margin-top:6px"><img src="${asset(item.image_src)}" style="max-width:100%;max-height:180px;border:1px solid #ddd;border-radius:4px"></div>`;
 
     // sentence_html モード: 文中にselectを埋め込む
