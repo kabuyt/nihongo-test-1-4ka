@@ -945,20 +945,62 @@ R.render_audio_select = function(q, container) {
 // audio_multi_select: 音声+複数ドロップダウン
 R.render_audio_multi_select = function(q, container) {
   const block = createQBlock(q.title_html);
+  if (q.instruction) {
+    const inst = document.createElement('div');
+    inst.className = 'q-instruction';
+    inst.innerHTML = q.instruction;
+    block.appendChild(inst);
+  }
+  if (q.option_pool_html) {
+    const pool = document.createElement('div');
+    pool.style.cssText = 'background:#f0f8ff;padding:8px 12px;border-radius:4px;border:1px dashed #1a5276;margin:6px 0;font-size:13px';
+    pool.innerHTML = q.option_pool_html;
+    block.appendChild(pool);
+  }
   q.items.forEach(item => {
     const aq = document.createElement('div');
     aq.className = 'audio-q';
     aq.style.marginTop = '10px';
     aq.innerHTML = `<div class="qlabel">${item.label}</div><audio controls src="${asset(item.audio_src)}"></audio>`;
     if (item.image_src) aq.innerHTML += `<div style="margin-top:6px"><img src="${asset(item.image_src)}" style="max-width:100%;max-height:180px;border:1px solid #ddd;border-radius:4px"></div>`;
-    const p = document.createElement('p');
-    p.style.cssText = 'font-size:13px;margin-top:6px';
-    item.fields.forEach(f => {
-      p.textContent += f.prefix + ' ';
-      p.appendChild(makeSelect(f.field_id, f.options));
-      p.appendChild(document.createTextNode(' '));
-    });
-    aq.appendChild(p);
+
+    // sentence_html モード: 文中にselectを埋め込む
+    if (item.sentence_html) {
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:14px;margin-top:8px;line-height:2.2';
+      let html = item.sentence_html;
+      // プレースホルダをマーカーに置換
+      const markers = {};
+      item.fields.forEach((f, i) => {
+        const key = `__SELMARK_${i}__`;
+        markers[key] = f;
+        html = html.replace('{' + f.field_id + '}', key);
+      });
+      p.innerHTML = html;
+      // マーカーをselectに置換
+      Object.keys(markers).forEach(key => {
+        const f = markers[key];
+        const newHtml = p.innerHTML.replace(key, `<span data-ph="${key}"></span>`);
+        p.innerHTML = newHtml;
+        const ph = p.querySelector(`[data-ph="${key}"]`);
+        if (ph) ph.replaceWith(makeSelect(f.field_id, f.options));
+      });
+      aq.appendChild(p);
+    } else {
+      // 旧プレフィックス方式
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:13px;margin-top:6px';
+      item.fields.forEach(f => {
+        if (f.prefix) {
+          const span = document.createElement('span');
+          span.innerHTML = f.prefix + ' ';
+          p.appendChild(span);
+        }
+        p.appendChild(makeSelect(f.field_id, f.options));
+        p.appendChild(document.createTextNode(' '));
+      });
+      aq.appendChild(p);
+    }
     block.appendChild(aq);
   });
   container.appendChild(block);
