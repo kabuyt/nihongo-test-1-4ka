@@ -38,6 +38,7 @@
     <span class="badge">ADMIN PREVIEW</span>
     <a href="test-preview.html" style="color:#fff;text-decoration:none;font-size:13px;padding:4px 10px;background:#3498db;border-radius:4px">📋 プレビュー</a>
     <a href="test-admin.html" style="color:#bdc3c7;text-decoration:none;font-size:13px;padding:4px 10px">🔓 解放管理</a>
+    <button onclick="doGrade()" style="padding:4px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">🎯 採点テスト</button>
     <select id="test-select" onchange="loadTest(this.value)">
       <option value="">-- テストを選択 --</option>
     </select>
@@ -65,9 +66,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="common/config.js"></script>
 <script src="common/renderer.js"></script>
+<script src="common/grading.js"></script>
 <script>
 let _token = null;
 let _currentSections = [];
+let _gradingData = {}; // {section: {answer_key, scoring_rules}}
 
 async function doLogin() {
   const email = document.getElementById('admin-email').value;
@@ -147,6 +150,7 @@ async function loadTest(testId) {
   }
 
   _currentSections = testDef.sections || ['goii', 'bunpo', 'chokkai'];
+  _gradingData = {}; // リセット
 
   // アセットパス設定
   TestRenderer.setBasePath(testId);
@@ -170,6 +174,14 @@ async function loadTest(testId) {
     const questions = secData ? secData.questions : [];
     const qCount = Array.isArray(questions) ? questions.length : 0;
     totalQuestions += qCount;
+
+    // 採点用データを保存
+    if (secData && secData.answer_key) {
+      _gradingData[sec] = {
+        answer_key: secData.answer_key,
+        scoring_rules: secData.scoring_rules,
+      };
+    }
 
     // タブボタン
     const btn = document.createElement('button');
@@ -226,6 +238,54 @@ function showTab(name) {
     btn.classList.toggle('active', _currentSections[i] === name);
   });
   window.scrollTo(0, 0);
+}
+
+function doGrade() {
+  if (Object.keys(_gradingData).length === 0) {
+    alert('先にテストを選択して読み込んでください');
+    return;
+  }
+  // 回答収集（test.htmlと同じ方式）
+  const answers = {};
+  document.querySelectorAll('select, input[type=text], input[type=hidden]').forEach(el => {
+    if (el.id) answers[el.id] = el.value || '';
+  });
+  document.querySelectorAll('input[type=radio]:checked').forEach(el => {
+    answers[el.name] = el.value;
+  });
+  // セクション別採点
+  const perSection = {};
+  for (const sec in _gradingData) {
+    const d = _gradingData[sec];
+    const score = TestGrading.gradeSection(d.answer_key || {}, d.scoring_rules || {}, answers);
+    perSection[sec] = score;
+  }
+  // 詳細レポート（問題ブロック別）
+  let detail = '';
+  for (const sec in _gradingData) {
+    const d = _gradingData[sec];
+    detail += `\n=== ${sec} ===\n`;
+    for (const blockId in (d.scoring_rules || {})) {
+      const rule = d.scoring_rules[blockId];
+      const tmp = {};
+      tmp[blockId] = rule;
+      const tmpAk = {};
+      tmpAk[blockId] = (d.answer_key || {})[blockId];
+      const sc = TestGrading.gradeSection(tmpAk, tmp, answers);
+      detail += `  ${blockId} (${rule.method}): ${sc}点\n`;
+    }
+  }
+  const parts = [];
+  let total = 0;
+  for (const sec in perSection) {
+    parts.push(`${sec}: ${perSection[sec]}/100`);
+    total += perSection[sec];
+  }
+  const msg = `採点結果:\n\n${parts.join('\n')}\n\n合計: ${total}/${Object.keys(perSection).length * 100}点\n\n${detail}`;
+  alert(msg);
+  console.log('回答:', answers);
+  console.log('採点結果:', perSection);
+  console.log('採点データ:', _gradingData);
 }
 
 let _audioSpeed = 1.0;
