@@ -846,8 +846,8 @@ R.render_audio_select = function(q, container) {
   // 共有画像
   if (q.image_src) {
     const imgDiv = document.createElement('div');
-    imgDiv.style.cssText = 'margin:8px 0';
-    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;max-height:220px;border:1px solid #ddd;border-radius:4px">`;
+    imgDiv.style.cssText = 'margin:8px 0;text-align:center';
+    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;max-height:500px;border:1px solid #ddd;border-radius:4px">`;
     block.appendChild(imgDiv);
   }
   // 共有音声ファイル群
