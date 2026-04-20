@@ -440,7 +440,9 @@ R.render_word_puzzle = function(q, container) {
     puzzleDiv.style.cssText = 'margin:16px 0;padding:12px;background:#f8f9fa;border-radius:8px';
     const title = document.createElement('div');
     title.style.cssText = 'font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:8px';
-    title.innerHTML = `${idx + 1}）`;
+    const prefix = p.prefix ? p.prefix : '';
+    const suffix = p.suffix ? p.suffix : '';
+    title.innerHTML = `${idx + 1}）${prefix}（　　　　　　）${suffix}`;
     puzzleDiv.appendChild(title);
 
     // 回答表示エリア（選択済み）
