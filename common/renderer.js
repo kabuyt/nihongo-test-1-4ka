@@ -90,7 +90,7 @@ R.render_image_select_grid = function(q, container) {
     const selTr = document.createElement('tr');
     row.items.forEach((item, idx) => {
       const td = document.createElement('td');
-      td.textContent = item.label;
+      td.innerHTML = item.label;
       let opts = item.options;
       // dynamic_options の場合: correct_pool + extra_pool から選択肢を生成
       if (!opts && q.dynamic_options && q.correct_pool) {
@@ -115,7 +115,7 @@ R.render_tile_sort_buckets = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.style.cssText = 'font-size:12px;color:#888;margin-bottom:10px';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   // タイルプール
@@ -126,7 +126,7 @@ R.render_tile_sort_buckets = function(q, container) {
     const t = document.createElement('div');
     t.className = 'g3-tile';
     t.dataset.key = tile.key;
-    t.textContent = tile.label;
+    t.innerHTML = tile.label;
     t.onclick = function(e) { g3TileClick(e, this); };
     pool.appendChild(t);
   });
@@ -265,7 +265,7 @@ R.render_table_fill = function(q, container) {
       tbl.items.forEach(item => {
         const tr = document.createElement('tr');
         const tdLabel = document.createElement('td');
-        tdLabel.textContent = item.label || '';
+        tdLabel.innerHTML = item.label || '';
         tdLabel.style.cssText = 'font-size:13px;padding:6px 8px;white-space:nowrap';
         tr.appendChild(tdLabel);
         const tdInput = document.createElement('td');
@@ -292,7 +292,7 @@ R.render_select_dynamic_pool = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   const tableScroll = document.createElement('div');
@@ -319,7 +319,7 @@ R.render_select_dynamic_pool = function(q, container) {
       const options = [correct, ...distractors].sort(() => Math.random() - 0.5);
       const tdLabel = document.createElement('td');
       tdLabel.style.whiteSpace = 'nowrap';
-      tdLabel.textContent = item.label;
+      tdLabel.innerHTML = item.label;
       tr.appendChild(tdLabel);
       const tdSel = document.createElement('td');
       tdSel.appendChild(makeSelect(item.field_id, options));
@@ -338,7 +338,7 @@ R.render_fill_particle = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   if (q.example_html) {
@@ -367,7 +367,7 @@ R.render_select_in_sentence = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   const wrap = document.createElement('div');
@@ -393,7 +393,7 @@ R.render_word_puzzle = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   const puzzleContainer = document.createElement('div');
@@ -421,7 +421,7 @@ R.render_select_choice = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   if (q.example_html) {
@@ -454,7 +454,7 @@ R.render_select_choice = function(q, container) {
       });
       div.innerHTML = html;
     } else {
-      div.textContent = (item.prompt || item.label || '') + ' ';
+      div.innerHTML = (item.prompt || item.label || '') + ' ';
       if (item.input_type === 'text') {
         const inp = document.createElement('input');
         inp.type = 'text'; inp.id = item.field_id;
@@ -487,20 +487,20 @@ R.render_reading_comprehension = function(q, container) {
       if (ss.sub_title) {
         const t = document.createElement('div');
         t.style.cssText = 'font-weight:bold;color:#1a5276;margin-bottom:6px';
-        t.textContent = ss.sub_title;
+        t.innerHTML = ss.sub_title;
         ssDiv.appendChild(t);
       }
       if (ss.instruction) {
         const inst = document.createElement('div');
         inst.style.cssText = 'font-size:12px;color:#666;margin-bottom:6px';
-        inst.textContent = ss.instruction;
+        inst.innerHTML = ss.instruction;
         ssDiv.appendChild(inst);
       }
       (ss.items || []).forEach(item => {
         const p = document.createElement('p');
         p.style.cssText = 'font-size:13px;margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
         const qSpan = document.createElement('span');
-        qSpan.textContent = item.question || '';
+        qSpan.innerHTML = item.question || '';
         p.appendChild(qSpan);
         if (item.input_type === 'text') {
           const inp = document.createElement('input');
@@ -537,12 +537,12 @@ R.render_reading_comprehension = function(q, container) {
       gp.style.cssText = 'margin-top:14px;padding:10px;background:#f8f9fa;border-radius:6px';
       const gs = document.createElement('p');
       gs.style.cssText = 'font-size:14px;font-weight:bold;color:#1a5276;margin-bottom:8px';
-      gs.textContent = item.group_sentence;
+      gs.innerHTML = item.group_sentence;
       gp.appendChild(gs);
       item.sub_items.forEach(sub => {
         const sp = document.createElement('p');
         sp.style.cssText = 'font-size:13px;color:#555;margin-top:6px';
-        sp.textContent = sub.question + ' ';
+        sp.innerHTML = (sub.question || '') + ' ';
         if (sub.input_type === 'text') {
           const inp = document.createElement('input');
           inp.type = 'text'; inp.id = sub.field_id;
@@ -557,7 +557,7 @@ R.render_reading_comprehension = function(q, container) {
     } else {
       const p = document.createElement('p');
       p.style.cssText = 'font-size:13px;color:#555;margin-top:12px';
-      p.textContent = item.question;
+      p.innerHTML = item.question;
       qDiv.appendChild(p);
       if (item.input_type === 'text') {
         const inp = document.createElement('input');
@@ -618,7 +618,7 @@ R.render_radio_choice = function(q, container) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
     inst.style.cssText = 'background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   const wrap = document.createElement('div');
@@ -628,7 +628,7 @@ R.render_radio_choice = function(q, container) {
     qDiv.style.marginBottom = '18px';
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;font-weight:bold;margin-bottom:8px';
-    p.textContent = item.question;
+    p.innerHTML = item.question;
     qDiv.appendChild(p);
     const choicesDiv = document.createElement('div');
     choicesDiv.style.cssText = 'display:flex;flex-direction:column;gap:6px;font-size:13px';
@@ -703,7 +703,7 @@ R.render_audio_select = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   if (q.intro_audio) {
@@ -735,7 +735,7 @@ R.render_audio_select = function(q, container) {
       if (part.title) {
         const t = document.createElement('div');
         t.style.cssText = 'font-weight:bold;color:#1a5276;margin-top:10px';
-        t.textContent = part.title;
+        t.innerHTML = part.title;
         block.appendChild(t);
       }
       if (part.audio_src) {
@@ -750,7 +750,7 @@ R.render_audio_select = function(q, container) {
         if (item.label) {
           const sp = document.createElement('span');
           sp.style.cssText = 'min-width:60px;font-weight:bold';
-          sp.textContent = item.label;
+          sp.innerHTML = item.label;
           r.appendChild(sp);
         }
         if (item.audio_src) {
@@ -804,7 +804,7 @@ R.render_audio_select = function(q, container) {
       const ansBox = document.createElement('div');
       ansBox.className = 'answer-box';
       ansBox.style.marginTop = '6px';
-      if (item.prefix) ansBox.textContent = item.prefix;
+      if (item.prefix) ansBox.innerHTML = item.prefix;
       ansBox.appendChild(makeSelect(item.field_id, item.options || [], ''));
       if (item.suffix) {
         const suf = document.createTextNode(item.suffix);
@@ -905,7 +905,7 @@ R.render_audio_ox = function(q, container) {
   if (q.instruction) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   q.items.forEach(item => {
@@ -914,7 +914,7 @@ R.render_audio_ox = function(q, container) {
     aq.innerHTML = `<audio controls src="${asset(item.audio_src)}"></audio>`;
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;margin-top:4px';
-    p.textContent = item.label + ' ';
+    p.innerHTML = (item.label || '') + ' ';
     p.appendChild(makeSelect(item.field_id, item.options));
     aq.appendChild(p);
     block.appendChild(aq);
@@ -929,7 +929,7 @@ R.render_audio_tanaka = function(q, container) {
     const inst = document.createElement('div');
     inst.className = 'q-instruction';
     inst.style.cssText = 'background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12';
-    inst.textContent = q.instruction;
+    inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
   // イラスト
@@ -1023,7 +1023,7 @@ function makeField(f, parentEl) {
   if (f.label) {
     const sp = document.createElement('span');
     sp.style.cssText = 'font-weight:bold;color:#555;margin-right:4px';
-    sp.textContent = f.label;
+    sp.innerHTML = f.label;
     parentEl.appendChild(sp);
   }
   let el;
