@@ -831,6 +831,12 @@ R.render_audio_select = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
+  if (q.option_pool_html) {
+    const pool = document.createElement('div');
+    pool.style.cssText = 'background:#f0f8ff;padding:10px 14px;border-radius:6px;border:1px dashed #1a5276;margin:8px 0;font-size:14px;line-height:2';
+    pool.innerHTML = q.option_pool_html;
+    block.appendChild(pool);
+  }
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
