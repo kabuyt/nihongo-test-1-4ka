@@ -171,8 +171,15 @@ R.render_table_fill = function(q, container) {
   if (q.instruction) {
     const note = document.createElement('div');
     note.className = 'q-instruction';
-    note.textContent = q.instruction;
+    note.innerHTML = q.instruction;
     block.appendChild(note);
+  }
+  if (q.example_html) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+    ex.innerHTML = '例）' + q.example_html;
+    block.appendChild(ex);
   }
   if (q.audio_src) {
     const a = document.createElement('div');
