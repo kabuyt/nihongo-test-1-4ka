@@ -339,7 +339,16 @@ R.render_select_dynamic_pool = function(q, container) {
       tdLabel.innerHTML = item.label;
       tr.appendChild(tdLabel);
       const tdSel = document.createElement('td');
-      tdSel.appendChild(makeSelect(item.field_id, options));
+      const useText = q.input_type === 'text' || item.input_type === 'text';
+      if (useText) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.id = item.field_id;
+        inp.style.cssText = 'width:100%;font-size:13px;padding:5px 6px;border:1px solid #aaa;border-radius:4px';
+        tdSel.appendChild(inp);
+      } else {
+        tdSel.appendChild(makeSelect(item.field_id, options));
+      }
       tr.appendChild(tdSel);
     }
     table.appendChild(tr);
