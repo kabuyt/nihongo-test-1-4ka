@@ -84,6 +84,7 @@
 <script src="common/config.js"></script>
 <script src="common/auth.js"></script>
 <script src="common/renderer.js"></script>
+<script src="common/grading.js"></script>
 <script>
 // ===== テストページ メイン =====
 
@@ -91,6 +92,7 @@ const params = new URLSearchParams(location.search);
 const TEST_ID = params.get('id');
 let _sections = [];
 let _testDef = null;
+let _sectionGradingData = {}; // {section: {answer_key, scoring_rules}}
 
 function showError(title, detail) {
   document.getElementById('loading').style.display = 'none';
@@ -268,7 +270,7 @@ async function doSubmit() {
   const btn = document.getElementById('send-btn');
   const status = document.getElementById('send-status');
   btn.disabled = true;
-  status.textContent = '送信中...';
+  status.textContent = '採点中...';
 
   // 全回答を収集
   const answers = {};
@@ -284,11 +286,33 @@ async function doSubmit() {
   const profile = getStudentProfile();
   const testDate = document.getElementById('test_date').value;
 
-  // Supabaseに結果を保存（RPC関数経由）
+  // 自動採点: grading data を取得してクライアント側で採点
+  let scores = { score_vocab: null, score_grammar: null, score_listening: null };
+  let autoScored = false;
+  try {
+    const { data: gradingData, error: gdErr } = await supabase.rpc('get_grading_data', { p_test_id: TEST_ID });
+    if (!gdErr && gradingData && typeof window.TestGrading !== 'undefined') {
+      scores = window.TestGrading.gradeTest(gradingData, answers);
+      autoScored = true;
+      console.log('自動採点結果:', scores);
+    } else {
+      console.warn('grading_data取得失敗 or TestGrading未ロード:', gdErr);
+    }
+  } catch (e) {
+    console.error('採点エラー:', e);
+  }
+
+  status.textContent = '送信中...';
+
+  // Supabaseに結果を保存（スコア付き）
   const { error } = await supabase.rpc('submit_test_result', {
     p_test_id: TEST_ID,
     p_test_date: testDate || new Date().toISOString().slice(0, 10),
-    p_answers: answers
+    p_answers: answers,
+    p_score_vocab: scores.score_vocab,
+    p_score_grammar: scores.score_grammar,
+    p_score_listening: scores.score_listening,
+    p_auto_scored: autoScored,
   });
 
   if (error) {
@@ -304,14 +328,25 @@ async function doSubmit() {
     return;
   }
 
-  status.textContent = '✅ 送信完了！結果は先生が採点します。';
+  // 採点結果表示
+  if (autoScored) {
+    const parts = [];
+    if (scores.score_vocab !== null) parts.push(`語彙: ${scores.score_vocab}/100`);
+    if (scores.score_grammar !== null) parts.push(`文法: ${scores.score_grammar}/100`);
+    if (scores.score_listening !== null) parts.push(`聴解: ${scores.score_listening}/100`);
+    const total = (scores.score_vocab || 0) + (scores.score_grammar || 0) + (scores.score_listening || 0);
+    const maxTotal = (scores.score_vocab !== null ? 100 : 0) + (scores.score_grammar !== null ? 100 : 0) + (scores.score_listening !== null ? 100 : 0);
+    status.innerHTML = `✅ 送信完了！<br><b>${parts.join(' / ')}</b><br>合計: ${total}/${maxTotal}点`;
+  } else {
+    status.textContent = '✅ 送信完了！結果は先生が採点します。';
+  }
   status.style.color = '#27ae60';
   btn.textContent = '送信済み';
 
-  // 3秒後にテスト一覧へ
+  // 5秒後にテスト一覧へ
   setTimeout(() => {
     window.location.href = 'index.html';
-  }, 3000);
+  }, 5000);
 }
 </script>
 </body>
