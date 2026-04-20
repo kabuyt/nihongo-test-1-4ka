@@ -192,7 +192,7 @@ R.render_table_fill = function(q, container) {
         const headTr = document.createElement('tr');
         const blank = document.createElement('th'); blank.textContent = ''; headTr.appendChild(blank);
         q.columns.forEach(c => {
-          const th = document.createElement('th'); th.textContent = c; headTr.appendChild(th);
+          const th = document.createElement('th'); th.innerHTML = c; headTr.appendChild(th);
         });
         tbl.appendChild(headTr);
       }
@@ -232,7 +232,7 @@ R.render_table_fill = function(q, container) {
       const headTr = document.createElement('tr');
       tbl.headers.forEach(h => {
         const th = document.createElement('th');
-        th.textContent = h;
+        th.innerHTML = h;
         headTr.appendChild(th);
       });
       table.appendChild(headTr);
@@ -1101,7 +1101,7 @@ R.render_audio_table_ox_text = function(q, container) {
     const headTr = document.createElement('tr');
     const blank = document.createElement('th'); blank.textContent = ''; headTr.appendChild(blank);
     q.columns.forEach(c => {
-      const th = document.createElement('th'); th.textContent = c; headTr.appendChild(th);
+      const th = document.createElement('th'); th.innerHTML = c; headTr.appendChild(th);
     });
     table.appendChild(headTr);
   }
