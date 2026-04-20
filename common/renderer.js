@@ -475,7 +475,7 @@ R.render_word_puzzle = function(q, container) {
     // 回答表示エリア（選択済み）
     const answerArea = document.createElement('div');
     answerArea.style.cssText = 'min-height:44px;padding:8px;background:#fff;border:2px dashed #aaa;border-radius:6px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center';
-    answerArea.dataset.placeholder = 'タップして順番に並べる →';
+    answerArea.dataset.placeholder = 'Nhấn vào các từ bên dưới để xếp theo thứ tự →';
     puzzleDiv.appendChild(answerArea);
 
     // 未選択タイルエリア
