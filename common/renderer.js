@@ -18,7 +18,7 @@ function asset(src) {
   return _basePath + src;
 }
 
-// select要素を生成
+// select要素を生成（options配列をシャッフルして正解が先頭に来ないように）
 function makeSelect(fieldId, options, style) {
   const sel = document.createElement('select');
   sel.id = fieldId;
@@ -27,7 +27,13 @@ function makeSelect(fieldId, options, style) {
   blank.value = '';
   blank.textContent = '--';
   sel.appendChild(blank);
-  options.forEach(opt => {
+  // シャッフル（Fisher-Yates）
+  const shuffled = (options || []).slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  shuffled.forEach(opt => {
     const o = document.createElement('option');
     if (typeof opt === 'object') {
       o.value = opt.value;
