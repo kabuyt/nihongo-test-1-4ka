@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>テスト解放管理（Admin）</title>
+<link rel="stylesheet" href="common/style.css">
+<style>
+  body { background:#f5f6fa; }
+  .admin-nav { background:#2c3e50; color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; position:sticky; top:0; z-index:100; }
+  .admin-nav .badge { background:#e74c3c; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; }
+  .admin-nav a { color:#bdc3c7; text-decoration:none; font-size:13px; padding:4px 10px; border-radius:4px; }
+  .admin-nav a:hover { background:#34495e; color:#fff; }
+  .admin-nav a.active { background:#3498db; color:#fff; }
+
+  .login-box { max-width:400px; margin:80px auto; padding:32px; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,.1); text-align:center; }
+  .login-box h2 { color:#2c3e50; margin-bottom:16px; }
+  .login-box input { width:100%; padding:10px; margin:6px 0; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; }
+  .login-box button { width:100%; padding:12px; margin-top:12px; background:#2c3e50; color:#fff; border:none; border-radius:6px; font-size:15px; cursor:pointer; }
+
+  .container { max-width:100%; padding:16px; box-sizing:border-box; }
+  .toolbar { background:#fff; padding:12px 16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .toolbar label { font-size:13px; color:#555; }
+  .toolbar input, .toolbar select { padding:6px 10px; border:1px solid #ccc; border-radius:5px; font-size:13px; }
+  .btn-action { padding:6px 14px; border:none; border-radius:5px; font-size:13px; cursor:pointer; background:#3498db; color:#fff; }
+  .btn-action:hover { background:#2980b9; }
+  .btn-action.warn { background:#e67e22; }
+  .btn-action.warn:hover { background:#d35400; }
+  .btn-action.danger { background:#e74c3c; }
+  .btn-action:disabled { opacity:.5; cursor:not-allowed; }
+
+  .matrix-wrap { background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); overflow:auto; max-height:75vh; }
+  table.matrix { border-collapse:separate; border-spacing:0; width:100%; font-size:12px; }
+  table.matrix th, table.matrix td { padding:6px 4px; border-bottom:1px solid #eee; border-right:1px solid #eee; text-align:center; vertical-align:middle; white-space:nowrap; }
+  table.matrix thead th { background:#34495e; color:#fff; position:sticky; top:0; z-index:10; padding:8px 6px; }
+  table.matrix tbody tr:hover { background:#fafbfc; }
+  table.matrix .col-name { text-align:left; min-width:140px; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+  table.matrix .col-id { font-family:monospace; min-width:60px; }
+  table.matrix .col-class { color:#777; min-width:60px; }
+  table.matrix .sticky-col { position:sticky; left:0; background:#fff; z-index:5; }
+  table.matrix thead .sticky-col { background:#34495e; z-index:11; }
+
+  .cell-status { cursor:pointer; padding:6px 4px; border-radius:4px; min-width:55px; }
+  .cell-status:hover { outline:2px solid #3498db; }
+  .cell-status.no-auth { background:#ecf0f1; color:#bdc3c7; cursor:not-allowed; }
+  .cell-status.locked { background:#fff; color:#bdc3c7; }
+  .cell-status.unlocked { background:#fff3cd; color:#856404; }
+  .cell-status.submitted { background:#d4edda; color:#155724; font-weight:bold; }
+  .cell-status.retake { background:#ffe5b4; color:#a65300; }
+  .score-mini { font-size:10px; color:#555; display:block; margin-top:2px; }
+
+  .row-noauth { opacity:.55; background:#fafafa; }
+  .badge-noauth { background:#95a5a6; color:#fff; padding:1px 6px; border-radius:8px; font-size:10px; }
+  .badge-auth { background:#27ae60; color:#fff; padding:1px 6px; border-radius:8px; font-size:10px; }
+
+  .stats { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .stat-card { background:#fff; padding:10px 16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); font-size:13px; }
+  .stat-card b { color:#2c3e50; font-size:18px; display:block; }
+
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+  .modal-bg.show { display:flex; }
+  .modal { background:#fff; border-radius:10px; padding:20px; max-width:520px; width:90%; max-height:80vh; overflow:auto; }
+  .modal h3 { margin:0 0 12px; color:#2c3e50; }
+  .modal .row { margin:10px 0; }
+  .modal label { font-size:13px; color:#555; display:block; margin-bottom:4px; }
+  .modal select, .modal input[type=checkbox] { font-size:14px; }
+  .modal .actions { text-align:right; margin-top:16px; padding-top:12px; border-top:1px solid #eee; }
+  .modal .actions button { margin-left:8px; padding:8px 16px; border:none; border-radius:5px; cursor:pointer; font-size:13px; }
+  .modal .btn-cancel { background:#bdc3c7; color:#333; }
+  .modal .btn-ok { background:#27ae60; color:#fff; }
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="login-page">
+  <div class="login-box">
+    <h2>🔑 Admin テスト解放管理</h2>
+    <input type="email" id="admin-email" placeholder="メールアドレス" value="admin@trainee.local">
+    <input type="password" id="admin-pass" placeholder="パスワード">
+    <button onclick="doLogin()">ログイン</button>
+    <p id="login-error" style="color:#e74c3c;font-size:13px;margin-top:8px"></p>
+  </div>
+</div>
+
+<!-- 管理画面 -->
+<div id="admin-page" style="display:none">
+  <div class="admin-nav">
+    <span class="badge">ADMIN</span>
+    <a href="test-preview.html">📋 プレビュー</a>
+    <a href="test-admin.html" class="active">🔓 解放管理</a>
+    <span style="margin-left:auto;font-size:13px;color:#bdc3c7">
+      <span id="admin-email-display"></span>
+      <button onclick="doLogout()" style="margin-left:8px;padding:4px 10px;border-radius:4px;border:1px solid #fff;background:transparent;color:#fff;cursor:pointer;font-size:12px">ログアウト</button>
+    </span>
+  </div>
+
+  <div class="container">
+    <!-- 統計 -->
+    <div class="stats" id="stats-area"></div>
+
+    <!-- ツールバー -->
+    <div class="toolbar">
+      <label>クラス:
+        <select id="filter-class" onchange="renderMatrix()"><option value="">全部</option></select>
+      </label>
+      <label>会社:
+        <select id="filter-company" onchange="renderMatrix()"><option value="">全部</option></select>
+      </label>
+      <label>検索:
+        <input type="text" id="filter-search" placeholder="学生ID/名前" oninput="renderMatrix()" style="width:140px">
+      </label>
+      <label>
+        <input type="checkbox" id="filter-auth" checked onchange="renderMatrix()">
+        認証アカウントあり のみ
+      </label>
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn-action" onclick="openBulkModal()">⚡ 一括解放</button>
+        <button class="btn-action warn" onclick="reload()">🔄 再読込</button>
+      </span>
+    </div>
+
+    <!-- マトリクス -->
+    <div class="matrix-wrap" id="matrix-wrap">
+      <p style="text-align:center;padding:40px;color:#888">読み込み中...</p>
+    </div>
+
+    <p style="font-size:12px;color:#777;margin-top:10px">
+      🔘 セルをクリックでアクセス切替 ・ 🔒未解放 ・ 📝解放済 ・ ✅提出済+点数 ・ 🔁再受験許可
+    </p>
+  </div>
+</div>
+
+<!-- 一括モーダル -->
+<div class="modal-bg" id="bulk-modal">
+  <div class="modal">
+    <h3>⚡ 一括テスト解放</h3>
+    <div class="row">
+      <label>対象:</label>
+      <select id="bulk-target">
+        <option value="filtered">現在表示中の学生 全員</option>
+        <option value="class">特定クラスのみ</option>
+        <option value="company">特定会社のみ</option>
+      </select>
+    </div>
+    <div class="row" id="bulk-class-row" style="display:none">
+      <label>クラス:</label>
+      <select id="bulk-class"></select>
+    </div>
+    <div class="row" id="bulk-company-row" style="display:none">
+      <label>会社:</label>
+      <select id="bulk-company"></select>
+    </div>
+    <div class="row">
+      <label>解放するテスト:</label>
+      <select id="bulk-test">
+        <option value="">-- 選択 --</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>
+        <input type="checkbox" id="bulk-retake">
+        再受験許可（既に提出済みでも再受験可能にする）
+      </label>
+    </div>
+    <p style="font-size:12px;color:#777;background:#fffde7;padding:8px;border-radius:4px">
+      ※ 認証アカウントが無い学生はスキップされます。
+    </p>
+    <div class="actions">
+      <button class="btn-cancel" onclick="closeBulkModal()">キャンセル</button>
+      <button class="btn-ok" onclick="doBulkGrant()">実行</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script>
+let _trainees = [];
+let _tests = [];
+let _accessMap = {}; // key: trainee_id|test_id → access row
+let _resultMap = {}; // key: trainee_id|test_id → latest result
+
+async function doLogin() {
+  const email = document.getElementById('admin-email').value;
+  const pass = document.getElementById('admin-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = error.message; return; }
+
+  const { data: profile } = await supabase
+    .from('user_profiles').select('role').eq('id', data.user.id).single();
+
+  if (!profile || !['admin', 'org'].includes(profile.role)) {
+    errEl.textContent = '管理者アカウントではありません';
+    await supabase.auth.signOut();
+    return;
+  }
+
+  document.getElementById('admin-email-display').textContent = email;
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('admin-page').style.display = 'block';
+  await reload();
+}
+
+async function doLogout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+async function reload() {
+  document.getElementById('matrix-wrap').innerHTML = '<p style="text-align:center;padding:40px;color:#888">読み込み中...</p>';
+
+  // 並列取得
+  const [trRes, tdRes, taRes, trrRes] = await Promise.all([
+    supabase.from('trainees').select('id,student_id,name_katakana,class_group,company,auth_user_id').order('student_id'),
+    supabase.from('test_definitions').select('id,display_name,sort_order,sections').order('sort_order'),
+    supabase.from('test_access').select('id,trainee_id,test_id,is_retake'),
+    supabase.from('test_results').select('id,trainee_id,test_name,score_vocab,score_grammar,score_listening,test_date,created_at').order('created_at', { ascending: false })
+  ]);
+
+  if (trRes.error || tdRes.error || taRes.error || trrRes.error) {
+    document.getElementById('matrix-wrap').innerHTML = '<p style="color:red;padding:20px">読み込みエラー: ' + (trRes.error||tdRes.error||taRes.error||trrRes.error).message + '</p>';
+    return;
+  }
+
+  _trainees = trRes.data || [];
+  _tests = tdRes.data || [];
+
+  _accessMap = {};
+  (taRes.data || []).forEach(a => { _accessMap[a.trainee_id + '|' + a.test_id] = a; });
+
+  _resultMap = {};
+  (trrRes.data || []).forEach(r => {
+    const k = r.trainee_id + '|' + r.test_name;
+    if (!_resultMap[k]) _resultMap[k] = r; // 最新のみ（DESCソート済み）
+  });
+
+  // フィルタ初期化
+  const classes = [...new Set(_trainees.map(t => t.class_group).filter(Boolean))].sort();
+  const companies = [...new Set(_trainees.map(t => t.company).filter(Boolean))].sort();
+  fillSelect('filter-class', classes);
+  fillSelect('filter-company', companies);
+  fillSelect('bulk-class', classes, true);
+  fillSelect('bulk-company', companies, true);
+
+  // テストドロップダウン
+  const bulkTest = document.getElementById('bulk-test');
+  bulkTest.innerHTML = '<option value="">-- 選択 --</option>';
+  _tests.forEach(t => {
+    bulkTest.innerHTML += `<option value="${t.id}">${t.display_name}</option>`;
+  });
+
+  renderStats();
+  renderMatrix();
+}
+
+function fillSelect(id, items, noAll) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = noAll ? '' : '<option value="">全部</option>';
+  items.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+  sel.value = cur;
+}
+
+function renderStats() {
+  const total = _trainees.length;
+  const withAuth = _trainees.filter(t => t.auth_user_id).length;
+  const totalAccess = Object.keys(_accessMap).length;
+  const totalSubmissions = Object.keys(_resultMap).length;
+  document.getElementById('stats-area').innerHTML = `
+    <div class="stat-card"><b>${total}</b>登録学生</div>
+    <div class="stat-card"><b>${withAuth}</b>ログイン可能</div>
+    <div class="stat-card"><b>${total - withAuth}</b>アカウント未作成</div>
+    <div class="stat-card"><b>${totalAccess}</b>テスト解放数</div>
+    <div class="stat-card"><b>${totalSubmissions}</b>提出済み</div>
+  `;
+}
+
+function renderMatrix() {
+  const fClass = document.getElementById('filter-class').value;
+  const fCompany = document.getElementById('filter-company').value;
+  const fSearch = document.getElementById('filter-search').value.toLowerCase();
+  const onlyAuth = document.getElementById('filter-auth').checked;
+
+  const filtered = _trainees.filter(t => {
+    if (onlyAuth && !t.auth_user_id) return false;
+    if (fClass && t.class_group !== fClass) return false;
+    if (fCompany && t.company !== fCompany) return false;
+    if (fSearch && !((t.student_id||'').toLowerCase().includes(fSearch) || (t.name_katakana||'').toLowerCase().includes(fSearch))) return false;
+    return true;
+  });
+
+  let html = '<table class="matrix"><thead><tr>';
+  html += '<th class="sticky-col col-id">学生ID</th>';
+  html += '<th class="sticky-col col-name" style="left:60px">名前</th>';
+  html += '<th>クラス</th>';
+  html += '<th>会社</th>';
+  html += '<th>認証</th>';
+  _tests.forEach(t => {
+    html += `<th title="${t.display_name}">${t.id}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  filtered.forEach(t => {
+    const noAuth = !t.auth_user_id;
+    html += `<tr class="${noAuth ? 'row-noauth' : ''}">`;
+    html += `<td class="sticky-col col-id">${t.student_id || '-'}</td>`;
+    html += `<td class="sticky-col col-name" style="left:60px">${t.name_katakana || ''}</td>`;
+    html += `<td class="col-class">${t.class_group || ''}</td>`;
+    html += `<td class="col-class">${t.company || ''}</td>`;
+    html += `<td>${noAuth ? '<span class="badge-noauth">未作成</span>' : '<span class="badge-auth">OK</span>'}</td>`;
+
+    _tests.forEach(test => {
+      if (noAuth) {
+        html += `<td><span class="cell-status no-auth">—</span></td>`;
+        return;
+      }
+      const k = t.id + '|' + test.id;
+      const access = _accessMap[k];
+      const result = _resultMap[k];
+
+      let cls = 'locked', label = '🔒';
+      if (result) {
+        cls = 'submitted';
+        const total = (result.score_vocab||0) + (result.score_grammar||0) + (result.score_listening||0);
+        const max = (test.sections||['goii','bunpo','chokkai']).length * 100;
+        label = `✅<span class="score-mini">${total}/${max}</span>`;
+      } else if (access) {
+        cls = access.is_retake ? 'retake' : 'unlocked';
+        label = access.is_retake ? '🔁' : '📝';
+      }
+      html += `<td><span class="cell-status ${cls}" onclick="onCellClick('${t.id}','${test.id}','${t.student_id}','${test.id}')">${label}</span></td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('matrix-wrap').innerHTML = html;
+
+  if (filtered.length === 0) {
+    document.getElementById('matrix-wrap').innerHTML += '<p style="text-align:center;padding:30px;color:#888">該当する学生がいません</p>';
+  }
+}
+
+async function onCellClick(traineeId, testId, studentId, testIdLabel) {
+  const k = traineeId + '|' + testId;
+  const access = _accessMap[k];
+  const result = _resultMap[k];
+
+  let action;
+  if (result && access && !access.is_retake) {
+    action = confirm(`${studentId} の ${testIdLabel}: 提出済みです。\n\n[OK] 再受験を許可する\n[キャンセル] 何もしない`) ? 'retake' : null;
+  } else if (result && access && access.is_retake) {
+    action = confirm(`${studentId} の ${testIdLabel}: 再受験許可中。\n\n[OK] 再受験許可を取り消す\n[キャンセル] 何もしない`) ? 'cancel-retake' : null;
+  } else if (access) {
+    action = confirm(`${studentId} の ${testIdLabel}: 解放中。\n\n[OK] 解放を取り消す\n[キャンセル] 何もしない`) ? 'revoke' : null;
+  } else {
+    action = confirm(`${studentId} の ${testIdLabel}: 未解放。\n\n[OK] 解放する\n[キャンセル] 何もしない`) ? 'grant' : null;
+  }
+  if (!action) return;
+
+  if (action === 'grant') {
+    const { error } = await supabase.from('test_access').insert({ trainee_id: traineeId, test_id: testId });
+    if (error) { alert('エラー: ' + error.message); return; }
+  } else if (action === 'revoke') {
+    const { error } = await supabase.from('test_access').delete().eq('trainee_id', traineeId).eq('test_id', testId);
+    if (error) { alert('エラー: ' + error.message); return; }
+  } else if (action === 'retake') {
+    const { error } = await supabase.from('test_access').update({ is_retake: true }).eq('trainee_id', traineeId).eq('test_id', testId);
+    if (error) { alert('エラー: ' + error.message); return; }
+  } else if (action === 'cancel-retake') {
+    const { error } = await supabase.from('test_access').update({ is_retake: false }).eq('trainee_id', traineeId).eq('test_id', testId);
+    if (error) { alert('エラー: ' + error.message); return; }
+  }
+  await reload();
+}
+
+// ===== 一括モーダル =====
+function openBulkModal() {
+  document.getElementById('bulk-modal').classList.add('show');
+  // 対象切替
+  document.getElementById('bulk-target').onchange = (e) => {
+    document.getElementById('bulk-class-row').style.display = e.target.value === 'class' ? 'block' : 'none';
+    document.getElementById('bulk-company-row').style.display = e.target.value === 'company' ? 'block' : 'none';
+  };
+}
+function closeBulkModal() {
+  document.getElementById('bulk-modal').classList.remove('show');
+}
+
+async function doBulkGrant() {
+  const target = document.getElementById('bulk-target').value;
+  const testId = document.getElementById('bulk-test').value;
+  const isRetake = document.getElementById('bulk-retake').checked;
+  if (!testId) { alert('テストを選択してください'); return; }
+
+  let targetTrainees;
+  if (target === 'filtered') {
+    // 現在表示中の条件を再適用
+    const fClass = document.getElementById('filter-class').value;
+    const fCompany = document.getElementById('filter-company').value;
+    const fSearch = document.getElementById('filter-search').value.toLowerCase();
+    targetTrainees = _trainees.filter(t => {
+      if (!t.auth_user_id) return false;
+      if (fClass && t.class_group !== fClass) return false;
+      if (fCompany && t.company !== fCompany) return false;
+      if (fSearch && !((t.student_id||'').toLowerCase().includes(fSearch) || (t.name_katakana||'').toLowerCase().includes(fSearch))) return false;
+      return true;
+    });
+  } else if (target === 'class') {
+    const cls = document.getElementById('bulk-class').value;
+    targetTrainees = _trainees.filter(t => t.auth_user_id && t.class_group === cls);
+  } else {
+    const cmp = document.getElementById('bulk-company').value;
+    targetTrainees = _trainees.filter(t => t.auth_user_id && t.company === cmp);
+  }
+
+  if (targetTrainees.length === 0) { alert('対象学生がいません（認証アカウント有りのみ対象）'); return; }
+  if (!confirm(`${targetTrainees.length}名に「${testId}」を解放します。よろしいですか？`)) return;
+
+  // 既存access確認後にUPSERT
+  let okCount = 0, skipCount = 0;
+  for (const t of targetTrainees) {
+    const k = t.id + '|' + testId;
+    const exist = _accessMap[k];
+    if (exist) {
+      if (isRetake && !exist.is_retake) {
+        const { error } = await supabase.from('test_access').update({ is_retake: true }).eq('id', exist.id);
+        if (!error) okCount++;
+      } else {
+        skipCount++;
+      }
+    } else {
+      const { error } = await supabase.from('test_access').insert({ trainee_id: t.id, test_id: testId, is_retake: isRetake });
+      if (!error) okCount++;
+      else skipCount++;
+    }
+  }
+
+  closeBulkModal();
+  alert(`完了: ${okCount}名解放 / ${skipCount}名スキップ（既に同状態）`);
+  await reload();
+}
+
+// 自動ログイン
+(async function() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    const { data: profile } = await supabase
+      .from('user_profiles').select('role').eq('id', session.user.id).single();
+    if (profile && ['admin', 'org'].includes(profile.role)) {
+      document.getElementById('admin-email-display').textContent = session.user.email;
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('admin-page').style.display = 'block';
+      await reload();
+    }
+  }
+})();
+</script>
+</body>
+</html>
