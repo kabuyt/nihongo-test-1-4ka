@@ -396,23 +396,80 @@ R.render_word_puzzle = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
-  const puzzleContainer = document.createElement('div');
-  puzzleContainer.id = 'bq3-puzzles';
-  block.appendChild(puzzleContainer);
-  q.puzzles.forEach(p => {
-    const h = document.createElement('input');
-    h.type = 'hidden';
-    h.id = p.field_id;
-    block.appendChild(h);
+  q.puzzles.forEach((p, idx) => {
+    const puzzleDiv = document.createElement('div');
+    puzzleDiv.style.cssText = 'margin:16px 0;padding:12px;background:#f8f9fa;border-radius:8px';
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:bold;color:#1a5276;margin-bottom:8px';
+    title.innerHTML = `${idx + 1}）`;
+    puzzleDiv.appendChild(title);
+
+    // 回答表示エリア（選択済み）
+    const answerArea = document.createElement('div');
+    answerArea.style.cssText = 'min-height:44px;padding:8px;background:#fff;border:2px dashed #aaa;border-radius:6px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center';
+    answerArea.dataset.placeholder = 'タップして順番に並べる →';
+    puzzleDiv.appendChild(answerArea);
+
+    // 未選択タイルエリア
+    const tilesArea = document.createElement('div');
+    tilesArea.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+    puzzleDiv.appendChild(tilesArea);
+
+    // 隠しフィールド（結果文字列）
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.id = p.field_id;
+    puzzleDiv.appendChild(hidden);
+
+    // 状態
+    const state = { selected: [], remaining: p.words.slice() };
+
+    function makeTile(word, inAnswer) {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'puzzle-tile';
+      tile.style.cssText = 'padding:6px 12px;border:1.5px solid #1a5276;background:' + (inAnswer ? '#1a5276' : '#fff') + ';color:' + (inAnswer ? '#fff' : '#1a5276') + ';border-radius:6px;cursor:pointer;font-size:14px;font-family:inherit';
+      tile.innerHTML = word;
+      tile.dataset.word = word;
+      return tile;
+    }
+
+    function render() {
+      answerArea.innerHTML = '';
+      if (state.selected.length === 0) {
+        const ph = document.createElement('span');
+        ph.style.cssText = 'color:#aaa;font-size:12px';
+        ph.textContent = answerArea.dataset.placeholder;
+        answerArea.appendChild(ph);
+      }
+      state.selected.forEach((w, i) => {
+        const t = makeTile(w, true);
+        t.onclick = () => {
+          // クリックで未選択側に戻す
+          state.selected.splice(i, 1);
+          state.remaining.push(w);
+          render();
+        };
+        answerArea.appendChild(t);
+      });
+      tilesArea.innerHTML = '';
+      state.remaining.forEach((w, i) => {
+        const t = makeTile(w, false);
+        t.onclick = () => {
+          state.remaining.splice(i, 1);
+          state.selected.push(w);
+          render();
+        };
+        tilesArea.appendChild(t);
+      });
+      // 隠しフィールドを更新（rubyタグを除去したプレーン文字列）
+      const plain = state.selected.map(w => w.replace(/<ruby>([^<]*)<rt>[^<]*<\/rt><\/ruby>/g, '$1')).join('');
+      hidden.value = plain;
+    }
+    render();
+    block.appendChild(puzzleDiv);
   });
   container.appendChild(block);
-  // パズル初期化（DOMに追加された後に呼ぶ）
-  setTimeout(() => {
-    if (typeof initB3Puzzles === 'function') {
-      window._b3Words = q.puzzles.map(p => p.words);
-      initB3Puzzles();
-    }
-  }, 0);
 };
 
 // select_choice: 選択式問題
