@@ -409,14 +409,41 @@ R.render_select_in_sentence = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
+  if (q.image_src) {
+    const imgDiv = document.createElement('div');
+    imgDiv.style.cssText = 'text-align:center;margin:10px 0';
+    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;max-height:420px;border:1px solid #ddd;border-radius:6px">`;
+    block.appendChild(imgDiv);
+  }
+  if (q.example_html) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+    ex.innerHTML = q.example_html;
+    block.appendChild(ex);
+  }
   const wrap = document.createElement('div');
   wrap.style.cssText = 'margin:8px 0;line-height:3';
+  // シャッフル用ヘルパー
+  const shuffle = arr => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
   q.items.forEach(item => {
     const p = document.createElement('p');
     p.className = 'sentence';
     let html = item.sentence_html;
     item.fields.forEach(f => {
-      const selectHtml = `<span class="fill-inline"><select id="${f.field_id}" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">Chọn</option>${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select></span>`;
+      const shuffled = shuffle(f.options || []);
+      const optsHtml = shuffled.map(o => {
+        if (typeof o === 'object') return `<option value="${o.value}">${o.label}</option>`;
+        return `<option value="${o}">${o}</option>`;
+      }).join('');
+      const selectHtml = `<span class="fill-inline"><select id="${f.field_id}" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">Chọn</option>${optsHtml}</select></span>`;
       html = html.replace('{' + f.field_id + '}', selectHtml);
     });
     p.innerHTML = html;
