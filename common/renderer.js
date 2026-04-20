@@ -237,18 +237,19 @@ R.render_table_fill = function(q, container) {
       });
       table.appendChild(headTr);
     }
-    // 行構造判定: items 数 ≤ headers 数 かつ col が一意なら1行配置、それ以外は行ごとに配置
+    // 行構造判定: items が col を持ち、col が一意なら1行配置、それ以外は行ごとに配置
     const headerCount = (tbl.headers || []).length;
     const colSet = new Set(tbl.items.map(item => item.col).filter(c => c !== undefined));
-    const isSingleRow = headerCount > 0 && tbl.items.length <= headerCount && colSet.size === tbl.items.filter(i => i.col !== undefined).length;
+    const hasColAll = tbl.items.every(item => item.col !== undefined);
+    const isSingleRow = hasColAll && colSet.size === tbl.items.length;
     if (isSingleRow) {
       const bodyTr = document.createElement('tr');
       tbl.items.forEach(item => {
         const td = document.createElement('td');
         if (item.field_id === null) {
           td.className = 'already';
-          td.style.cssText = 'text-align:center;font-size:11px';
-          td.textContent = item.fixed_value;
+          td.style.cssText = 'text-align:center;font-size:12px';
+          td.innerHTML = item.fixed_value;
         } else if (item.input_type === 'text') {
           const inp = document.createElement('input');
           inp.type = 'text'; inp.id = item.field_id;
