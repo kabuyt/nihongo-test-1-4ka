@@ -227,7 +227,23 @@ R.render_table_fill = function(q, container) {
     const table = document.createElement('table');
     table.className = 'qa-table';
     table.style.width = '100%';
+    table.style.tableLayout = 'fixed';
     if (ti > 0) table.style.marginTop = '10px';
+    // 各列を均等幅に
+    const colCount = Math.max(
+      (tbl.headers || []).length,
+      ((tbl.items || []).reduce((m, it) => it.col !== undefined ? Math.max(m, it.col + 1) : m, 0))
+    );
+    if (colCount > 0) {
+      const colgroup = document.createElement('colgroup');
+      const w = (100 / colCount).toFixed(4) + '%';
+      for (let i = 0; i < colCount; i++) {
+        const c = document.createElement('col');
+        c.style.width = w;
+        colgroup.appendChild(c);
+      }
+      table.appendChild(colgroup);
+    }
     if (tbl.headers) {
       const headTr = document.createElement('tr');
       tbl.headers.forEach(h => {
