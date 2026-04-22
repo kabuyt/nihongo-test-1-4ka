@@ -12,10 +12,11 @@ R.setBasePath = function(testId) {
   _basePath = 'static/' + testId + '/';
 };
 
-// アセットパスを解決
+// アセットパスを解決（rubyタグ除去の安全網つき）
 function asset(src) {
   if (!src) return '';
-  return _basePath + src;
+  const plain = src.replace(/<ruby>([^<]*)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+  return _basePath + plain;
 }
 
 // select要素を生成（options配列をシャッフルして正解が先頭に来ないように）
