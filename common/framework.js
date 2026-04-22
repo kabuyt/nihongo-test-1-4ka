@@ -305,6 +305,7 @@ TF.submitResults = async function() {
           score_grammar:     _scores.bunpo,
           score_listening:   _scores.chokkai,
           score_conversation: null,
+          leave_count:       _leaveCount,
           answers_json:      typeof window.collectPayload === 'function' ? window.collectPayload() : null
         })
       }
