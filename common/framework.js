@@ -69,6 +69,7 @@ function _startAntiCheat() {
       _silentReset();
     } else {
       _silentReset();
+      _playBeep();
       alert(`⚠ Bạn đã rời khỏi bài kiểm tra!\nToàn bộ câu trả lời đã bị XÓA.\n\n（離脱を検出。回答をリセットしました。${_leaveCount}回目）`);
     }
   });
@@ -108,6 +109,29 @@ function _silentReset() {
   document.getElementById('result-box').style.display = 'none';
   // テスト固有のリセットがあれば呼ぶ
   if (typeof window.onTestReset === 'function') window.onTestReset();
+}
+
+// ===== 離脱警告ビープ =====
+function _playBeep() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    [0, 180, 360].forEach(delay => {
+      setTimeout(() => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = 880;
+        gain.gain.value = 0.4;
+        osc.start();
+        setTimeout(() => osc.stop(), 140);
+      }, delay);
+    });
+    setTimeout(() => ctx.close(), 800);
+  } catch (e) { /* 無視 */ }
 }
 
 // ===== アプリ内ブラウザ検出 =====
