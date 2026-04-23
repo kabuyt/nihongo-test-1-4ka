@@ -54,9 +54,11 @@ function grade_flex_match(rule, answerKey, userAnswers) {
     normalize_spaces: rule.normalize_spaces !== false,
     strip_accents: rule.strip_accents !== false,  // デフォルトON
     strip_suffix: rule.strip_suffix,
+    strip_punctuation: rule.strip_punctuation === true,
   };
   const sep = rule.separator || '／';
   const sepRegex = new RegExp('[' + sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '、/,，]');
+  const exactOnly = rule.exact_only === true;
   let score = 0;
   (rule.field_ids || []).forEach(fid => {
     const expected = answerKey[fid];
@@ -66,8 +68,10 @@ function grade_flex_match(rule, answerKey, userAnswers) {
     // 学生の回答も区切って複数表現対応
     const actVariants = String(actual || '').split(sepRegex).map(s => normalize(s, opts)).filter(Boolean);
     if (actVariants.length === 0) return;
-    // いずれかの期待値が、いずれかの回答と一致 / 部分一致ならOK
-    const matched = expVariants.some(e => actVariants.some(a => a === e || a.includes(e) || e.includes(a)));
+    // exact_only: 正規化後の完全一致のみ（部分一致を許さない）
+    const matched = exactOnly
+      ? expVariants.some(e => actVariants.some(a => a === e))
+      : expVariants.some(e => actVariants.some(a => a === e || a.includes(e) || e.includes(a)));
     if (matched) score += pts;
   });
   return score;

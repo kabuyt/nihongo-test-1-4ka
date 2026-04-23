@@ -1372,9 +1372,14 @@ function makeField(f, parentEl) {
 R.render_free_text = function(q, container) {
   const block = createQBlock(q.title_html);
   renderIntro(q, block);
+  const twoCol = q.layout === 'two_column';
+  const wrap = document.createElement('div');
+  if (twoCol) {
+    wrap.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px';
+  }
   q.items.forEach(item => {
     const row = document.createElement('div');
-    row.style.cssText = 'margin:10px 0;padding:8px;background:#f8f9fa;border-radius:6px';
+    row.style.cssText = 'margin:' + (twoCol ? '0' : '10px 0') + ';padding:8px;background:#f8f9fa;border-radius:6px';
     if (item.prompt_html || item.label) {
       const p = document.createElement('div');
       p.style.cssText = 'font-size:14px;margin-bottom:6px';
@@ -1384,9 +1389,11 @@ R.render_free_text = function(q, container) {
     const inp = document.createElement('input');
     inp.type = 'text'; inp.id = item.field_id;
     inp.style.cssText = 'width:100%;padding:6px;border:1px solid #aaa;border-radius:4px;font-size:14px;box-sizing:border-box';
+    if (item.placeholder) inp.placeholder = item.placeholder;
     row.appendChild(inp);
-    block.appendChild(row);
+    wrap.appendChild(row);
   });
+  block.appendChild(wrap);
   container.appendChild(block);
 };
 R.render_word_conjugation = R.render_free_text;
