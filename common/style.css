@@ -2,13 +2,20 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f0f2f5;color:#333;font-size:15px}
 /* ルビ表示最適化（スマホでも見えるように） */
-ruby{ruby-position:over;line-height:2.2}
-rt{font-size:.65em;color:inherit;user-select:none;font-weight:normal}
+ruby{ruby-position:over;ruby-align:center;line-height:2.4;display:inline-block;vertical-align:baseline}
+rt{font-size:.7em;color:inherit;user-select:none;font-weight:normal;line-height:1;text-align:center;display:block}
 .q-block ruby{line-height:2.4}
 .sentence ruby,.qlabel ruby{line-height:2.6}
 /* word_puzzle タイル内のルビ */
-.puzzle-tile ruby{line-height:2}
-.puzzle-tile rt{font-size:.55em}
+.puzzle-tile{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.puzzle-tile ruby{line-height:2.2}
+.puzzle-tile rt{font-size:.6em}
+/* スマホ向け強化 */
+@media (max-width:600px){
+  ruby{line-height:2.6}
+  rt{font-size:.75em}
+  .puzzle-tile{padding-top:14px!important;padding-bottom:8px!important}
+}
 header{background:#1a5276;color:#fff;padding:14px 16px;text-align:center}
 header h1{font-size:18px;margin-bottom:4px;line-height:1.3}
 header p{font-size:12px;opacity:.85}
