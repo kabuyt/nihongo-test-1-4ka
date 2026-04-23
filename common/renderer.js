@@ -125,50 +125,149 @@ R.render_tile_sort_buckets = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
+
+  // 状態管理
+  const state = {
+    selectedKey: null,            // 現在選択中のタイル key
+    placement: {},                // key -> bucketId（'g3-b-<id>'）またはundefined（プール内）
+  };
+
+  const tileMap = {};             // key -> {label}
+  q.tiles.forEach(t => { tileMap[t.key] = t; });
+
   // タイルプール
   const pool = document.createElement('div');
   pool.className = 'g3-pool';
-  pool.id = 'g3-pool';
-  q.tiles.forEach(tile => {
-    const t = document.createElement('div');
-    t.className = 'g3-tile';
-    t.dataset.key = tile.key;
-    t.innerHTML = tile.label;
-    t.onclick = function(e) { g3TileClick(e, this); };
-    pool.appendChild(t);
-  });
+  pool.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f8f9fa;border:2px dashed #aaa;border-radius:6px;margin-bottom:10px';
   block.appendChild(pool);
+
   // バケット
   const bucketsDiv = document.createElement('div');
   bucketsDiv.className = 'g3-buckets';
+  bucketsDiv.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  block.appendChild(bucketsDiv);
+
+  // バケットDIV作成
+  const bucketDrops = {};         // bucketId -> drop element
   q.buckets.forEach(b => {
     const bucket = document.createElement('div');
-    bucket.className = 'g3-bucket';
-    const bucketId = 'g3-b-' + b.id.replace('g3_', '');
-    bucket.onclick = function() { g3BucketClick(bucketId); };
-    bucket.innerHTML = `<div class="g3-bucket-label">${b.label}</div><div class="g3-bucket-drop" id="${bucketId}"></div>`;
+    bucket.style.cssText = 'flex:1;min-width:120px;border:1.5px solid #1a5276;border-radius:6px;padding:8px;background:#fff;cursor:pointer';
+    const bucketId = 'g3-b-' + String(b.id).replace('g3_', '');
+    bucket.innerHTML = `<div style="font-weight:bold;color:#1a5276;font-size:13px;margin-bottom:6px">${b.label}</div>`;
+    const drop = document.createElement('div');
+    drop.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;min-height:40px';
+    drop.dataset.bucketId = bucketId;
+    drop.dataset.fieldId = b.id;
+    bucket.appendChild(drop);
+    bucketDrops[bucketId] = drop;
+    bucket.onclick = (e) => { e.stopPropagation(); placeOrPick(bucketId); };
     bucketsDiv.appendChild(bucket);
   });
+
   if (q.none_bucket) {
     const nb = document.createElement('div');
-    nb.className = 'g3-bucket g3-bucket-none';
-    nb.onclick = function() { g3BucketClick('g3-b-none'); };
-    nb.innerHTML = `<div class="g3-bucket-label">${q.none_bucket.label}</div><div class="g3-bucket-drop" id="g3-b-none"></div>`;
+    nb.style.cssText = 'flex:1;min-width:120px;border:1.5px solid #aaa;border-radius:6px;padding:8px;background:#fafafa;cursor:pointer';
+    nb.innerHTML = `<div style="font-weight:bold;color:#777;font-size:13px;margin-bottom:6px">${q.none_bucket.label}</div>`;
+    const drop = document.createElement('div');
+    drop.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;min-height:40px';
+    drop.dataset.bucketId = 'g3-b-none';
+    nb.appendChild(drop);
+    bucketDrops['g3-b-none'] = drop;
+    nb.onclick = (e) => { e.stopPropagation(); placeOrPick('g3-b-none'); };
     bucketsDiv.appendChild(nb);
   }
-  block.appendChild(bucketsDiv);
-  // リセットボタン
-  const resetDiv = document.createElement('div');
-  resetDiv.style.cssText = 'text-align:right;margin-top:6px';
-  resetDiv.innerHTML = '<button type="button" onclick="g3Reset()" style="font-size:12px;padding:4px 12px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555">↺ Đặt lại</button>';
-  block.appendChild(resetDiv);
-  // Hidden fields
+
+  // 隠し入力（バケットの中身を JSON配列で保存）
   q.buckets.forEach(b => {
     const h = document.createElement('input');
     h.type = 'hidden';
     h.id = b.id;
     block.appendChild(h);
   });
+
+  // リセットボタン
+  const resetDiv = document.createElement('div');
+  resetDiv.style.cssText = 'text-align:right;margin-top:8px';
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.textContent = '↺ Đặt lại / リセット';
+  resetBtn.style.cssText = 'font-size:12px;padding:4px 12px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555';
+  resetBtn.onclick = () => {
+    state.selectedKey = null;
+    state.placement = {};
+    rerender();
+  };
+  resetDiv.appendChild(resetBtn);
+  block.appendChild(resetDiv);
+
+  function makeTile(key) {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    const isSelected = state.selectedKey === key;
+    tile.style.cssText = `padding:6px 12px;border:2px solid ${isSelected ? '#e67e22' : '#1a5276'};background:${isSelected ? '#fff3cd' : '#fff'};color:#1a5276;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit`;
+    tile.innerHTML = tileMap[key].label;
+    tile.dataset.key = key;
+    tile.onclick = (e) => {
+      e.stopPropagation();
+      // 既に置かれているタイルをクリック → 取り出してプールに戻す
+      if (state.placement[key]) {
+        delete state.placement[key];
+        state.selectedKey = null;
+      } else {
+        // プールのタイルをクリック → 選択 or 解除
+        state.selectedKey = state.selectedKey === key ? null : key;
+      }
+      rerender();
+    };
+    return tile;
+  }
+
+  function placeOrPick(bucketId) {
+    if (state.selectedKey) {
+      // 選択中のタイルをこのバケットに置く
+      state.placement[state.selectedKey] = bucketId;
+      state.selectedKey = null;
+      rerender();
+    }
+  }
+
+  function updateHiddenFields() {
+    q.buckets.forEach(b => {
+      const bucketId = 'g3-b-' + String(b.id).replace('g3_', '');
+      const keys = Object.keys(state.placement).filter(k => state.placement[k] === bucketId);
+      const h = document.getElementById(b.id);
+      if (h) h.value = JSON.stringify(keys);
+    });
+  }
+
+  function rerender() {
+    // プールを再構築
+    pool.innerHTML = '';
+    q.tiles.forEach(t => {
+      if (!state.placement[t.key]) {
+        pool.appendChild(makeTile(t.key));
+      }
+    });
+    if (pool.children.length === 0) {
+      const ph = document.createElement('span');
+      ph.style.cssText = 'color:#aaa;font-size:12px;padding:4px';
+      ph.textContent = '（全てのカードを配置しました）';
+      pool.appendChild(ph);
+    }
+    // バケットを再構築
+    Object.keys(bucketDrops).forEach(bucketId => {
+      const drop = bucketDrops[bucketId];
+      drop.innerHTML = '';
+      q.tiles.forEach(t => {
+        if (state.placement[t.key] === bucketId) {
+          drop.appendChild(makeTile(t.key));
+        }
+      });
+    });
+    updateHiddenFields();
+  }
+
+  rerender();
   container.appendChild(block);
 };
 
