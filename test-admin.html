@@ -159,8 +159,8 @@
     </div>
     <div class="row">
       <label>
-        <input type="checkbox" id="bulk-retake">
-        再受験許可（既に提出済みでも再受験可能にする）
+        <input type="checkbox" id="bulk-retake" checked>
+        <b>再受験許可</b>（提出済みでも再受験可能にする・推奨ON）
       </label>
     </div>
     <p style="font-size:12px;color:#777;background:#fffde7;padding:8px;border-radius:4px">
@@ -421,27 +421,42 @@ async function doBulkGrant() {
   if (targetTrainees.length === 0) { alert('対象学生がいません（認証アカウント有りのみ対象）'); return; }
   if (!confirm(`${targetTrainees.length}名に「${testId}」を解放します。よろしいですか？`)) return;
 
-  // 既存access確認後にUPSERT
-  let okCount = 0, skipCount = 0;
+  // カウンタ
+  let newGrant = 0, newRetake = 0, alreadyRetake = 0, alreadyAccess = 0, submitted = 0, errors = 0;
   for (const t of targetTrainees) {
     const k = t.id + '|' + testId;
     const exist = _accessMap[k];
+    const hasResult = !!_resultMap[k];
     if (exist) {
-      if (isRetake && !exist.is_retake) {
-        const { error } = await supabase.from('test_access').update({ is_retake: true }).eq('id', exist.id);
-        if (!error) okCount++;
+      // 既に access あり
+      if (isRetake) {
+        if (!exist.is_retake) {
+          const { error } = await supabase.from('test_access').update({ is_retake: true }).eq('id', exist.id);
+          if (error) errors++;
+          else newRetake++;
+          if (hasResult) submitted++;
+        } else {
+          alreadyRetake++;
+        }
       } else {
-        skipCount++;
+        alreadyAccess++;
       }
     } else {
+      // 新規 INSERT
       const { error } = await supabase.from('test_access').insert({ trainee_id: t.id, test_id: testId, is_retake: isRetake });
-      if (!error) okCount++;
-      else skipCount++;
+      if (error) errors++;
+      else newGrant++;
     }
   }
 
   closeBulkModal();
-  alert(`完了: ${okCount}名解放 / ${skipCount}名スキップ（既に同状態）`);
+  const lines = [`「${testId}」の処理完了:`];
+  if (newGrant) lines.push(`  新規解放: ${newGrant}名`);
+  if (newRetake) lines.push(`  再受験許可をON: ${newRetake}名 (内 提出済みから再受験可能化: ${submitted}名)`);
+  if (alreadyRetake) lines.push(`  既に再受験許可中: ${alreadyRetake}名`);
+  if (alreadyAccess) lines.push(`  既に解放済み(再受験OFF): ${alreadyAccess}名`);
+  if (errors) lines.push(`  エラー: ${errors}名`);
+  alert(lines.join('\n'));
   await reload();
 }
 
