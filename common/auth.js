@@ -9,7 +9,7 @@ let _studentProfile = null;
  * @returns {boolean} 成功/失敗
  */
 async function studentLogin(studentId, birthDate) {
-  const email = studentId.toUpperCase() + '@student.trainee.local';
+  const email = studentId.toLowerCase() + '@student.trainee.local';
   const password = birthDate.replace(/-/g, ''); // YYYYMMDD
 
   const { data, error } = await supabase.auth.signInWithPassword({
