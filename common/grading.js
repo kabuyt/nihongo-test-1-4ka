@@ -227,7 +227,10 @@ function grade_pair_match(rule, answerKey, userAnswers) {
   return score;
 }
 
-// bucket_sort: カテゴリ分類、trapで減点
+// bucket_sort: カテゴリ分類
+// points_each は「1バケット完全一致で加点」する意味。
+// バケット内のタイルが必要キー全て + trap無し + 余分タイル無し なら正解。
+// trapタイルが含まれると penalty_per_trap を減点。
 function grade_bucket_sort(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 2;
   const penalty = rule.penalty_per_trap || 1;
@@ -237,7 +240,7 @@ function grade_bucket_sort(rule, answerKey, userAnswers) {
     const actual = userAnswers[fid];
     if (!expected) return;
     const expSet = new Set(Array.isArray(expected) ? expected : [expected]);
-    // actualは配列(カンマ区切り文字列) or JSON文字列
+    // actualは配列 or JSON文字列
     let actArr = [];
     if (Array.isArray(actual)) actArr = actual;
     else if (typeof actual === 'string') {
@@ -245,10 +248,23 @@ function grade_bucket_sort(rule, answerKey, userAnswers) {
         actArr = actual.split(',').map(s => s.trim()).filter(Boolean);
       }
     }
+    const actSet = new Set(actArr);
+    // バケット完全一致判定
+    let hasAllExpected = true;
+    expSet.forEach(k => { if (!actSet.has(k)) hasAllExpected = false; });
+    // trapタイルが入っているか
+    let trapCount = 0;
     actArr.forEach(k => {
-      if (expSet.has(k)) score += pts;
-      else if ((rule.trap_keys || []).includes(k)) score -= penalty;
+      if ((rule.trap_keys || []).includes(k)) trapCount++;
     });
+    // 正解タイル完全一致 && 余分/trap無し なら加点
+    const hasTrap = trapCount > 0;
+    // 余分タイル（正解でもtrapでもない）もペナルティにしない場合は緩めに判定
+    if (hasAllExpected && !hasTrap) {
+      score += pts;
+    }
+    // trap混入はペナルティ
+    score -= penalty * trapCount;
   });
   return Math.max(0, score);
 }
