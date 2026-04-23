@@ -56,7 +56,7 @@ function grade_flex_match(rule, answerKey, userAnswers) {
     strip_suffix: rule.strip_suffix,
   };
   const sep = rule.separator || '／';
-  const sepRegex = new RegExp('[' + sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '、/]');
+  const sepRegex = new RegExp('[' + sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '、/,，]');
   let score = 0;
   (rule.field_ids || []).forEach(fid => {
     const expected = answerKey[fid];
