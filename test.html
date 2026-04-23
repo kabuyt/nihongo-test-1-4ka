@@ -87,6 +87,8 @@
 <script src="common/grading.js"></script>
 <script>
 // ===== テストページ メイン =====
+// リスニング音声は1回のみ再生可（学生受験モード）
+window.ONE_SHOT_AUDIO = true;
 
 const params = new URLSearchParams(location.search);
 const TEST_ID = params.get('id');

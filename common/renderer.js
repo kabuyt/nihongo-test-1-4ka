@@ -1654,6 +1654,30 @@ R.renderSection = function(questions, container) {
       container.appendChild(div);
     }
   });
+  // 学生モード（window.ONE_SHOT_AUDIO=true）のみ音声1回再生制限を適用
+  if (window.ONE_SHOT_AUDIO === true) {
+    container.querySelectorAll('audio').forEach(R.sealAudio);
+  }
+};
+
+/**
+ * 音声要素を「1回のみ再生」に制限。再生中のpause/resumeは可、巻き戻し不可、
+ * 終了後は要素を「再生済み」ラベルに置換。
+ */
+R.sealAudio = function(audio) {
+  if (audio.dataset.sealed === '1') return;
+  audio.dataset.sealed = '1';
+  let lastTime = 0;
+  audio.addEventListener('timeupdate', () => { lastTime = audio.currentTime; });
+  audio.addEventListener('seeking', () => {
+    if (audio.currentTime < lastTime - 0.3) audio.currentTime = lastTime;
+  });
+  audio.addEventListener('ended', () => {
+    const done = document.createElement('span');
+    done.textContent = '🔇 再生済み';
+    done.style.cssText = 'display:inline-block;color:#888;font-size:13px;padding:6px 10px;background:#eee;border-radius:6px;border:1px solid #ccc';
+    if (audio.parentNode) audio.parentNode.replaceChild(done, audio);
+  });
 };
 
 })();
