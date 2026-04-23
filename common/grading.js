@@ -13,6 +13,11 @@ function normalize(s, opt) {
   if (opt.trim !== false) s = s.trim();
   if (opt.normalize_spaces) s = s.replace(/\s+/g, ' ');
   if (opt.case_insensitive) s = s.toLowerCase();
+  if (opt.strip_accents) {
+    // ベトナム語等のアクセント記号除去
+    s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    s = s.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  }
   if (opt.strip_punctuation) s = s.replace(/[、。，．・,\.\s]+/g, '');
   if (opt.strip_suffix) s = s.replace(new RegExp(opt.strip_suffix + '$'), '');
   if (opt.strip_hyphens) s = s.replace(/[-ー－]/g, '');
@@ -39,26 +44,31 @@ function grade_exact_match(rule, answerKey, userAnswers) {
   return score;
 }
 
-// flex_match: 正規化後一致。case_insensitive + separator で複数表現対応
+// flex_match: 正規化後一致。case_insensitive + アクセント無視 + separator で複数表現対応
+// - 期待値も回答も separator で分割し、いずれか一致すればOK
+// - ベトナム語のアクセント違い (hành lý / hành lí / Hanh ly 等) を同一視
 function grade_flex_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   const opts = {
     case_insensitive: rule.case_insensitive !== false,
     normalize_spaces: rule.normalize_spaces !== false,
+    strip_accents: rule.strip_accents !== false,  // デフォルトON
     strip_suffix: rule.strip_suffix,
   };
+  const sep = rule.separator || '／';
+  const sepRegex = new RegExp('[' + sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '、/]');
   let score = 0;
   (rule.field_ids || []).forEach(fid => {
     const expected = answerKey[fid];
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
-    const expVariants = String(expected).split(rule.separator || '／').map(s => normalize(s, opts));
-    const actualN = normalize(actual, opts);
-    if (!actualN) return;
-    // いずれかのバリアントに一致 OR 部分一致
-    if (expVariants.some(v => v === actualN || v.includes(actualN) || actualN.includes(v))) {
-      score += pts;
-    }
+    const expVariants = String(expected).split(sepRegex).map(s => normalize(s, opts)).filter(Boolean);
+    // 学生の回答も区切って複数表現対応
+    const actVariants = String(actual || '').split(sepRegex).map(s => normalize(s, opts)).filter(Boolean);
+    if (actVariants.length === 0) return;
+    // いずれかの期待値が、いずれかの回答と一致 / 部分一致ならOK
+    const matched = expVariants.some(e => actVariants.some(a => a === e || a.includes(e) || e.includes(a)));
+    if (matched) score += pts;
   });
   return score;
 }
