@@ -1068,7 +1068,7 @@ R.render_audio_select = function(q, container) {
     aq.style.marginTop = '8px';
     if (item.label) aq.innerHTML += `<div class="qlabel">${item.label}</div>`;
     if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
-    if (item.image_src) aq.innerHTML += `<div style="margin-top:8px"><img src="${asset(item.image_src)}" style="max-width:100%;border:1px solid #ddd;border-radius:4px"></div>`;
+    if (item.image_src) aq.innerHTML += `<div style="margin-top:8px;text-align:center"><img src="${asset(item.image_src)}" style="width:100%;max-width:480px;height:auto;display:block;margin:0 auto;border:1px solid #ddd;border-radius:4px"></div>`;
     if (item.question) aq.innerHTML += `<p style="font-size:13px;margin-top:8px">${item.question}</p>`;
     if (item.fields) {
       // 複数フィールド
