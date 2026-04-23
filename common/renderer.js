@@ -937,6 +937,36 @@ R.render_audio_select = function(q, container) {
     pool.innerHTML = q.option_pool_html;
     block.appendChild(pool);
   }
+  // schedule_table 対応 (問題9など)
+  if (q.schedule_table) {
+    const tbl = document.createElement('table');
+    tbl.className = 'qa-table';
+    tbl.style.cssText = 'width:100%;font-size:12px;text-align:center;margin:8px 0';
+    const headTr = document.createElement('tr');
+    (q.schedule_table.headers || []).forEach(h => {
+      const th = document.createElement('th');
+      th.innerHTML = h;
+      headTr.appendChild(th);
+    });
+    tbl.appendChild(headTr);
+    (q.schedule_table.rows || []).forEach(row => {
+      const tr = document.createElement('tr');
+      const td0 = document.createElement('td');
+      td0.style.fontWeight = 'bold';
+      td0.innerHTML = row.label || '';
+      tr.appendChild(td0);
+      (row.cells || []).forEach(c => {
+        const td = document.createElement('td');
+        td.innerHTML = c;
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'background:#fffde7;padding:8px;border-radius:4px;border-left:4px solid #f39c12;margin:6px 0';
+    wrap.appendChild(tbl);
+    block.appendChild(wrap);
+  }
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
