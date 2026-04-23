@@ -846,18 +846,44 @@ R.render_radio_choice = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
+  // 全体共通の音声（audio_src / intro_audio）
+  if (q.audio_src) {
+    const a = document.createElement('div');
+    a.style.cssText = 'margin:10px 0';
+    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    block.appendChild(a);
+  }
+  if (q.intro_audio) {
+    const a = document.createElement('div');
+    a.style.cssText = 'margin:10px 0';
+    a.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}" style="width:100%"></audio>`;
+    block.appendChild(a);
+  }
   const wrap = document.createElement('div');
   wrap.style.marginTop = '12px';
   q.items.forEach(item => {
     const qDiv = document.createElement('div');
     qDiv.style.marginBottom = '18px';
+    // item.audio_src: 問題ごとの音声
+    if (item.audio_src) {
+      const a = document.createElement('div');
+      a.style.cssText = 'margin-bottom:6px';
+      a.innerHTML = `<audio controls src="${asset(item.audio_src)}" style="width:100%"></audio>`;
+      qDiv.appendChild(a);
+    }
+    if (item.image_src) {
+      const imgDiv = document.createElement('div');
+      imgDiv.style.cssText = 'text-align:center;margin:6px 0';
+      imgDiv.innerHTML = `<img src="${asset(item.image_src)}" style="max-width:100%;max-height:220px;border:1px solid #ddd;border-radius:4px">`;
+      qDiv.appendChild(imgDiv);
+    }
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;font-weight:bold;margin-bottom:8px';
-    p.innerHTML = item.question;
+    p.innerHTML = item.question || '';
     qDiv.appendChild(p);
     const choicesDiv = document.createElement('div');
     choicesDiv.style.cssText = 'display:flex;flex-direction:column;gap:6px;font-size:13px';
-    item.choices.forEach(c => {
+    (item.choices || []).forEach(c => {
       const label = document.createElement('label');
       label.innerHTML = `<input type="radio" name="${item.field_id}" value="${c.value}"> ${c.label}`;
       choicesDiv.appendChild(label);
