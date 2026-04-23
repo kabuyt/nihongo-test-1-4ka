@@ -1016,6 +1016,13 @@ R.render_audio_select = function(q, container) {
       block.appendChild(audio);
     });
   }
+  // 共有音声（単一ファイルを全item共通で使用する場合）
+  if (q.audio_src && !q.audio_files && !q.intro_audio) {
+    const a = document.createElement('div');
+    a.style.cssText = 'margin:8px 0';
+    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    block.appendChild(a);
+  }
   // parts構造（test4 c3など）
   if (q.parts) {
     q.parts.forEach(part => {
