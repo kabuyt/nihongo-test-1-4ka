@@ -596,7 +596,7 @@ R.render_word_puzzle = function(q, container) {
       const tile = document.createElement('button');
       tile.type = 'button';
       tile.className = 'puzzle-tile';
-      tile.style.cssText = 'padding:6px 12px;border:1.5px solid #1a5276;background:' + (inAnswer ? '#1a5276' : '#fff') + ';color:' + (inAnswer ? '#fff' : '#1a5276') + ';border-radius:6px;cursor:pointer;font-size:14px;font-family:inherit';
+      tile.style.cssText = 'padding:12px 14px 8px;border:1.5px solid #1a5276;background:' + (inAnswer ? '#1a5276' : '#fff') + ';color:' + (inAnswer ? '#fff' : '#1a5276') + ';border-radius:6px;cursor:pointer;font-size:15px;font-family:inherit;line-height:1.8';
       tile.innerHTML = word;
       tile.dataset.word = word;
       return tile;
