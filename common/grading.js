@@ -186,10 +186,12 @@ function grade_substring_match(rule, answerKey, userAnswers) {
 }
 
 // multi_field_group: グループ単位で全フィールド一致したら points_per_field × 個数
+// rule.group_points (配列) で各グループに個別ポイント指定可能
 function grade_multi_field_group(rule, answerKey, userAnswers) {
   const ppf = rule.points_per_field || rule.points_each || 1;
+  const groupPoints = rule.group_points || null;
   let score = 0;
-  (rule.groups || []).forEach(group => {
+  (rule.groups || []).forEach((group, gi) => {
     const allOk = group.every(fid => {
       const expected = answerKey[fid];
       if (expected === undefined) return false;
@@ -199,7 +201,9 @@ function grade_multi_field_group(rule, answerKey, userAnswers) {
       }
       return normalize(userAnswers[fid]) === normalize(expected);
     });
-    if (allOk) score += ppf * group.length;
+    if (allOk) {
+      score += groupPoints ? (groupPoints[gi] ?? 0) : (ppf * group.length);
+    }
   });
   return score;
 }
