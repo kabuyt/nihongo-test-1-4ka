@@ -93,8 +93,21 @@
   tests.forEach(t => {
     const card = document.createElement('a');
 
-    if (t.is_submitted) {
-      // 受験済み
+    if (t.is_submitted && t.is_retake) {
+      // 提出済み + 再受験許可 → もう一度受験可能
+      card.className = 'test-card active-card';
+      card.href = 'test.html?id=' + t.test_id;
+      const scores = [];
+      if (t.score_vocab !== null && t.score_vocab !== undefined) scores.push('語彙:' + t.score_vocab);
+      if (t.score_grammar !== null && t.score_grammar !== undefined) scores.push('文法:' + t.score_grammar);
+      if (t.score_listening !== null && t.score_listening !== undefined) scores.push('聴解:' + t.score_listening);
+      card.innerHTML = `
+        <h2>${t.display_name} <span class="badge badge-ready">🔁 もう一度受験可能</span></h2>
+        <p>${sectionText(t.sections)}</p>
+        ${scores.length ? '<div class="score-line">前回のスコア: <span>' + scores.join(' / ') + '</span></div>' : ''}
+      `;
+    } else if (t.is_submitted) {
+      // 受験済み（再受験不可）
       card.className = 'test-card submitted';
       card.href = '#';
       card.onclick = e => e.preventDefault();
