@@ -1661,23 +1661,65 @@ R.renderSection = function(questions, container) {
 };
 
 /**
- * 音声要素を「1回のみ再生」に制限。再生中のpause/resumeは可、巻き戻し不可、
- * 終了後は要素を「再生済み」ラベルに置換。
+ * 音声要素を「1回のみ再生・巻き戻し不可」に制限。
+ * ネイティブコントロールを削除し、再生ボタン + 一時停止ボタンのみ提供。
+ * 終了後は「再生済み」ラベルに置換。
  */
 R.sealAudio = function(audio) {
   if (audio.dataset.sealed === '1') return;
   audio.dataset.sealed = '1';
-  let lastTime = 0;
-  audio.addEventListener('timeupdate', () => { lastTime = audio.currentTime; });
-  audio.addEventListener('seeking', () => {
-    if (audio.currentTime < lastTime - 0.3) audio.currentTime = lastTime;
+  audio.controls = false;
+  audio.style.display = 'none';
+  audio.preload = 'auto';
+
+  const wrap = document.createElement('span');
+  wrap.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:4px 0';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '▶ 再生 (Play)';
+  btn.style.cssText = 'padding:8px 16px;font-size:14px;background:#1a5276;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit';
+
+  const status = document.createElement('span');
+  status.style.cssText = 'font-size:12px;color:#666';
+
+  btn.onclick = () => {
+    if (audio.ended) return;
+    if (audio.paused) {
+      audio.play();
+    } else {
+      audio.pause();
+    }
+  };
+
+  audio.addEventListener('play', () => {
+    btn.textContent = '⏸ 一時停止 (Pause)';
+    btn.style.background = '#d35400';
+    status.textContent = '再生中...';
+  });
+  audio.addEventListener('pause', () => {
+    if (!audio.ended) {
+      btn.textContent = '▶ 続ける (Resume)';
+      btn.style.background = '#1a5276';
+      status.textContent = '一時停止中';
+    }
   });
   audio.addEventListener('ended', () => {
     const done = document.createElement('span');
     done.textContent = '🔇 再生済み';
     done.style.cssText = 'display:inline-block;color:#888;font-size:13px;padding:6px 10px;background:#eee;border-radius:6px;border:1px solid #ccc';
-    if (audio.parentNode) audio.parentNode.replaceChild(done, audio);
+    if (wrap.parentNode) wrap.parentNode.replaceChild(done, wrap);
   });
+  // 巻き戻し禁止（万一seekingが発火した場合の保険）
+  let lastTime = 0;
+  audio.addEventListener('timeupdate', () => { lastTime = audio.currentTime; });
+  audio.addEventListener('seeking', () => {
+    if (audio.currentTime < lastTime) audio.currentTime = lastTime;
+  });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(status);
+  if (audio.parentNode) audio.parentNode.insertBefore(wrap, audio);
 };
 
 })();
