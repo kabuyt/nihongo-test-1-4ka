@@ -269,8 +269,6 @@ function doFinish() {
 async function doSubmit() {
   const btn = document.getElementById('send-btn');
   const status = document.getElementById('send-status');
-  btn.disabled = true;
-  status.textContent = '採点中...';
 
   // 全回答を収集
   const answers = {};
@@ -282,6 +280,42 @@ async function doSubmit() {
   document.querySelectorAll('input[type=radio]:checked').forEach(el => {
     answers[el.name] = el.value;
   });
+
+  // 未回答チェック（セクション別）
+  const secUnans = { goii: 0, bunpo: 0, chokkai: 0 };
+  const secTotal = { goii: 0, bunpo: 0, chokkai: 0 };
+  const secLabels = { goii: 'Từ vựng（語彙）', bunpo: 'Ngữ pháp（文法）', chokkai: 'Nghe hiểu（聴解）' };
+  Object.keys(answers).forEach(k => {
+    let sec = null;
+    if (k.startsWith('g')) sec = 'goii';
+    else if (k.startsWith('b')) sec = 'bunpo';
+    else if (k.startsWith('c')) sec = 'chokkai';
+    if (!sec) return;
+    secTotal[sec]++;
+    const v = answers[k];
+    if (v === '' || v === null || v === undefined) secUnans[sec]++;
+  });
+
+  // 警告: 未回答が多いセクションがあれば確認
+  const warnings = [];
+  _sections.forEach(sec => {
+    if (secTotal[sec] > 0) {
+      const rate = secUnans[sec] / secTotal[sec];
+      if (rate >= 0.5) {
+        warnings.push(`  ${secLabels[sec]}: ${secUnans[sec]}/${secTotal[sec]} 問 未回答 (${Math.round(rate*100)}%)`);
+      }
+    }
+  });
+  if (warnings.length > 0) {
+    const msg = '⚠ Còn nhiều câu chưa trả lời / 未回答が多いセクションがあります:\n\n' + warnings.join('\n') +
+                '\n\nGửi (提出) しますか？\nキャンセル: もう一度見直す';
+    if (!confirm(msg)) {
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  status.textContent = '採点中...';
 
   const profile = getStudentProfile();
   const testDate = document.getElementById('test_date').value;
