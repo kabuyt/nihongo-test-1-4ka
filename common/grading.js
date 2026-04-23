@@ -279,6 +279,29 @@ function grade_bucket_sort(rule, answerKey, userAnswers) {
   return Math.max(0, score);
 }
 
+// unordered_tokens: 文字構成一致で○（word_puzzle用）
+// 同じタイルを並べ替えた文字列なら正解扱い
+// 例: 「りんごを2つと切手を2枚ください」≡「切手を2枚とりんごを2つください」
+function grade_unordered_tokens(rule, answerKey, userAnswers) {
+  const pts = rule.points_each || 1;
+  let score = 0;
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = Array.isArray(answerKey) ? answerKey[i] : answerKey[fid];
+    const actual = userAnswers[fid];
+    if (!expected || !actual) return;
+    // 期待値が複数許容（配列）の場合は各要素チェック
+    const expList = Array.isArray(expected) ? expected : [expected];
+    const actNorm = normalize(actual, { case_insensitive: true });
+    const actSorted = actNorm.split('').sort().join('');
+    const matched = expList.some(e => {
+      const eNorm = normalize(e, { case_insensitive: true });
+      return eNorm === actNorm || eNorm.split('').sort().join('') === actSorted;
+    });
+    if (matched) score += pts;
+  });
+  return score;
+}
+
 // price_country: 価格+国の複合採点
 function grade_price_country(rule, answerKey, userAnswers) {
   const pPrice = rule.price_points || 2;
@@ -309,6 +332,7 @@ const METHOD_MAP = {
   multi_field_match: grade_multi_field_match,
   pair_match: grade_pair_match,
   bucket_sort: grade_bucket_sort,
+  unordered_tokens: grade_unordered_tokens,
   price_country: grade_price_country,
   manual: () => 0, // 手動採点は0点（先生が後で加点）
 };
