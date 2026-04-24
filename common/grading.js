@@ -29,14 +29,32 @@ function toHalfWidth(s) {
   return String(s || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
 }
 
+// answer_key から field_id に対応する期待値を取得（dict/list 両対応）
+// list の場合は field_id 末尾の数字を 1-indexed で検索
+function getExpected(answerKey, fid, idx) {
+  if (Array.isArray(answerKey)) {
+    if (typeof idx === 'number' && idx >= 0 && idx < answerKey.length) return answerKey[idx];
+    const m = /(\d+)[a-z]*$/.exec(fid || '');
+    if (m) {
+      const i = parseInt(m[1], 10) - 1;
+      if (i >= 0 && i < answerKey.length) return answerKey[i];
+    }
+    return undefined;
+  }
+  if (answerKey && typeof answerKey === 'object') {
+    return answerKey[fid];
+  }
+  return undefined;
+}
+
 // ====== method別採点関数 ======
 
 // exact_match: 厳密一致（前後trim）
 function grade_exact_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
     if (normalize(actual) === normalize(expected)) score += pts;
@@ -60,8 +78,8 @@ function grade_flex_match(rule, answerKey, userAnswers) {
   const sepRegex = new RegExp('[' + sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '、/,，]');
   const exactOnly = rule.exact_only === true;
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
     const expVariants = String(expected).split(sepRegex).map(s => normalize(s, opts)).filter(Boolean);
@@ -82,8 +100,8 @@ function grade_normalized_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   const opts = { strip_punctuation: true, case_insensitive: true };
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
     const expN = Array.isArray(expected)
@@ -102,8 +120,8 @@ function grade_split_match(rule, answerKey, userAnswers) {
   const sep = rule.separator || '／';
   const opts = { case_insensitive: rule.case_insensitive !== false };
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
     const variants = String(expected).split(sep).map(v => normalize(v, opts));
@@ -148,8 +166,8 @@ function grade_radio_exact(rule, answerKey, userAnswers) {
 function grade_ox_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (!expected) return;
     // ×と✕を同一視
@@ -164,8 +182,8 @@ function grade_phone_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   const opts = { strip_hyphens: true };
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     if (!expected) return;
     if (normalize(userAnswers[fid], opts) === normalize(expected, opts)) score += pts;
   });
@@ -197,7 +215,7 @@ function grade_multi_field_group(rule, answerKey, userAnswers) {
   let score = 0;
   (rule.groups || []).forEach((group, gi) => {
     const allOk = group.every(fid => {
-      const expected = answerKey[fid];
+      const expected = getExpected(answerKey, fid, i);
       if (expected === undefined) return false;
       // 配列なら「どれかに一致」
       if (Array.isArray(expected)) {
@@ -216,8 +234,8 @@ function grade_multi_field_group(rule, answerKey, userAnswers) {
 function grade_multi_field_match(rule, answerKey, userAnswers) {
   const ppf = rule.points_per_field || rule.points_each || 1;
   let score = 0;
-  (rule.field_ids || []).forEach(fid => {
-    const expected = answerKey[fid];
+  (rule.field_ids || []).forEach((fid, i) => {
+    const expected = getExpected(answerKey, fid, i);
     if (expected === undefined) return;
     if (Array.isArray(expected)) {
       if (expected.some(e => normalize(userAnswers[fid]) === normalize(e))) score += ppf;
