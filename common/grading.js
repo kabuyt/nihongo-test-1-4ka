@@ -49,7 +49,7 @@ function getExpected(answerKey, fid, idx) {
 
 // ====== method別採点関数 ======
 
-// exact_match: 厳密一致（前後trim）
+// exact_match: 厳密一致（前後trim）。expected が配列の場合はいずれかに一致でOK
 function grade_exact_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   let score = 0;
@@ -57,7 +57,9 @@ function grade_exact_match(rule, answerKey, userAnswers) {
     const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
-    if (normalize(actual) === normalize(expected)) score += pts;
+    const expList = Array.isArray(expected) ? expected : [expected];
+    const actN = normalize(actual);
+    if (expList.some(e => normalize(e) === actN)) score += pts;
   });
   return score;
 }
