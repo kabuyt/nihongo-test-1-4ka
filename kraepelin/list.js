@@ -170,6 +170,39 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// guide.html をフェッチして PDF Blob を生成
+async function generateGuidePDF(opts) {
+  const resp = await fetch('guide.html');
+  const html = await resp.text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const guideStyleText = [...doc.querySelectorAll('head style')].map(s => s.textContent).join('\n');
+  const guideContent = doc.querySelector('.guide');
+  if (!guideContent) throw new Error('guide.html の .guide が見つかりません');
+
+  // toolbar はPDFでは不要なので除去
+  const toolbar = guideContent.querySelector('.guide-toolbar');
+  if (toolbar) toolbar.remove();
+
+  const tempStyle = document.createElement('style');
+  tempStyle.id = 'temp-guide-style';
+  tempStyle.textContent = guideStyleText;
+  document.head.appendChild(tempStyle);
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;visibility:hidden;z-index:-1;';
+  wrapper.appendChild(guideContent);
+  document.body.appendChild(wrapper);
+
+  try {
+    await new Promise(res => setTimeout(res, 200));
+    const blob = await html2pdf().set(opts).from(guideContent).output('blob');
+    return blob;
+  } finally {
+    tempStyle.remove();
+    wrapper.remove();
+  }
+}
+
 // PDF一括ダウンロード（ZIP）
 async function bulkDownloadPDF() {
   const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
@@ -211,6 +244,15 @@ async function bulkDownloadPDF() {
       const d = new Date(r.started_at || r.created_at);
       const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
       zip.file(`クレペリン検査_${safeName}_${dateStr}.pdf`, blob);
+    }
+
+    // ガイドPDFも同封
+    btn.textContent = 'ガイドPDF生成中...';
+    try {
+      const guideBlob = await generateGuidePDF(opts);
+      zip.file('00_結果の見方.pdf', guideBlob);
+    } catch (e) {
+      console.warn('ガイドPDF生成失敗（本体はZIPに含めます）:', e);
     }
 
     btn.textContent = 'ZIP生成中...';
