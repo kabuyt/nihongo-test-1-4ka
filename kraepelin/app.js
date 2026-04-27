@@ -3,6 +3,7 @@
 const App = (() => {
   // 定数
   const NUMS_PER_ROW = 116;
+  const PRACTICE_NUMS = 11; // 練習モード: 10問のチュートリアル
   const ROW_TIME = 60; // 秒
   const BREAK_TIME = 300; // 秒
   const ROWS_PER_HALF = 5;
@@ -25,6 +26,7 @@ const App = (() => {
   const screens = {
     start: document.getElementById('screen-start'),
     test: document.getElementById('screen-test'),
+    transition: document.getElementById('screen-transition'),
     break: document.getElementById('screen-break'),
     result: document.getElementById('screen-result'),
   };
@@ -42,12 +44,17 @@ const App = (() => {
   function showScreen(name) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[name].classList.add('active');
+    // test 画面に練習モードクラスを反映
+    if (name === 'test') {
+      screens.test.classList.toggle('practice-mode', mode === 'practice');
+    }
   }
 
   // ============ 数字列生成 ============
   function generateRow() {
+    const len = mode === 'practice' ? PRACTICE_NUMS : NUMS_PER_ROW;
     const row = [];
-    for (let i = 0; i < NUMS_PER_ROW; i++) {
+    for (let i = 0; i < len; i++) {
       row.push(Math.floor(Math.random() * 9) + 1); // 1-9
     }
     return row;
@@ -94,15 +101,59 @@ const App = (() => {
       }
       ansRow.appendChild(cell);
     }
+
+    // 練習モード: ヒント表示 + テンキーハイライト
+    updatePracticeHint();
+  }
+
+  // ============ 練習モードのヒント ============
+  function updatePracticeHint() {
+    const hintEl = document.getElementById('practice-hint');
+    if (!hintEl) return;
+
+    document.querySelectorAll('.numpad-btn').forEach(btn => btn.classList.remove('hint-target'));
+
+    if (mode !== 'practice') {
+      hintEl.style.display = 'none';
+      return;
+    }
+
+    const a = numbers[currentPos];
+    const b = numbers[currentPos + 1];
+    if (a == null || b == null) {
+      hintEl.style.display = 'none';
+      return;
+    }
+    const sum = a + b;
+    const onesDigit = sum % 10;
+    hintEl.style.display = 'block';
+    hintEl.innerHTML = `
+      <div class="hint-step">
+        2つの数字を足します。今は <strong>${a}</strong> + <strong>${b}</strong> = <strong>${sum}</strong>。
+        <strong>${sum}</strong> の<u>一の位</u>は <strong class="hint-answer">${onesDigit}</strong> なので、
+        下の <strong class="hint-answer">${onesDigit}</strong> ボタンを押してください。
+      </div>
+      <div class="hint-step vi">
+        Cộng hai chữ số. Bây giờ <strong>${a}</strong> + <strong>${b}</strong> = <strong>${sum}</strong>.
+        Chữ số <u>hàng đơn vị</u> của <strong>${sum}</strong> là <strong class="hint-answer">${onesDigit}</strong>,
+        nên bấm nút <strong class="hint-answer">${onesDigit}</strong> bên dưới.
+      </div>
+    `;
+    const targetBtn = document.querySelector(`.numpad-btn[data-num="${onesDigit}"]`);
+    if (targetBtn) targetBtn.classList.add('hint-target');
   }
 
   function updateHeader() {
-    const totalRows = mode === 'practice' ? 1 : ROWS_PER_HALF;
     const label = mode === 'practice' ? '練習' : (phase === 'first' ? '前半' : '後半');
-    const rowInPhase = mode === 'practice' ? 1 : (phase === 'first' ? currentRow + 1 : currentRow - ROWS_PER_HALF + 1);
-
     dom.phaseLabel.textContent = label;
-    dom.rowLabel.textContent = `${rowInPhase} / ${totalRows} 行目`;
+    if (mode === 'practice') {
+      const total = numbers.length - 1;
+      dom.rowLabel.textContent = `練習 ${Math.min(currentPos + 1, total)} / ${total} 問`;
+    } else {
+      const totalRows = ROWS_PER_HALF;
+      const rowInPhase = phase === 'first' ? currentRow + 1 : currentRow - ROWS_PER_HALF + 1;
+      dom.rowLabel.textContent = `${rowInPhase} / ${totalRows} 行目`;
+    }
   }
 
   function updateTimer() {
@@ -114,6 +165,13 @@ const App = (() => {
 
   // ============ タイマー ============
   function startTimer() {
+    if (mode === 'practice') {
+      // 練習モード: タイマー無効、表示は「--:--」
+      clearInterval(timerInterval);
+      dom.timer.textContent = '--:--';
+      dom.timer.classList.remove('warning');
+      return;
+    }
     timeLeft = ROW_TIME;
     updateTimer();
     clearInterval(timerInterval);
@@ -149,8 +207,8 @@ const App = (() => {
     });
 
     if (mode === 'practice') {
-      // 練習終了 → スタートに戻る
-      showScreen('start');
+      // 練習終了 → 移行画面へ
+      showScreen('transition');
       return;
     }
 
@@ -286,7 +344,7 @@ const App = (() => {
       }
     });
 
-    // 検査開始ボタン
+    // 開始ボタン（練習から開始 → 自動的に本番へ移行）
     document.getElementById('btn-start').addEventListener('click', () => {
       const nameInput = document.getElementById('input-name');
       const name = nameInput.value.trim();
@@ -297,8 +355,7 @@ const App = (() => {
         return;
       }
       userName = name;
-      testStartedAt = new Date();
-      mode = 'test';
+      mode = 'practice';
       phase = 'first';
       currentRow = 0;
       allResults = [];
@@ -306,9 +363,10 @@ const App = (() => {
       startRow();
     });
 
-    // 練習ボタン
-    document.getElementById('btn-practice').addEventListener('click', () => {
-      mode = 'practice';
+    // 練習→本番 移行ボタン
+    document.getElementById('btn-start-real').addEventListener('click', () => {
+      testStartedAt = new Date();
+      mode = 'test';
       phase = 'first';
       currentRow = 0;
       allResults = [];

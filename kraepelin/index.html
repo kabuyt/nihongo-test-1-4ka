@@ -42,9 +42,9 @@
       </div>
 
       <div class="start-buttons">
-        <button id="btn-practice" class="btn btn-secondary">練習する（1行）<span class="vi-btn">Luyện tập (1 dòng)</span></button>
-        <button id="btn-start" class="btn btn-primary">検査開始<span class="vi-btn">Bắt đầu kiểm tra</span></button>
+        <button id="btn-start" class="btn btn-primary">開始（練習から）<span class="vi-btn">Bắt đầu (từ luyện tập)</span></button>
       </div>
+      <p class="start-note">※ 必ず練習を行ってから本番に進みます<span class="vi-inline">/ Phải luyện tập trước khi vào bài kiểm tra chính thức</span></p>
     </div>
   </div>
 
@@ -64,6 +64,8 @@
       <div id="answer-row" class="answer-row"></div>
     </div>
 
+    <div id="practice-hint" class="practice-hint" style="display:none;"></div>
+
     <div id="numpad" class="numpad">
       <button class="numpad-btn" data-num="1">1</button>
       <button class="numpad-btn" data-num="2">2</button>
@@ -75,6 +77,25 @@
       <button class="numpad-btn" data-num="8">8</button>
       <button class="numpad-btn" data-num="9">9</button>
       <button class="numpad-btn" data-num="0">0</button>
+    </div>
+  </div>
+
+  <!-- 練習→本番 移行画面 -->
+  <div id="screen-transition" class="screen">
+    <div class="break-container">
+      <div class="transition-icon">✓</div>
+      <h2>練習完了！<span class="vi-h">Đã hoàn thành luyện tập!</span></h2>
+      <p>これから本番の検査を開始します。<br>本番では正解は表示されません。</p>
+      <p class="vi">Bây giờ bắt đầu bài kiểm tra chính thức.<br>Trong bài chính thức không hiển thị đáp án.</p>
+      <div style="margin: 24px 0; background: var(--gray-50); border-radius: 10px; padding: 16px; text-align:left; max-width: 360px; margin-left: auto; margin-right: auto;">
+        <div style="font-size:0.9rem; color: var(--gray-700); line-height: 1.7;">
+          <strong>本番の流れ:</strong><br>
+          ① 前半 5行（各1分）<br>
+          ② 休憩 5分（強制）<br>
+          ③ 後半 5行（各1分）
+        </div>
+      </div>
+      <button id="btn-start-real" class="btn btn-primary">検査を開始する<span class="vi-btn">Bắt đầu kiểm tra</span></button>
     </div>
   </div>
 
