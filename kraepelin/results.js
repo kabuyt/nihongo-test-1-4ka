@@ -644,5 +644,28 @@ const Results = (() => {
     renderDetailTable(allResults);
   }
 
-  return { render };
+  // ============ Supabase 保存 ============
+  async function saveToCloud(allResults, meta) {
+    if (typeof supabase === 'undefined') {
+      return { error: { message: 'Supabase 未読み込み' } };
+    }
+    const judgment = judgeTypicality(allResults);
+    const allCounts = allResults.map(r => calcRowStats(r).correct);
+    const all = allResults.flatMap(r => r.answers);
+    const errorRate = all.length > 0 ? all.filter(a => !a.isCorrect).length / all.length : 0;
+    const avgCorrect = allCounts.length > 0 ? allCounts.reduce((a, b) => a + b, 0) / allCounts.length : 0;
+
+    return supabase.from('kraepelin_results').insert({
+      name: meta.name,
+      started_at: meta.startedAt,
+      rows_per_half: allResults.filter(r => r.phase === 'first').length,
+      results: allResults,
+      judgment_type: judgment.type,
+      judgment_score: judgment.score,
+      avg_correct: Number(avgCorrect.toFixed(2)),
+      error_rate: Number(errorRate.toFixed(4)),
+    });
+  }
+
+  return { render, saveToCloud, judgeTypicality, calcRowStats };
 })();

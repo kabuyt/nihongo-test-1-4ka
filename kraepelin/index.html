@@ -82,10 +82,10 @@
   <div id="screen-break" class="screen">
     <div class="break-container">
       <h2>休憩時間<span class="vi-h">Thời gian nghỉ</span></h2>
-      <p>前半が終了しました。少し休んでください。</p>
-      <p class="vi">Đã kết thúc nửa đầu. Hãy nghỉ một chút.</p>
+      <p>前半が終了しました。<strong>必ず5分間休んでください。</strong></p>
+      <p class="vi">Đã kết thúc nửa đầu. <strong>Hãy nghỉ đủ 5 phút.</strong></p>
       <div id="break-timer" class="break-timer">5:00</div>
-      <button id="btn-skip-break" class="btn btn-secondary">スキップして後半へ<span class="vi-btn">Bỏ qua, sang nửa sau</span></button>
+      <p class="break-note">後半は自動で開始します<span class="vi-inline">/ Nửa sau sẽ tự động bắt đầu</span></p>
     </div>
   </div>
 
@@ -146,13 +146,18 @@
         </div>
       </div>
 
+      <div id="save-status" class="save-status no-print"></div>
+
       <div class="start-buttons no-print">
         <button id="btn-pdf" class="btn btn-secondary">PDF保存<span class="vi-btn">Lưu PDF</span></button>
         <button id="btn-retry" class="btn btn-primary">もう一度<span class="vi-btn">Làm lại</span></button>
+        <a href="list.html" class="btn btn-secondary admin-only" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">一覧を見る</a>
       </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../common/config.js"></script>
   <script src="app.js"></script>
   <script src="results.js"></script>
 </body>

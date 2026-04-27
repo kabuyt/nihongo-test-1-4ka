@@ -162,7 +162,9 @@ const App = (() => {
     } else if (phase === 'second' && currentRow >= ROWS_PER_HALF * 2) {
       // 全て終了 → 結果画面へ
       showScreen('result');
-      Results.render(allResults, { name: userName, startedAt: testStartedAt });
+      const meta = { name: userName, startedAt: testStartedAt };
+      Results.render(allResults, meta);
+      saveResultToCloud(allResults, meta);
     } else {
       // 次の行
       startRow();
@@ -191,10 +193,6 @@ const App = (() => {
       }
     }, 1000);
 
-    document.getElementById('btn-skip-break').onclick = () => {
-      clearInterval(timerInterval);
-      startSecondHalf();
-    };
   }
 
   function startSecondHalf() {
@@ -226,6 +224,29 @@ const App = (() => {
     if (currentPos >= numbers.length - 1) {
       clearInterval(timerInterval);
       setTimeout(() => finishRow(), 300);
+    }
+  }
+
+  // ============ クラウド保存 ============
+  async function saveResultToCloud(results, meta) {
+    const statusEl = document.getElementById('save-status');
+    if (!statusEl) return;
+    statusEl.textContent = '☁ Supabase に保存中...';
+    statusEl.className = 'save-status no-print saving';
+    try {
+      const { error } = await Results.saveToCloud(results, meta);
+      if (error) {
+        statusEl.textContent = '⚠ 保存失敗: ' + error.message + '（PDFは保存できます）';
+        statusEl.className = 'save-status no-print error';
+        console.error('Supabase save error:', error);
+      } else {
+        statusEl.textContent = '✓ クラウドに保存しました';
+        statusEl.className = 'save-status no-print success';
+      }
+    } catch (e) {
+      statusEl.textContent = '⚠ 保存失敗: ' + e.message;
+      statusEl.className = 'save-status no-print error';
+      console.error(e);
     }
   }
 

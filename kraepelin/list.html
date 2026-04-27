@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クレペリン検査 結果一覧</title>
+  <link rel="stylesheet" href="style.css?v=2">
+  <style>
+    html, body { overflow: auto; user-select: text; -webkit-user-select: text; background: #f9fafb; }
+    .list-page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .list-header h1 { font-size: 1.6rem; color: var(--gray-900); }
+    .list-header .nav-link { color: var(--primary); text-decoration: none; font-size: 0.9rem; }
+    .list-header .nav-link:hover { text-decoration: underline; }
+
+    .toolbar { background: #fff; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--gray-200); margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .toolbar input[type=text] { flex: 1; min-width: 180px; padding: 8px 12px; border: 1.5px solid var(--gray-300); border-radius: 8px; font-size: 0.9rem; }
+    .toolbar input:focus { outline: none; border-color: var(--primary); }
+    .toolbar .stats { font-size: 0.85rem; color: var(--gray-600); margin-left: auto; }
+
+    .list-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid var(--gray-200); }
+    .list-table th { background: var(--gray-50); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-500); padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--gray-200); }
+    .list-table td { padding: 12px; font-size: 0.9rem; color: var(--gray-700); border-bottom: 1px solid var(--gray-100); }
+    .list-table tr.row-hover { cursor: pointer; transition: background 0.1s; }
+    .list-table tr.row-hover:hover { background: #f0f7ff; }
+    .list-table .col-name { font-weight: 600; color: var(--gray-900); }
+    .list-table .col-actions { white-space: nowrap; text-align: right; }
+
+    .judge-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .judge-badge.typical { background: #dcfce7; color: #15803d; }
+    .judge-badge.near-typical { background: #fef3c7; color: #b45309; }
+    .judge-badge.atypical { background: #fee2e2; color: #b91c1c; }
+    .judge-badge.incomplete { background: var(--gray-200); color: var(--gray-600); }
+
+    .btn-mini { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--gray-300); background: #fff; color: var(--gray-700); font-size: 0.8rem; cursor: pointer; margin-left: 4px; }
+    .btn-mini:hover { background: var(--gray-50); }
+    .btn-mini.danger { color: var(--error); border-color: #fecaca; }
+    .btn-mini.danger:hover { background: #fef2f2; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-500); }
+    .loading { text-align: center; padding: 40px; color: var(--gray-500); }
+
+    /* 詳細モーダル */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 100; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+    .modal-bg.show { display: flex; }
+    .modal-panel { background: #f9fafb; border-radius: 12px; max-width: 900px; width: 100%; padding: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-header { background: #fff; padding: 14px 20px; border-radius: 12px 12px 0 0; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 5; }
+    .modal-header h2 { font-size: 1.1rem; color: var(--gray-900); margin: 0; }
+    .btn-close { background: none; border: none; font-size: 1.4rem; color: var(--gray-500); cursor: pointer; padding: 4px 10px; border-radius: 6px; }
+    .btn-close:hover { background: var(--gray-100); color: var(--gray-900); }
+    .modal-body { padding: 0; }
+  </style>
+</head>
+<body>
+
+<div class="list-page">
+  <div class="list-header">
+    <div>
+      <h1>クレペリン検査 結果一覧</h1>
+      <p style="font-size:0.85rem;color:var(--gray-500);margin-top:2px;">特定技能候補者 面接記録 / Hồ sơ phỏng vấn ứng viên kỹ năng đặc định</p>
+    </div>
+    <a href="index.html" class="nav-link">← 検査ページへ戻る</a>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search-name" placeholder="氏名で検索..." autocomplete="off">
+    <select id="filter-judgment" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:0.9rem;">
+      <option value="">全ての判定</option>
+      <option value="typical">定型曲線</option>
+      <option value="near-typical">準定型曲線</option>
+      <option value="atypical">非定型曲線</option>
+      <option value="incomplete">未完了</option>
+    </select>
+    <span class="stats" id="stats">読み込み中...</span>
+  </div>
+
+  <div id="list-container">
+    <div class="loading">読み込み中...</div>
+  </div>
+</div>
+
+<!-- 詳細モーダル -->
+<div id="modal-bg" class="modal-bg">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2 id="modal-title">検査結果</h2>
+      <div>
+        <button class="btn-mini" onclick="window.print()">PDF保存</button>
+        <button class="btn-close" onclick="closeModal()">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="screen-result" class="screen active" style="position:static;display:block;height:auto;">
+        <div class="result-container">
+          <h2>検査結果<span class="vi-h">Kết quả kiểm tra</span></h2>
+          <div id="result-meta" class="result-meta"></div>
+          <div id="judgment-card" class="judgment-card">
+            <div id="judgment-icon" class="judgment-icon"></div>
+            <div id="judgment-label" class="judgment-label"></div>
+            <div id="judgment-desc" class="judgment-desc"></div>
+          </div>
+          <div class="result-section">
+            <h3>作業曲線<span class="vi-inline">/ Đường cong làm việc</span></h3>
+            <canvas id="chart-curve" width="800" height="350"></canvas>
+            <div id="curve-note" class="curve-note"></div>
+          </div>
+          <div class="result-section">
+            <h3>性格・行動特性（4軸評価）<span class="vi-inline">/ Tính cách・hành vi (4 trục)</span></h3>
+            <div id="four-axes" class="four-axes"></div>
+          </div>
+          <div class="result-section">
+            <h3>作業能力<span class="vi-inline">/ Năng lực làm việc</span></h3>
+            <div id="summary-stats" class="summary-stats"></div>
+          </div>
+          <div class="result-section">
+            <h3>詳細分析<span class="vi-inline">/ Phân tích chi tiết</span></h3>
+            <div id="analysis" class="analysis"></div>
+          </div>
+          <div class="result-section">
+            <h3>各行の詳細<span class="vi-inline">/ Chi tiết từng dòng</span></h3>
+            <div class="table-wrapper">
+              <table id="detail-table">
+                <thead>
+                  <tr>
+                    <th>行<div class="vi-th">Dòng</div></th>
+                    <th>区分<div class="vi-th">Phần</div></th>
+                    <th>正答数<div class="vi-th">Đúng</div></th>
+                    <th>誤答数<div class="vi-th">Sai</div></th>
+                    <th>正答率<div class="vi-th">Tỉ lệ</div></th>
+                  </tr>
+                </thead>
+                <tbody id="detail-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../common/config.js"></script>
+<script src="results.js"></script>
+<script src="list.js"></script>
+</body>
+</html>

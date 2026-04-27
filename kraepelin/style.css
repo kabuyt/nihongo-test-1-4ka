@@ -564,6 +564,26 @@ html, body {
   white-space: pre-line;
 }
 
+/* 保存ステータス */
+.save-status {
+  text-align: center;
+  padding: 10px 16px;
+  margin: 16px 0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.save-status:empty { display: none; }
+.save-status.saving { background: #eff6ff; color: #1d4ed8; }
+.save-status.success { background: #f0fdf4; color: #15803d; }
+.save-status.error { background: #fef2f2; color: #b91c1c; }
+
+.break-note {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-top: 12px;
+}
+
 /* 受検者メタ情報 */
 .result-meta {
   text-align: center;
