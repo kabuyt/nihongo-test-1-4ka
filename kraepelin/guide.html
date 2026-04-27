@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クレペリン検査 結果の見方</title>
+  <link rel="stylesheet" href="style.css?v=4">
+  <style>
+    html, body { overflow: auto; user-select: text; -webkit-user-select: text; background: #f9fafb; height: auto; }
+    .guide { max-width: 820px; margin: 0 auto; padding: 32px 24px 60px; background: #fff; }
+    .guide-header { text-align: center; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid var(--gray-200); }
+    .guide-header h1 { font-size: 1.8rem; color: var(--gray-900); margin-bottom: 6px; }
+    .guide-header .subtitle { font-size: 0.9rem; color: var(--gray-500); }
+    .guide-toolbar { text-align: right; margin-bottom: 16px; }
+    .guide-toolbar a { color: var(--primary); text-decoration: none; font-size: 0.85rem; margin-right: 12px; }
+    .guide-toolbar button { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    .guide-section { background: #fff; border: 1px solid var(--gray-200); border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; break-inside: avoid; }
+    .guide-section h2 { font-size: 1.2rem; color: var(--gray-900); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #f0f7ff; }
+    .guide-section h2 .num { display: inline-block; background: var(--primary); color: #fff; width: 26px; height: 26px; border-radius: 50%; text-align: center; line-height: 26px; font-size: 0.85rem; margin-right: 8px; }
+    .guide-section p { line-height: 1.7; color: var(--gray-700); margin-bottom: 8px; }
+    .guide-section ul { padding-left: 20px; line-height: 1.8; color: var(--gray-700); }
+    .guide-section ul li { margin-bottom: 4px; }
+    .guide-section .vi { font-size: 0.82rem; color: var(--gray-500); margin-top: 4px; }
+
+    .judge-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+    .judge-card { padding: 14px 16px; border-radius: 10px; border: 1.5px solid; }
+    .judge-card.typical { background: #f0fdf4; border-color: #86efac; }
+    .judge-card.near-typical { background: #fffbeb; border-color: #fcd34d; }
+    .judge-card.atypical { background: #fef2f2; border-color: #fca5a5; }
+    .judge-card .label { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .judge-card.typical .label { color: #15803d; }
+    .judge-card.near-typical .label { color: #b45309; }
+    .judge-card.atypical .label { color: #b91c1c; }
+    .judge-card .desc { font-size: 0.88rem; color: var(--gray-700); }
+    .judge-card .vi { font-size: 0.78rem; color: var(--gray-500); margin-top: 4px; }
+
+    .axis-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+    .axis-row { padding: 12px 14px; background: var(--gray-50); border-radius: 8px; border-left: 4px solid; }
+    .axis-row.f { border-color: #2563eb; }
+    .axis-row.h { border-color: #7c3aed; }
+    .axis-row.k { border-color: #f59e0b; }
+    .axis-row.s { border-color: #16a34a; }
+    .axis-row .axis-name { font-weight: 700; color: var(--gray-900); font-size: 0.95rem; }
+    .axis-row .axis-meaning { font-size: 0.85rem; color: var(--gray-700); margin-top: 4px; line-height: 1.5; }
+    .axis-row .axis-meaning .vi { font-size: 0.75rem; color: var(--gray-500); margin-top: 2px; }
+
+    .key-points { background: #eff6ff; border-radius: 10px; padding: 16px 20px; margin-top: 12px; }
+    .key-points strong { color: #1d4ed8; }
+
+    @media print {
+      @page { size: A4; margin: 14mm; }
+      html, body { background: #fff !important; overflow: visible !important; }
+      .guide { max-width: 100%; padding: 0; }
+      .guide-toolbar { display: none !important; }
+      .guide-section { box-shadow: none; padding: 12px 14px; margin-bottom: 8px; font-size: 9.5pt; }
+      .guide-section h2 { font-size: 1rem; margin-bottom: 6px; }
+      .guide-header h1 { font-size: 1.3rem; }
+      .judge-grid { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+      .axis-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .judge-card, .axis-row { padding: 8px 10px; break-inside: avoid; }
+      .judge-card .desc, .axis-row .axis-meaning { font-size: 0.78rem; }
+      .judge-card .vi, .axis-row .vi { font-size: 0.68rem; }
+    }
+
+    @media (max-width: 600px) {
+      .axis-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="guide">
+  <div class="guide-toolbar no-print">
+    <a href="index.html">← 検査ページへ</a>
+    <a href="list.html">結果一覧</a>
+    <button onclick="window.print()">📄 PDF保存</button>
+  </div>
+
+  <div class="guide-header">
+    <h1>クレペリン検査 結果の見方</h1>
+    <div class="subtitle">Cách đọc kết quả bài kiểm tra Kraepelin</div>
+  </div>
+
+  <!-- 1. 検査の概要 -->
+  <section class="guide-section">
+    <h2><span class="num">1</span>検査の概要</h2>
+    <p>1〜9のランダムな数字を隣り合う2つずつ足し、答えの<strong>一の位</strong>を入力する単純作業を繰り返します。</p>
+    <p class="vi">Lặp lại thao tác đơn giản: cộng hai chữ số liền kề (1〜9) và nhập <strong>chữ số hàng đơn vị</strong> của tổng.</p>
+    <ul>
+      <li>1行 60秒、前半5行 → 休憩5分 → 後半5行（簡易版・約15分）</li>
+      <li class="vi">Mỗi dòng 60 giây. Cấu trúc: nửa đầu 5 dòng → nghỉ 5 phút → nửa sau 5 dòng (khoảng 15 phút)</li>
+    </ul>
+    <div class="key-points">
+      <strong>何を測っているか:</strong> 単純作業の量・正確さ・ペースの変化から、性格・行動傾向・処理能力を推定します。<br>
+      <span class="vi" style="display:block;margin-top:6px;"><strong>Đo cái gì:</strong> Suy đoán tính cách, xu hướng hành vi và năng lực xử lý từ lượng công việc, độ chính xác và thay đổi nhịp độ của thao tác đơn giản.</span>
+    </div>
+  </section>
+
+  <!-- 2. 総合判定 -->
+  <section class="guide-section">
+    <h2><span class="num">2</span>総合判定（曲線タイプ）</h2>
+    <p>作業曲線の形状とスコアから、3段階で判定します。</p>
+    <p class="vi">Đánh giá theo 3 cấp dựa trên hình dạng đường cong làm việc và điểm số.</p>
+    <div class="judge-grid">
+      <div class="judge-card typical">
+        <div class="label">✓ 定型曲線</div>
+        <div class="desc">作業曲線が定型パターン。安定した処理能力、適応的な行動傾向。</div>
+        <div class="vi">Đường cong điển hình. Năng lực xử lý ổn định, xu hướng hành vi thích nghi.</div>
+      </div>
+      <div class="judge-card near-typical">
+        <div class="label">△ 準定型曲線</div>
+        <div class="desc">概ね定型。一部に偏りや変動があるが許容範囲。</div>
+        <div class="vi">Gần điển hình. Có vài điểm lệch nhưng trong phạm vi chấp nhận được.</div>
+      </div>
+      <div class="judge-card atypical">
+        <div class="label">✗ 非定型曲線</div>
+        <div class="desc">定型からの逸脱。作業量・誤答・変動・後半低下のいずれかが顕著。</div>
+        <div class="vi">Khác biệt rõ với điển hình. Có vấn đề rõ về lượng công việc, sai sót, biến động hoặc giảm sút ở nửa sau.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 作業曲線 -->
+  <section class="guide-section">
+    <h2><span class="num">3</span>作業曲線の読み方</h2>
+    <p>横軸 = 行番号（時間経過）、縦軸 = 1行の正答数。前半（青）と後半（橙）の流れに注目します。</p>
+    <p class="vi">Trục ngang = số dòng (theo thời gian), trục dọc = số câu đúng mỗi dòng. Chú ý dòng chảy nửa đầu (xanh) và nửa sau (cam).</p>
+    <ul>
+      <li><strong>初頭努力</strong>: 最初の数行が高いか（取りかかりの良さ）</li>
+      <li class="vi">Nỗ lực ban đầu: vài dòng đầu có cao không (khả năng bắt đầu)</li>
+      <li><strong>U字カーブ</strong>: 中盤に低下し、終盤やや回復するのが定型</li>
+      <li class="vi">Đường cong U: giảm ở giữa và phục hồi nhẹ ở cuối là điển hình</li>
+      <li><strong>休憩後の回復</strong>: 後半の出だしが前半終盤より高いか</li>
+      <li class="vi">Phục hồi sau nghỉ: đầu nửa sau có cao hơn cuối nửa đầu không</li>
+      <li><strong>後半の低下</strong>: 急激な低下は疲労耐性の低さを示す</li>
+      <li class="vi">Giảm sút nửa sau: giảm đột ngột thể hiện sức bền yếu</li>
+    </ul>
+  </section>
+
+  <!-- 4. 4軸評価 -->
+  <section class="guide-section">
+    <h2><span class="num">4</span>性格・行動特性（4軸評価）</h2>
+    <p>各軸を5段階で評価。<strong>高い＝良い</strong>とは限らず、それぞれ「傾向の強さ」を示します。</p>
+    <p class="vi">Đánh giá từng trục theo 5 mức. Cao không nhất thiết là tốt — thể hiện mức độ của mỗi xu hướng.</p>
+    <div class="axis-grid">
+      <div class="axis-row f">
+        <div class="axis-name">発動性 / Tính khởi động</div>
+        <div class="axis-meaning">取りかかりの良さ、意欲。最初の数行 vs 全体平均で算出。
+          <div class="vi">Khả năng bắt đầu, động lực. Tính bằng vài dòng đầu so với trung bình.</div>
+        </div>
+      </div>
+      <div class="axis-row h">
+        <div class="axis-name">可変性 / Tính biến động</div>
+        <div class="axis-meaning">気分や行動の変化幅。標準偏差で算出。大きい＝環境に敏感、小さい＝安定。
+          <div class="vi">Độ biến động cảm xúc・hành vi. Tính bằng độ lệch chuẩn. Lớn = nhạy cảm, nhỏ = ổn định.</div>
+        </div>
+      </div>
+      <div class="axis-row k">
+        <div class="axis-name">亢進性 / Tính hưng phấn</div>
+        <div class="axis-meaning">勢い・持続力。休憩後の回復量と後半の維持力で算出。
+          <div class="vi">Đà tiến・độ bền. Tính bằng phục hồi sau nghỉ và duy trì ở nửa sau.</div>
+        </div>
+      </div>
+      <div class="axis-row s">
+        <div class="axis-name">作業量 / Năng lực làm việc</div>
+        <div class="axis-meaning">処理能力・効率。1行平均正答数で算出。50/40/30/20問が境界。
+          <div class="vi">Năng lực xử lý・hiệu suất. Tính bằng trung bình câu đúng/dòng. Mốc 50/40/30/20.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 詳細分析 -->
+  <section class="guide-section">
+    <h2><span class="num">5</span>詳細分析</h2>
+    <p>5項目について、テキストで具体的な傾向を記述します。</p>
+    <ul>
+      <li><strong>初頭努力</strong>: 序盤の意欲・主体性</li>
+      <li><strong>疲労耐性</strong>: 前半の前期 vs 後期の差</li>
+      <li><strong>休憩効果</strong>: 休憩前後の作業量変化</li>
+      <li><strong>前半 vs 後半</strong>: 前半・後半の総合比較</li>
+      <li><strong>正確性</strong>: 誤答数の傾向</li>
+    </ul>
+    <p class="vi" style="margin-top:8px;">5 mục: nỗ lực ban đầu / sức bền / hiệu quả nghỉ ngơi / so sánh nửa đầu・nửa sau / độ chính xác.</p>
+  </section>
+
+  <!-- 6. 解釈の注意 -->
+  <section class="guide-section">
+    <h2><span class="num">6</span>解釈の注意</h2>
+    <ul>
+      <li>このテストは候補者の<strong>傾向</strong>を示すもので、採否の絶対的な基準ではありません。</li>
+      <li class="vi">Bài kiểm tra này thể hiện <strong>xu hướng</strong> của ứng viên, không phải tiêu chí tuyệt đối để tuyển dụng.</li>
+      <li>面接や他の評価と組み合わせて総合的に判断してください。</li>
+      <li class="vi">Hãy kết hợp với phỏng vấn và các đánh giá khác để có quyết định tổng hợp.</li>
+      <li>体調・緊張など外的要因の影響もあるため、参考指標として扱ってください。</li>
+      <li class="vi">Có ảnh hưởng của tình trạng sức khỏe, căng thẳng v.v., nên dùng làm chỉ số tham khảo.</li>
+      <li>簡易版（5+5行）はサンプル数が少ないため、判定の信頼性は本格版より低い点に留意。</li>
+      <li class="vi">Phiên bản đơn giản (5+5 dòng) có ít mẫu hơn, nên độ tin cậy thấp hơn bản đầy đủ.</li>
+    </ul>
+  </section>
+
+  <div class="guide-section" style="background: var(--gray-50); border: 1px dashed var(--gray-300); text-align: center; font-size: 0.85rem; color: var(--gray-500);">
+    GROP Vietnam ／ 特定技能候補者面接用 ／ 内田クレペリン精神検査（簡易版）
+  </div>
+</div>
+
+</body>
+</html>
