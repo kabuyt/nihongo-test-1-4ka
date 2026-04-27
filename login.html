@@ -45,8 +45,8 @@
 
     <div class="form-group">
       <label>生年月日（Ngày sinh）</label>
-      <input type="date" id="birth_date" autocomplete="bday">
-      <div class="hint">西暦で入力 / Nhập năm dương lịch</div>
+      <input type="tel" id="birth_date" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="例: 20000115" autocomplete="off" style="letter-spacing:2px;font-family:monospace">
+      <div class="hint">8桁の数字 YYYYMMDD（例: 2000年1月15日 → 20000115）</div>
     </div>
 
     <button class="btn-login" id="login-btn" onclick="doLogin()">
@@ -87,6 +87,11 @@ async function doLogin() {
     errEl.style.display = 'block';
     return;
   }
+  if (!/^[0-9]{8}$/.test(birthDate)) {
+    errEl.textContent = '生年月日は8桁の数字で入力してください / Nhập 8 chữ số (YYYYMMDD)';
+    errEl.style.display = 'block';
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'ログイン中...';
@@ -102,6 +107,11 @@ async function doLogin() {
     btn.textContent = 'ログイン / Đăng nhập';
   }
 }
+
+// 生年月日は数字のみ受け付ける
+document.getElementById('birth_date').addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);
+});
 
 // Enterキーでログイン
 document.addEventListener('keydown', e => {
