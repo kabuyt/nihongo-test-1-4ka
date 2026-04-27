@@ -7,8 +7,15 @@ const Results = (() => {
     const total = row.answers.length;
     const correct = row.answers.filter(a => a.isCorrect).length;
     const wrong = total - correct;
-    const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const rate = total > 0 ? formatRate((correct / total) * 100) : '0';
     return { total, correct, wrong, rate };
+  }
+
+  // 正答率を小数1位までで表示（誤答が1個でもあれば 100% にならないよう）
+  function formatRate(pct) {
+    if (pct === 100) return '100';
+    if (pct === 0) return '0';
+    return (Math.round(pct * 10) / 10).toFixed(1);
   }
 
   // ============ 定型 / 非定型 判定 ============
@@ -484,7 +491,7 @@ const Results = (() => {
     const totalAnswered = all.length;
     const totalCorrect = all.filter(a => a.isCorrect).length;
     const totalWrong = totalAnswered - totalCorrect;
-    const overallRate = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+    const overallRate = totalAnswered > 0 ? formatRate((totalCorrect / totalAnswered) * 100) : '0';
     const avgPerRow = allResults.length > 0 ? Math.round(totalCorrect / allResults.length * 10) / 10 : 0;
 
     const stats = [
