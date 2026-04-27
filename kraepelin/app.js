@@ -88,7 +88,6 @@ const App = (() => {
         if (ans) {
           cell.textContent = ans.given;
           cell.classList.add(ans.isCorrect ? 'correct' : 'wrong');
-          cell.style.color = ans.isCorrect ? 'var(--success)' : 'var(--error)';
         }
       } else if (i === currentPos) {
         cell.classList.add('current');

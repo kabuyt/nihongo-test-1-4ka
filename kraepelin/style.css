@@ -410,10 +410,10 @@ html, body {
   background: #eff6ff;
 }
 
-/* 入力済みの回答: 正誤に関わらず赤字（実際のクレペリンに近い表示） */
+/* 入力済みの回答: 正誤に関わらず緑字（紙に書いた感、テスト中フィードバックなし） */
 .ans-cell.correct,
 .ans-cell.wrong {
-  color: var(--error);
+  color: var(--success);
   border: none;
   background: transparent;
   font-weight: 700;
