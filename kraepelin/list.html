@@ -49,6 +49,28 @@
     .btn-close { background: none; border: none; font-size: 1.4rem; color: var(--gray-500); cursor: pointer; padding: 4px 10px; border-radius: 6px; }
     .btn-close:hover { background: var(--gray-100); color: var(--gray-900); }
     .modal-body { padding: 0; }
+
+    /* PDF印刷時: モーダルを通常ページとして流す */
+    @media print {
+      html, body { overflow: visible !important; background: #fff !important; height: auto !important; }
+      .list-page, .toolbar, .list-header { display: none !important; }
+      .modal-bg {
+        position: static !important;
+        background: transparent !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        display: block !important;
+        z-index: auto !important;
+      }
+      .modal-panel {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        max-width: 100% !important;
+        background: #fff !important;
+      }
+      .modal-header { display: none !important; }
+      .modal-body { padding: 0 !important; }
+    }
   </style>
 </head>
 <body>
