@@ -5,7 +5,7 @@ const App = (() => {
   const NUMS_PER_ROW = 116;
   const ROW_TIME = 60; // 秒
   const BREAK_TIME = 300; // 秒
-  const ROWS_PER_HALF = 15;
+  const ROWS_PER_HALF = 5;
   const VISIBLE_CELLS = 20; // 画面に表示するセル数
 
   // 状態

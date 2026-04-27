@@ -22,7 +22,7 @@ const Results = (() => {
     const issues = [];
     let score = 100; // 定型度スコア (100=完全定型)
 
-    if (firstCounts.length < 15 || secondCounts.length < 15) {
+    if (firstCounts.length < 5 || secondCounts.length < 5) {
       return { type: 'incomplete', score: 0, issues: ['検査が未完了です'], details: {} };
     }
 
@@ -42,11 +42,11 @@ const Results = (() => {
       score -= 20;
     }
 
-    // 3. 前半U字カーブの判定
+    // 3. 前半U字カーブの判定（簡易版: 5行構成）
     // 定型: 最初高い → 中盤下がる → 終盤やや回復
-    const firstEarly = average(firstCounts.slice(0, 3));
-    const firstMid = average(firstCounts.slice(5, 10));
-    const firstLate = average(firstCounts.slice(12, 15));
+    const firstEarly = average(firstCounts.slice(0, 2));
+    const firstMid = average(firstCounts.slice(2, 3));
+    const firstLate = average(firstCounts.slice(-2));
     const hasInitialEffort = firstEarly > firstMid;
     const hasLateRecovery = firstLate >= firstMid - 2;
 
@@ -56,8 +56,8 @@ const Results = (() => {
     }
 
     // 4. 後半が前半より開始時に増加し、徐々に低下
-    const secondStart = average(secondCounts.slice(0, 3));
-    const lastFirstAvg = average(firstCounts.slice(-3));
+    const secondStart = average(secondCounts.slice(0, 2));
+    const lastFirstAvg = average(firstCounts.slice(-2));
     const hasBreakRecovery = secondStart > lastFirstAvg - 2;
 
     if (!hasBreakRecovery) {
@@ -156,8 +156,8 @@ const Results = (() => {
     const allCounts = allResults.map(r => calcRowStats(r).correct);
     const avgAll = average(allCounts);
 
-    // 発動性: 取りかかりの良さ（最初3行 vs 全体平均）
-    const first3 = average(firstCounts.slice(0, 3));
+    // 発動性: 取りかかりの良さ（最初2行 vs 全体平均）
+    const first3 = average(firstCounts.slice(0, 2));
     const initiativeRatio = first3 / (avgAll || 1);
     let initiativeScore, initiativeLevel, initiativeDesc;
     if (initiativeRatio > 1.15) {
@@ -198,11 +198,11 @@ const Results = (() => {
     }
 
     // 亢進性: 勢いの強さ（後半の伸び、休憩後の回復）
-    const secondStart3 = average(secondCounts.slice(0, 3));
-    const lastFirst3 = average(firstCounts.slice(-3));
+    const secondStart3 = average(secondCounts.slice(0, 2));
+    const lastFirst3 = average(firstCounts.slice(-2));
     const recovery = secondStart3 - lastFirst3;
-    const secondTrend = secondCounts.length >= 5 ?
-      average(secondCounts.slice(0, 5)) - average(secondCounts.slice(-5)) : 0;
+    const secondTrend = secondCounts.length >= 4 ?
+      average(secondCounts.slice(0, 2)) - average(secondCounts.slice(-2)) : 0;
 
     let accelerationScore, accelerationLevel, accelerationDesc;
     if (recovery > 5 && secondTrend < 3) {
@@ -491,12 +491,12 @@ const Results = (() => {
 
     // 初頭努力
     if (firstCounts.length >= 3) {
-      const first3Avg = average(firstCounts.slice(0, 3));
-      const restAvg = average(firstCounts.slice(3));
+      const first3Avg = average(firstCounts.slice(0, 2));
+      const restAvg = average(firstCounts.slice(2));
       const effort = first3Avg - restAvg;
       let desc;
       if (effort > 3) {
-        desc = `最初の3行は平均より ${effort.toFixed(1)} 問多く、初頭努力が明確に見られます。意欲的に作業に取りかかれるタイプです。`;
+        desc = `最初の2行は平均より ${effort.toFixed(1)} 問多く、初頭努力が明確に見られます。意欲的に作業に取りかかれるタイプです。`;
       } else if (effort < -3) {
         desc = '序盤はやや低調で、ウォームアップを経て本来の力を発揮するタイプです。';
       } else {
@@ -506,9 +506,9 @@ const Results = (() => {
     }
 
     // 疲労度
-    if (firstCounts.length >= 10) {
-      const early = average(firstCounts.slice(0, 5));
-      const late = average(firstCounts.slice(-5));
+    if (firstCounts.length >= 4) {
+      const early = average(firstCounts.slice(0, 2));
+      const late = average(firstCounts.slice(-2));
       const fatigue = early - late;
       let desc;
       if (fatigue > 5) {
@@ -522,9 +522,9 @@ const Results = (() => {
     }
 
     // 休憩効果
-    if (firstCounts.length >= 3 && secondCounts.length >= 3) {
-      const lastFirst = average(firstCounts.slice(-3));
-      const firstSecond = average(secondCounts.slice(0, 3));
+    if (firstCounts.length >= 2 && secondCounts.length >= 2) {
+      const lastFirst = average(firstCounts.slice(-2));
+      const firstSecond = average(secondCounts.slice(0, 2));
       const recovery = firstSecond - lastFirst;
       let desc;
       if (recovery > 3) {
@@ -559,8 +559,8 @@ const Results = (() => {
       return s.wrong;
     });
     const avgErrors = average(allErrors);
-    const errorTrend = allErrors.length >= 10 ?
-      average(allErrors.slice(-5)) - average(allErrors.slice(0, 5)) : 0;
+    const errorTrend = allErrors.length >= 4 ?
+      average(allErrors.slice(-2)) - average(allErrors.slice(0, 2)) : 0;
 
     let errorDesc;
     if (avgErrors < 1) {
