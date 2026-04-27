@@ -59,6 +59,7 @@ function render() {
     const errPct = r.error_rate != null ? (Number(r.error_rate) * 100).toFixed(1) + '%' : '-';
     return `
       <tr class="row-hover" data-id="${r.id}">
+        <td onclick="event.stopPropagation();"><input type="checkbox" class="row-check" data-id="${r.id}"></td>
         <td class="col-name">${escapeHtml(r.name || '(無名)')}</td>
         <td>${dateStr}</td>
         <td><span class="judge-badge ${judgeKey}">${judgeLabel}</span></td>
@@ -77,6 +78,7 @@ function render() {
     <table class="list-table">
       <thead>
         <tr>
+          <th><input type="checkbox" id="select-all-cb" title="全選択"></th>
           <th>氏名</th>
           <th>検査日時</th>
           <th>判定</th>
@@ -91,8 +93,20 @@ function render() {
   `;
 
   container.querySelectorAll('tr.row-hover').forEach(tr => {
-    tr.addEventListener('click', () => showDetail(tr.dataset.id));
+    tr.addEventListener('click', (e) => {
+      // チェックボックスのセル以外でクリックされた場合のみ詳細を開く
+      if (e.target.closest('.row-check') || e.target.tagName === 'INPUT') return;
+      showDetail(tr.dataset.id);
+    });
   });
+
+  const selectAll = document.getElementById('select-all-cb');
+  if (selectAll) {
+    selectAll.checked = false;
+    selectAll.onchange = () => {
+      container.querySelectorAll('.row-check').forEach(cb => cb.checked = selectAll.checked);
+    };
+  }
 }
 
 function showDetail(id) {
@@ -156,9 +170,74 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// PDF一括ダウンロード（ZIP）
+async function bulkDownloadPDF() {
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+  if (ids.length === 0) { alert('対象を選択してください'); return; }
+  const targets = ids.map(id => allRecords.find(r => r.id === id)).filter(Boolean);
+
+  const btn = document.getElementById('bulk-pdf-btn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+
+  // モーダルを show（display:flex）するが visibility:hidden で見えなくする
+  // → html2canvas は layout 済みの DOM を撮影できる
+  const modalBg = document.getElementById('modal-bg');
+  const wasShown = modalBg.classList.contains('show');
+  modalBg.classList.add('show');
+  modalBg.style.visibility = 'hidden';
+
+  const zip = new JSZip();
+  const opts = {
+    margin: [10, 10, 10, 10],
+    image: { type: 'jpeg', quality: 0.92 },
+    html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  try {
+    for (let i = 0; i < targets.length; i++) {
+      const r = targets[i];
+      btn.textContent = `生成中 ${i + 1}/${targets.length}...`;
+      currentRecord = r;
+      Results.render(r.results || [], { name: r.name, startedAt: r.started_at || r.created_at });
+      // レイアウト + canvas 描画完了を待つ（visibility:hidden 配下では rAF が発火しないので setTimeout のみ）
+      await new Promise(res => setTimeout(res, 300));
+
+      const reportEl = document.querySelector('.modal-panel .result-container');
+      const blob = await html2pdf().set(opts).from(reportEl).output('blob');
+      const safeName = (r.name || '無名').replace(/[\\/:*?"<>|]/g, '');
+      const d = new Date(r.started_at || r.created_at);
+      const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+      zip.file(`クレペリン検査_${safeName}_${dateStr}.pdf`, blob);
+    }
+
+    btn.textContent = 'ZIP生成中...';
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `クレペリン検査_一括_${new Date().toISOString().slice(0, 10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('PDF生成失敗: ' + err.message);
+    console.error(err);
+  } finally {
+    if (!wasShown) modalBg.classList.remove('show');
+    modalBg.style.visibility = '';
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
 // イベント
 document.getElementById('search-name').addEventListener('input', render);
 document.getElementById('filter-judgment').addEventListener('change', render);
+document.getElementById('bulk-pdf-btn').addEventListener('click', bulkDownloadPDF);
 document.getElementById('modal-bg').addEventListener('click', (e) => {
   if (e.target === document.getElementById('modal-bg')) closeModal();
 });

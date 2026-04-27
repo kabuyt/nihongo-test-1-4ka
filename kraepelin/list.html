@@ -93,6 +93,7 @@
       <option value="atypical">非定型曲線</option>
       <option value="incomplete">未完了</option>
     </select>
+    <button class="btn-mini" id="bulk-pdf-btn" style="padding:8px 14px;font-size:0.85rem;">📄 選択をPDF一括DL</button>
     <span class="stats" id="stats">読み込み中...</span>
   </div>
 
@@ -162,8 +163,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="../common/config.js"></script>
 <script src="results.js?v=2"></script>
-<script src="list.js?v=4"></script>
+<script src="list.js?v=9"></script>
 </body>
 </html>
