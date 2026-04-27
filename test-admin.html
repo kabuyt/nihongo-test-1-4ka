@@ -101,6 +101,15 @@
 
     <!-- ツールバー -->
     <div class="toolbar">
+      <label>送り出し:
+        <select id="filter-org" onchange="renderMatrix()">
+          <option value="">全部</option>
+          <option value="VJC">VJC</option>
+          <option value="BRN">BARAEN</option>
+          <option value="AKN">AKANE</option>
+          <option value="GRV">GRVN (admin)</option>
+        </select>
+      </label>
       <label>クラス:
         <select id="filter-class" onchange="renderMatrix()"><option value="">全部</option></select>
       </label>
@@ -280,6 +289,7 @@ function renderStats() {
 }
 
 function renderMatrix() {
+  const fOrg = document.getElementById('filter-org').value;
   const fClass = document.getElementById('filter-class').value;
   const fCompany = document.getElementById('filter-company').value;
   const fSearch = document.getElementById('filter-search').value.toLowerCase();
@@ -287,6 +297,7 @@ function renderMatrix() {
 
   const filtered = _trainees.filter(t => {
     if (onlyAuth && !t.auth_user_id) return false;
+    if (fOrg && !((t.student_id||'').toUpperCase().startsWith(fOrg))) return false;
     if (fClass && t.class_group !== fClass) return false;
     if (fCompany && t.company !== fCompany) return false;
     if (fSearch && !((t.student_id||'').toLowerCase().includes(fSearch) || (t.name_katakana||'').toLowerCase().includes(fSearch))) return false;
@@ -400,11 +411,13 @@ async function doBulkGrant() {
   let targetTrainees;
   if (target === 'filtered') {
     // 現在表示中の条件を再適用
+    const fOrg = document.getElementById('filter-org').value;
     const fClass = document.getElementById('filter-class').value;
     const fCompany = document.getElementById('filter-company').value;
     const fSearch = document.getElementById('filter-search').value.toLowerCase();
     targetTrainees = _trainees.filter(t => {
       if (!t.auth_user_id) return false;
+      if (fOrg && !((t.student_id||'').toUpperCase().startsWith(fOrg))) return false;
       if (fClass && t.class_group !== fClass) return false;
       if (fCompany && t.company !== fCompany) return false;
       if (fSearch && !((t.student_id||'').toLowerCase().includes(fSearch) || (t.name_katakana||'').toLowerCase().includes(fSearch))) return false;
