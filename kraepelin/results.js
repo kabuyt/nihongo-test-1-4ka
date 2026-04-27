@@ -616,8 +616,25 @@ const Results = (() => {
     return Math.sqrt(average(sqDiffs));
   }
 
+  // ============ 受検者情報 ============
+  function renderMeta(meta) {
+    const el = document.getElementById('result-meta');
+    if (!el) return;
+    const name = meta && meta.name ? meta.name : '';
+    const date = meta && meta.startedAt ? new Date(meta.startedAt) : new Date();
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日`;
+    const parts = [];
+    if (name) parts.push(`<span class="meta-name">受検者: <strong>${name}</strong> さん</span>`);
+    parts.push(`<span class="meta-date">検査日: ${dateStr}</span>`);
+    el.innerHTML = parts.join('');
+  }
+
   // ============ メインレンダリング ============
-  function render(allResults) {
+  function render(allResults, meta) {
+    renderMeta(meta);
     const judgment = judgeTypicality(allResults);
     renderJudgment(judgment);
     drawChart(allResults, judgment);

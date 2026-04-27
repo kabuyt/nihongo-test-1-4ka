@@ -18,6 +18,8 @@ const App = (() => {
   let currentAnswers = [];
   let timerInterval = null;
   let timeLeft = ROW_TIME;
+  let userName = '';
+  let testStartedAt = null;
 
   // DOM
   const screens = {
@@ -160,7 +162,7 @@ const App = (() => {
     } else if (phase === 'second' && currentRow >= ROWS_PER_HALF * 2) {
       // 全て終了 → 結果画面へ
       showScreen('result');
-      Results.render(allResults);
+      Results.render(allResults, { name: userName, startedAt: testStartedAt });
     } else {
       // 次の行
       startRow();
@@ -265,6 +267,16 @@ const App = (() => {
 
     // 検査開始ボタン
     document.getElementById('btn-start').addEventListener('click', () => {
+      const nameInput = document.getElementById('input-name');
+      const name = nameInput.value.trim();
+      if (!name) {
+        nameInput.focus();
+        nameInput.classList.add('input-error');
+        setTimeout(() => nameInput.classList.remove('input-error'), 1500);
+        return;
+      }
+      userName = name;
+      testStartedAt = new Date();
       mode = 'test';
       phase = 'first';
       currentRow = 0;

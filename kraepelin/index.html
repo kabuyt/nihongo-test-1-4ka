@@ -4,18 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>クレペリン検査</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <!-- スタート画面 -->
   <div id="screen-start" class="screen active">
     <div class="start-container">
-      <h1>クレペリン検査</h1>
-      <p class="subtitle">内田クレペリン精神検査</p>
+      <h1>クレペリン検査<span class="vi-h">Bài kiểm tra Kraepelin</span></h1>
+      <p class="subtitle">内田クレペリン精神検査<span class="vi"> / Kiểm tra tâm lý Uchida-Kraepelin</span></p>
 
       <div class="description">
-        <h2>検査の説明</h2>
+        <h2>検査の説明<span class="vi-inline">（Hướng dẫn）</span></h2>
         <p>画面に表示される<strong>隣り合う2つの数字を足して</strong>、その答えの<strong>一の位</strong>を入力してください。</p>
+        <p class="vi">Cộng <strong>hai chữ số liền kề</strong> hiển thị trên màn hình, sau đó nhập <strong>chữ số hàng đơn vị</strong> của tổng.</p>
         <div class="example-box">
           <div class="example-numbers">
             <span class="num">3</span>
@@ -26,17 +27,23 @@
           </div>
           <div class="example-arrow">↓</div>
           <div class="example-answer">3 + 8 = 11 → <strong>1</strong> を入力</div>
+          <div class="example-answer vi">3 + 8 = 11 → Nhập <strong>1</strong></div>
         </div>
         <ul>
-          <li>1行あたり <strong>1分間</strong> で、できるだけ多く解いてください</li>
-          <li>前半5行 → 休憩5分 → 後半5行 の構成です（約15分）</li>
-          <li>数字キーまたは画面下のテンキーで入力できます</li>
+          <li>1行あたり <strong>1分間</strong> で、できるだけ多く解いてください<div class="vi">Hãy giải càng nhiều càng tốt trong <strong>1 phút</strong> mỗi dòng.</div></li>
+          <li>前半5行 → 休憩5分 → 後半5行 の構成です（約15分）<div class="vi">Cấu trúc: nửa đầu 5 dòng → nghỉ 5 phút → nửa sau 5 dòng (khoảng 15 phút).</div></li>
+          <li>数字キーまたは画面下のテンキーで入力できます<div class="vi">Có thể nhập bằng phím số trên bàn phím hoặc bàn phím số trên màn hình.</div></li>
         </ul>
       </div>
 
+      <div class="name-input-area">
+        <label for="input-name">氏名<span class="vi-inline">/ Họ tên</span></label>
+        <input type="text" id="input-name" placeholder="例: グエン・ヴァン・A / Nguyễn Văn A" autocomplete="name">
+      </div>
+
       <div class="start-buttons">
-        <button id="btn-practice" class="btn btn-secondary">練習する（1行）</button>
-        <button id="btn-start" class="btn btn-primary">検査開始</button>
+        <button id="btn-practice" class="btn btn-secondary">練習する（1行）<span class="vi-btn">Luyện tập (1 dòng)</span></button>
+        <button id="btn-start" class="btn btn-primary">検査開始<span class="vi-btn">Bắt đầu kiểm tra</span></button>
       </div>
     </div>
   </div>
@@ -47,6 +54,7 @@
       <div class="progress-info">
         <span id="phase-label">前半</span>
         <span id="row-label">1 / 5 行目</span>
+        <span class="vi-mini">Dòng / Phần</span>
       </div>
       <div id="timer" class="timer">1:00</div>
     </div>
@@ -73,17 +81,19 @@
   <!-- 休憩画面 -->
   <div id="screen-break" class="screen">
     <div class="break-container">
-      <h2>休憩時間</h2>
+      <h2>休憩時間<span class="vi-h">Thời gian nghỉ</span></h2>
       <p>前半が終了しました。少し休んでください。</p>
+      <p class="vi">Đã kết thúc nửa đầu. Hãy nghỉ một chút.</p>
       <div id="break-timer" class="break-timer">5:00</div>
-      <button id="btn-skip-break" class="btn btn-secondary">スキップして後半へ</button>
+      <button id="btn-skip-break" class="btn btn-secondary">スキップして後半へ<span class="vi-btn">Bỏ qua, sang nửa sau</span></button>
     </div>
   </div>
 
   <!-- 結果画面 -->
   <div id="screen-result" class="screen">
     <div class="result-container">
-      <h2>検査結果</h2>
+      <h2>検査結果<span class="vi-h">Kết quả kiểm tra</span></h2>
+      <div id="result-meta" class="result-meta"></div>
 
       <!-- 総合判定 -->
       <div id="judgment-card" class="judgment-card">
@@ -94,41 +104,41 @@
 
       <!-- 作業曲線 -->
       <div class="result-section">
-        <h3>作業曲線</h3>
+        <h3>作業曲線<span class="vi-inline">/ Đường cong làm việc</span></h3>
         <canvas id="chart-curve" width="800" height="350"></canvas>
         <div id="curve-note" class="curve-note"></div>
       </div>
 
       <!-- 4つの評価軸 -->
       <div class="result-section">
-        <h3>性格・行動特性（4軸評価）</h3>
+        <h3>性格・行動特性（4軸評価）<span class="vi-inline">/ Tính cách・hành vi (4 trục)</span></h3>
         <div id="four-axes" class="four-axes"></div>
       </div>
 
       <!-- 総合スコア -->
       <div class="result-section">
-        <h3>作業能力</h3>
+        <h3>作業能力<span class="vi-inline">/ Năng lực làm việc</span></h3>
         <div id="summary-stats" class="summary-stats"></div>
       </div>
 
       <!-- 詳細分析 -->
       <div class="result-section">
-        <h3>詳細分析</h3>
+        <h3>詳細分析<span class="vi-inline">/ Phân tích chi tiết</span></h3>
         <div id="analysis" class="analysis"></div>
       </div>
 
       <!-- 各行の詳細 -->
       <div class="result-section">
-        <h3>各行の詳細</h3>
+        <h3>各行の詳細<span class="vi-inline">/ Chi tiết từng dòng</span></h3>
         <div class="table-wrapper">
           <table id="detail-table">
             <thead>
               <tr>
-                <th>行</th>
-                <th>区分</th>
-                <th>正答数</th>
-                <th>誤答数</th>
-                <th>正答率</th>
+                <th>行<div class="vi-th">Dòng</div></th>
+                <th>区分<div class="vi-th">Phần</div></th>
+                <th>正答数<div class="vi-th">Đúng</div></th>
+                <th>誤答数<div class="vi-th">Sai</div></th>
+                <th>正答率<div class="vi-th">Tỉ lệ</div></th>
               </tr>
             </thead>
             <tbody id="detail-tbody"></tbody>
@@ -137,8 +147,8 @@
       </div>
 
       <div class="start-buttons no-print">
-        <button id="btn-pdf" class="btn btn-secondary">PDF保存</button>
-        <button id="btn-retry" class="btn btn-primary">もう一度</button>
+        <button id="btn-pdf" class="btn btn-secondary">PDF保存<span class="vi-btn">Lưu PDF</span></button>
+        <button id="btn-retry" class="btn btn-primary">もう一度<span class="vi-btn">Làm lại</span></button>
       </div>
     </div>
   </div>
