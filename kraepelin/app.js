@@ -374,9 +374,14 @@ const App = (() => {
       startRow();
     });
 
-    // PDF保存ボタン
+    // PDF保存ボタン（document.title をファイル名として使用）
     document.getElementById('btn-pdf').addEventListener('click', () => {
+      const orig = document.title;
+      const d = testStartedAt || new Date();
+      const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+      document.title = `クレペリン検査_${userName || '無名'}_${dateStr}`;
       window.print();
+      setTimeout(() => { document.title = orig; }, 1000);
     });
 
     // もう一度ボタン

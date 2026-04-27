@@ -1,6 +1,7 @@
 // ============ クレペリン検査 結果一覧 ============
 
 let allRecords = [];
+let currentRecord = null;
 
 async function loadRecords() {
   const container = document.getElementById('list-container');
@@ -97,6 +98,7 @@ function render() {
 function showDetail(id) {
   const record = allRecords.find(r => r.id === id);
   if (!record) return;
+  currentRecord = record;
   document.getElementById('modal-title').textContent = `${record.name || '(無名)'} - ${formatDate(record.started_at || record.created_at)}`;
   document.getElementById('modal-bg').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -107,6 +109,17 @@ function showDetail(id) {
       startedAt: record.started_at || record.created_at,
     });
   }));
+}
+
+function printDetail() {
+  if (!currentRecord) { window.print(); return; }
+  const orig = document.title;
+  const safeName = (currentRecord.name || '無名').replace(/[\\/:*?"<>|]/g, '');
+  const d = new Date(currentRecord.started_at || currentRecord.created_at);
+  const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  document.title = `クレペリン検査_${safeName}_${dateStr}`;
+  window.print();
+  setTimeout(() => { document.title = orig; }, 1000);
 }
 
 function closeModal() {
