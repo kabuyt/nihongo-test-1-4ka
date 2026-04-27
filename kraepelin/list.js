@@ -98,12 +98,15 @@ function showDetail(id) {
   const record = allRecords.find(r => r.id === id);
   if (!record) return;
   document.getElementById('modal-title').textContent = `${record.name || '(無名)'} - ${formatDate(record.started_at || record.created_at)}`;
-  Results.render(record.results || [], {
-    name: record.name,
-    startedAt: record.started_at || record.created_at,
-  });
   document.getElementById('modal-bg').classList.add('show');
   document.body.style.overflow = 'hidden';
+  // モーダルがレイアウトされてから描画（canvas の高さ確保のため）
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    Results.render(record.results || [], {
+      name: record.name,
+      startedAt: record.started_at || record.created_at,
+    });
+  }));
 }
 
 function closeModal() {

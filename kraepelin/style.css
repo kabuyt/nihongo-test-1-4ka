@@ -689,8 +689,9 @@ html, body {
 
 #chart-curve {
   width: 100%;
-  height: auto;
+  aspect-ratio: 16 / 7;
   max-height: 350px;
+  display: block;
 }
 
 .curve-note {
@@ -1037,6 +1038,7 @@ html, body {
 
   /* グラフ: 小さく */
   #chart-curve {
+    aspect-ratio: 16 / 5;
     max-height: 180px;
   }
 
