@@ -319,7 +319,7 @@ function renderMatrix() {
     const noAuth = !t.auth_user_id;
     html += `<tr class="${noAuth ? 'row-noauth' : ''}">`;
     html += `<td class="sticky-col col-id">${t.student_id || '-'}</td>`;
-    html += `<td class="sticky-col col-name" style="left:60px">${t.name_katakana || ''}</td>`;
+    html += `<td class="sticky-col col-name" style="left:60px"><a href="index.html" target="_blank" title="テスト選択ページを開く" style="color:#2563eb;text-decoration:none">${t.name_katakana || ''}</a></td>`;
     html += `<td class="col-class">${t.class_group || ''}</td>`;
     html += `<td class="col-class">${t.company || ''}</td>`;
     html += `<td>${noAuth ? '<span class="badge-noauth">未作成</span>' : '<span class="badge-auth">OK</span>'}</td>`;
