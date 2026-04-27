@@ -30,20 +30,27 @@ const Results = (() => {
     const errorRate = allResults.flatMap(r => r.answers).filter(a => !a.isCorrect).length /
                       allResults.flatMap(r => r.answers).length;
 
-    // 1. 作業量が著しく少ない（1行平均20問未満）
-    if (avgAll < 20) {
-      issues.push('作業量が著しく少ない');
-      score -= 30;
-    }
+    // === 簡易版（5+5行）用にチューニング ===
 
-    // 2. 誤答率が高い（15%以上）
-    if (errorRate > 0.15) {
-      issues.push('誤答が多い');
+    // 1. 作業量（段階評価）
+    if (avgAll < 15) {
+      issues.push('作業量が極めて少ない');
+      score -= 50;
+    } else if (avgAll < 25) {
+      issues.push('作業量がやや少ない');
       score -= 20;
     }
 
+    // 2. 誤答率（段階評価）
+    if (errorRate > 0.20) {
+      issues.push('誤答が極めて多い');
+      score -= 40;
+    } else if (errorRate > 0.10) {
+      issues.push('誤答がやや多い');
+      score -= 15;
+    }
+
     // 3. 前半U字カーブの判定（簡易版: 5行構成）
-    // 定型: 最初高い → 中盤下がる → 終盤やや回復
     const firstEarly = average(firstCounts.slice(0, 2));
     const firstMid = average(firstCounts.slice(2, 3));
     const firstLate = average(firstCounts.slice(-2));
@@ -52,10 +59,10 @@ const Results = (() => {
 
     if (!hasInitialEffort) {
       issues.push('初頭努力が見られない');
-      score -= 15;
+      score -= 10;
     }
 
-    // 4. 後半が前半より開始時に増加し、徐々に低下
+    // 4. 休憩後の回復
     const secondStart = average(secondCounts.slice(0, 2));
     const lastFirstAvg = average(firstCounts.slice(-2));
     const hasBreakRecovery = secondStart > lastFirstAvg - 2;
@@ -65,14 +72,28 @@ const Results = (() => {
       score -= 15;
     }
 
-    // 5. 著しい変動（標準偏差が大きすぎ）
+    // 5. 標準偏差（5行版用に閾値を下げる: sd>5）
     const sd = stddev(allCounts);
     if (sd > 8) {
       issues.push('作業量の変動が著しい');
-      score -= 20;
+      score -= 25;
+    } else if (sd > 5) {
+      issues.push('作業量にやや変動がある');
+      score -= 10;
     }
 
-    // 6. 途中の急激な落ち込み
+    // 6. 後半に向けた急激な低下傾向（疲労耐性の欠如）
+    if (secondCounts.length >= 3) {
+      const secondEarly = average(secondCounts.slice(0, 2));
+      const secondLate = average(secondCounts.slice(-2));
+      const declineRatio = secondLate / (secondEarly || 1);
+      if (declineRatio < 0.7) {
+        issues.push('後半で急激に作業量が低下');
+        score -= 20;
+      }
+    }
+
+    // 7. 途中の極端な落ち込み（急落）
     for (let i = 1; i < allCounts.length; i++) {
       if (allCounts[i] < allCounts[i - 1] * 0.5) {
         issues.push('途中で著しい作業量の低下がある');

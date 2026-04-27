@@ -6,7 +6,7 @@ const App = (() => {
   const ROW_TIME = 60; // 秒
   const BREAK_TIME = 300; // 秒
   const ROWS_PER_HALF = 5;
-  const VISIBLE_CELLS = 20; // 画面に表示するセル数
+  const VISIBLE_CELLS = 9; // 画面に表示するセル数（両脇に余裕を持たせる）
 
   // 状態
   let mode = 'test'; // 'test' | 'practice'
@@ -60,8 +60,9 @@ const App = (() => {
     numRow.innerHTML = '';
     ansRow.innerHTML = '';
 
-    // 表示範囲: currentPos を中心に前後を表示
-    const start = Math.max(0, currentPos - 3);
+    // 表示範囲: currentPos を中央に置き、過去の回答も可視範囲に入れる
+    const half = Math.floor(VISIBLE_CELLS / 2);
+    const start = Math.max(0, currentPos - half);
     const end = Math.min(numbers.length, start + VISIBLE_CELLS + 1);
 
     for (let i = start; i < end; i++) {
@@ -251,11 +252,11 @@ const App = (() => {
   }
 
   function flashNumpad(num, isCorrect) {
+    // 実際のクレペリンに合わせ正誤フィードバックは出さない（押下感のみ）
     const btn = document.querySelector(`.numpad-btn[data-num="${num}"]`);
     if (!btn) return;
-    const cls = isCorrect ? 'flash-correct' : 'flash-wrong';
-    btn.classList.add(cls);
-    setTimeout(() => btn.classList.remove(cls), 150);
+    btn.classList.add('flash-press');
+    setTimeout(() => btn.classList.remove('flash-press'), 100);
   }
 
   // ============ イベント設定 ============

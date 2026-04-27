@@ -343,7 +343,7 @@ html, body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 16px;
+  padding: 16px 24px;
   overflow: hidden;
   gap: 4px;
 }
@@ -361,7 +361,9 @@ html, body {
   gap: 2px;
   justify-content: flex-start;
   overflow: hidden;
-  padding: 0 4px;
+  /* 回答セルを2数字の中間（gap の真下）に配置するため
+     左に「数字セル幅の半分 + gap の半分」分オフセット */
+  padding: 0 4px 0 23px; /* 4px(default left) + 19px(36/2 + 2/2) */
 }
 
 .num-cell {
@@ -408,18 +410,13 @@ html, body {
   background: #eff6ff;
 }
 
-.ans-cell.correct {
-  color: var(--success);
-  border-color: var(--success);
-  background: #f0fdf4;
-  border-style: solid;
-}
-
+/* 入力済みの回答: 正誤に関わらず赤字（実際のクレペリンに近い表示） */
+.ans-cell.correct,
 .ans-cell.wrong {
   color: var(--error);
-  border-color: var(--error);
-  background: #fef2f2;
-  border-style: solid;
+  border: none;
+  background: transparent;
+  font-weight: 700;
 }
 
 /* Numpad */
@@ -454,12 +451,8 @@ html, body {
   transform: scale(0.95);
 }
 
-.numpad-btn.flash-correct {
-  background: #bbf7d0;
-}
-
-.numpad-btn.flash-wrong {
-  background: #fecaca;
+.numpad-btn.flash-press {
+  background: var(--gray-200);
 }
 
 /* ============ Break Screen ============ */
@@ -850,6 +843,11 @@ html, body {
     width: 28px;
     height: 30px;
     font-size: 0.9rem;
+  }
+
+  .answer-row {
+    /* モバイル: cell 28px + gap 2px → half = 15px。default left padding 4px と合わせて 19px */
+    padding: 0 4px 0 19px;
   }
 
   .numpad {
