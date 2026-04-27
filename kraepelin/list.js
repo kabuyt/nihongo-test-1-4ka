@@ -117,12 +117,12 @@ function showDetail(id) {
   document.getElementById('modal-bg').classList.add('show');
   document.body.style.overflow = 'hidden';
   // モーダルがレイアウトされてから描画（canvas の高さ確保のため）
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  setTimeout(() => {
     Results.render(record.results || [], {
       name: record.name,
       startedAt: record.started_at || record.created_at,
     });
-  }));
+  }, 50);
 }
 
 function printDetail() {

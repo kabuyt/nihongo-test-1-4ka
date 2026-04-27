@@ -703,6 +703,7 @@ html, body {
   width: 100%;
   aspect-ratio: 16 / 7;
   max-height: 350px;
+  min-height: 240px;
   display: block;
 }
 

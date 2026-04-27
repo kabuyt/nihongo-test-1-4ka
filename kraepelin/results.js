@@ -302,9 +302,13 @@ const Results = (() => {
 
     const W = rect.width;
     const H = rect.height;
-    const pad = { top: 30, right: 30, bottom: 50, left: 50 };
-    const chartW = W - pad.left - pad.right;
-    const chartH = H - pad.top - pad.bottom;
+    // 描画領域が確保できるよう padding をサイズに応じて縮小
+    const isSmall = H < 200;
+    const pad = isSmall
+      ? { top: 18, right: 16, bottom: 32, left: 36 }
+      : { top: 30, right: 30, bottom: 50, left: 50 };
+    const chartW = Math.max(40, W - pad.left - pad.right);
+    const chartH = Math.max(40, H - pad.top - pad.bottom);
 
     const correctCounts = allResults.map(r => calcRowStats(r).correct);
     const maxCount = Math.max(...correctCounts, 1);
