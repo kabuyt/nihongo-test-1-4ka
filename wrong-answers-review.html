@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不正解レビュー（Admin）</title>
+<link rel="stylesheet" href="common/style.css">
+<style>
+  body { background:#f5f6fa; }
+  .admin-nav { background:#2c3e50; color:#fff; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; position:sticky; top:0; z-index:100; }
+  .admin-nav .badge { background:#e74c3c; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold; }
+  .admin-nav a { color:#bdc3c7; text-decoration:none; font-size:13px; padding:4px 10px; border-radius:4px; }
+  .admin-nav a:hover { background:#34495e; color:#fff; }
+  .admin-nav a.active { background:#3498db; color:#fff; }
+
+  .login-box { max-width:400px; margin:80px auto; padding:32px; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,.1); text-align:center; }
+  .login-box h2 { color:#2c3e50; margin-bottom:16px; }
+  .login-box input { width:100%; padding:10px; margin:6px 0; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; }
+  .login-box button { width:100%; padding:12px; margin-top:12px; background:#2c3e50; color:#fff; border:none; border-radius:6px; font-size:15px; cursor:pointer; }
+
+  .container { max-width:1400px; margin:0 auto; padding:16px; box-sizing:border-box; }
+  .toolbar { background:#fff; padding:12px 16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .toolbar label { font-size:13px; color:#555; }
+  .toolbar select, .toolbar input { padding:6px 10px; border:1px solid #ccc; border-radius:5px; font-size:13px; }
+  .btn-action { padding:6px 14px; border:none; border-radius:5px; font-size:13px; cursor:pointer; background:#3498db; color:#fff; }
+  .btn-action:hover { background:#2980b9; }
+  .btn-add { background:#27ae60; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+  .btn-add:hover { background:#219653; }
+  .btn-add:disabled { background:#aaa; cursor:not-allowed; }
+
+  .stats { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .stat-card { background:#fff; padding:10px 16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); font-size:13px; }
+  .stat-card b { color:#2c3e50; font-size:18px; display:block; }
+
+  .table-wrap { background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); overflow:auto; }
+  table.review { border-collapse:collapse; width:100%; font-size:13px; }
+  table.review th, table.review td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
+  table.review thead th { background:#34495e; color:#fff; position:sticky; top:0; z-index:5; font-size:12px; }
+  table.review tbody tr:hover { background:#fafbfc; }
+  .col-test { white-space:nowrap; font-weight:bold; color:#2c3e50; }
+  .col-block { font-family:monospace; color:#666; font-size:12px; }
+  .col-answer { max-width:280px; word-break:break-all; }
+  .col-current { max-width:280px; word-break:break-all; color:#666; font-size:12px; }
+  .col-count { text-align:center; font-weight:bold; }
+  .badge-method { display:inline-block; padding:2px 6px; background:#ecf0f1; color:#555; border-radius:3px; font-size:11px; font-family:monospace; }
+  .row-added { background:#e8f5e9 !important; opacity:.65; }
+  .row-added .btn-add { display:none; }
+  .row-added .added-mark { color:#27ae60; font-weight:bold; }
+
+  .toast { position:fixed; top:20px; right:20px; padding:12px 20px; border-radius:6px; color:#fff; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.2); display:none; }
+  .toast.show { display:block; animation:slideIn .2s ease; }
+  .toast.success { background:#27ae60; }
+  .toast.error { background:#e74c3c; }
+  @keyframes slideIn { from { transform:translateX(40px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="login-page">
+  <div class="login-box">
+    <h2>🔑 不正解レビュー</h2>
+    <input type="email" id="admin-email" placeholder="メールアドレス" value="admin@trainee.local">
+    <input type="password" id="admin-pass" placeholder="パスワード">
+    <button onclick="doLogin()">ログイン</button>
+    <p id="login-error" style="color:#e74c3c;font-size:13px;margin-top:8px"></p>
+  </div>
+</div>
+
+<!-- レビュー画面 -->
+<div id="admin-page" style="display:none">
+  <div class="admin-nav">
+    <span class="badge">ADMIN</span>
+    <a href="test-preview.html">📋 プレビュー</a>
+    <a href="test-admin.html">🔓 解放管理</a>
+    <a href="wrong-answers-review.html" class="active">🔍 不正解レビュー</a>
+    <span style="margin-left:auto;font-size:13px;color:#bdc3c7">
+      <span id="admin-email-display"></span>
+      <button onclick="doLogout()" style="margin-left:8px;padding:4px 10px;border-radius:4px;border:1px solid #fff;background:transparent;color:#fff;cursor:pointer;font-size:12px">ログアウト</button>
+    </span>
+  </div>
+
+  <div class="container">
+    <div class="stats" id="stats-area"></div>
+
+    <div class="toolbar">
+      <label>テスト:
+        <select id="filter-test" onchange="renderTable()">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>セクション:
+        <select id="filter-section" onchange="renderTable()">
+          <option value="">全部</option>
+          <option value="goii">goii (語彙)</option>
+          <option value="bunpo">bunpo (文法)</option>
+          <option value="chokkai">chokkai (聴解)</option>
+        </select>
+      </label>
+      <label>最低件数:
+        <input type="number" id="filter-mincount" value="1" min="1" style="width:60px" onchange="renderTable()">
+      </label>
+      <label>検索:
+        <input type="text" id="filter-search" placeholder="block_id / 回答" oninput="renderTable()" style="width:160px">
+      </label>
+      <span style="margin-left:auto">
+        <button class="btn-action" onclick="reload()">🔄 再読込</button>
+      </span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="review">
+        <thead>
+          <tr>
+            <th style="width:80px">テスト</th>
+            <th style="width:80px">セクション</th>
+            <th style="width:100px">block / field</th>
+            <th style="width:100px">採点method</th>
+            <th>学生の回答</th>
+            <th>現在の正解</th>
+            <th style="width:60px">件数</th>
+            <th style="width:140px">アクション</th>
+          </tr>
+        </thead>
+        <tbody id="review-body">
+          <tr><td colspan="8" style="text-align:center;padding:40px;color:#888">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="font-size:12px;color:#777;margin-top:10px">
+      💡 自由入力系の問題（exact_match / flex_match / normalized_match 等）のみ表示。選択式は対象外。<br>
+      💡 「これも正解にする」を押すと、その問題の answer_key に追加され、以降の受験から正解扱いになります。
+    </p>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script src="common/grading.js"></script>
+<script>
+// ===== グローバル状態 =====
+let _sections = [];      // test_sections の全行
+let _results = [];        // test_results の全行（answers_jsonあり）
+let _aggregated = [];     // 集計済み不正解一覧
+
+// 自由入力系として扱う method
+const TEXT_INPUT_METHODS = new Set([
+  'exact_match', 'flex_match', 'vietnamese_fuzzy',
+  'normalized_match', 'array_flex'
+]);
+
+// ===== 認証 =====
+async function doLogin() {
+  const email = document.getElementById('admin-email').value;
+  const pass = document.getElementById('admin-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = error.message; return; }
+
+  const { data: profile } = await supabase
+    .from('user_profiles').select('role').eq('id', data.user.id).single();
+
+  if (!profile || !['admin', 'org'].includes(profile.role)) {
+    errEl.textContent = '管理者アカウントではありません';
+    await supabase.auth.signOut();
+    return;
+  }
+
+  document.getElementById('admin-email-display').textContent = email;
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('admin-page').style.display = 'block';
+  await reload();
+}
+
+async function doLogout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+// ===== データ取得 =====
+async function reload() {
+  document.getElementById('review-body').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#888">読み込み中...</td></tr>';
+
+  const [secRes, resRes] = await Promise.all([
+    supabase.from('test_sections').select('test_id,section_type,answer_key,scoring_rules,questions'),
+    supabase.from('test_results').select('id,trainee_id,test_name,answers_json').not('answers_json', 'is', null)
+  ]);
+
+  if (secRes.error || resRes.error) {
+    document.getElementById('review-body').innerHTML = '<tr><td colspan="8" style="color:red;padding:20px">読み込みエラー: ' + (secRes.error || resRes.error).message + '</td></tr>';
+    return;
+  }
+
+  _sections = secRes.data || [];
+  _results = resRes.data || [];
+
+  // テストドロップダウン埋める
+  const testIds = [...new Set(_sections.map(s => s.test_id))].sort();
+  const sel = document.getElementById('filter-test');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部</option>';
+  testIds.forEach(t => sel.innerHTML += `<option value="${t}">${t}</option>`);
+  sel.value = cur;
+
+  aggregate();
+  renderStats();
+  renderTable();
+}
+
+// ===== test_id 正規化（旧形式対応） =====
+const ALT_TEST_ID = {
+  '第1-4課':'test1','第5-11課':'test2','第12-18課':'test3','第19-25課':'test4',
+  '第26-33課':'test5','第34-40課':'test6','第41-45課':'test7','第46-50課':'test8'
+};
+
+// ===== questions から field_id → kind のマップを作る =====
+// kind: 'free' | 'select' | 'word_puzzle'
+const SELECT_INPUT_TYPES = new Set(['select', 'radio', 'checkbox', 'dropdown']);
+const SELECT_BLOCK_TYPES = new Set([
+  'radio_choice', 'audio_image_radio', 'image_select_grid',
+  'ox_choice', 'select_choice', 'select_in_sentence', 'fill_particle',
+  'reading_comprehension', 'dialogue_fill', 'pair_match', 'bucket_sort'
+]);
+
+function buildFieldTypeIndex(questions) {
+  const fieldKinds = {};  // field_id → 'free' | 'select' | 'word_puzzle'
+
+  (questions || []).forEach(block => {
+    const blockType = block.type;
+    const blockKind = SELECT_BLOCK_TYPES.has(blockType) ? 'select'
+                    : blockType === 'word_puzzle' ? 'word_puzzle'
+                    : 'free';
+
+    // word_puzzle の puzzles[]
+    (block.puzzles || []).forEach(p => {
+      if (p.field_id) fieldKinds[p.field_id] = 'word_puzzle';
+    });
+
+    // items[]
+    (block.items || []).forEach(item => {
+      const inferred = (item.choices && item.choices.length > 0) ? 'select' : blockKind;
+      // item 直下の field_id
+      if (item.field_id) {
+        const k = SELECT_INPUT_TYPES.has(item.input_type) ? 'select' : inferred;
+        fieldKinds[item.field_id] = k;
+      }
+      // item.fields[]
+      (item.fields || []).forEach(f => {
+        if (f.field_id) {
+          const k = SELECT_INPUT_TYPES.has(f.input_type) ? 'select' : inferred;
+          fieldKinds[f.field_id] = k;
+        }
+      });
+      // item.sub_items[]（reading_comprehension の OX 等）
+      (item.sub_items || []).forEach(si => {
+        if (si.field_id) {
+          const k = SELECT_INPUT_TYPES.has(si.input_type) ? 'select'
+                  : (si.options || si.choices) ? 'select'
+                  : inferred;
+          fieldKinds[si.field_id] = k;
+        }
+      });
+    });
+
+    // groups[]（multi_field 系）
+    (block.groups || []).forEach(group => {
+      (group.fields || []).forEach(f => {
+        if (f.field_id) {
+          const k = SELECT_INPUT_TYPES.has(f.input_type) ? 'select' : (f.choices ? 'select' : blockKind);
+          fieldKinds[f.field_id] = k;
+        }
+      });
+    });
+  });
+
+  return fieldKinds;
+}
+
+// ===== 集計（不正解抽出） =====
+function aggregate() {
+  // (test_id, section, block_id, field_id, normalized_answer) → { raw, count, ... }
+  const buckets = new Map();
+
+  // section index: test_id → section_type → section row + fieldTypes
+  const secIdx = {};
+  _sections.forEach(s => {
+    secIdx[s.test_id] = secIdx[s.test_id] || {};
+    secIdx[s.test_id][s.section_type] = { ...s, _fieldTypes: buildFieldTypeIndex(s.questions || []) };
+  });
+
+  _results.forEach(r => {
+    let testId = r.test_name;
+    if (!secIdx[testId] && ALT_TEST_ID[testId]) testId = ALT_TEST_ID[testId];
+    if (!secIdx[testId]) return;
+    const answers = r.answers_json || {};
+
+    Object.entries(secIdx[testId]).forEach(([secType, secRow]) => {
+      const rules = secRow.scoring_rules || {};
+      const ak = secRow.answer_key || {};
+
+      Object.entries(rules).forEach(([blockId, rule]) => {
+        if (!rule || !rule.method) return;
+        if (!TEXT_INPUT_METHODS.has(rule.method)) return;
+
+        const fieldIds = rule.field_ids || [];
+        const akBlock = ak[blockId];
+        if (akBlock === undefined) return;
+
+        fieldIds.forEach((fid, idx) => {
+          const userAns = answers[fid];
+          if (userAns === null || userAns === undefined || String(userAns).trim() === '') return;
+
+          // 選択式はスキップ（自由入力系・word_puzzle のみ対象）
+          const kind = secRow._fieldTypes[fid];
+          if (kind === 'select') return;
+
+          // 採点: 元の rule のまま、対象 fid だけ userAnswers に含める
+          // → 正解なら pts 点、不正解なら 0 点が返る（他のfidは answer 無しなので 0 点）
+          const score = window.TestGrading.gradeSection(
+            { [blockId]: akBlock },
+            { [blockId]: rule },
+            { [fid]: userAns }
+          );
+          if (score > 0) return;  // 正解なのでスキップ
+
+          // 不正解 → バケットに追加
+          const normAns = String(userAns).trim().toLowerCase();
+          const key = [testId, secType, blockId, fid, normAns].join('|');
+          let b = buckets.get(key);
+          if (!b) {
+            b = {
+              test_id: testId, section: secType, block_id: blockId, field_id: fid, idx,
+              method: rule.method,
+              raw_answer: String(userAns).trim(),
+              norm_answer: normAns,
+              current_correct: formatExpected(akBlock, fid, idx),
+              count: 0, trainees: new Set(),
+              key
+            };
+            buckets.set(key, b);
+          }
+          b.count++;
+          b.trainees.add(r.trainee_id);
+        });
+      });
+    });
+  });
+
+  _aggregated = [...buckets.values()].sort((a, b) => b.count - a.count);
+}
+
+function formatExpected(akBlock, fid, idx) {
+  let exp;
+  if (Array.isArray(akBlock)) {
+    exp = akBlock[idx];
+  } else if (akBlock && typeof akBlock === 'object') {
+    exp = akBlock[fid];
+  }
+  if (exp === undefined) return '(なし)';
+  if (Array.isArray(exp)) return exp.join(' / ');
+  return String(exp);
+}
+
+// ===== UI 描画 =====
+function renderStats() {
+  const totalResults = _results.length;
+  const totalSections = _sections.length;
+  const totalWrongAns = _aggregated.length;
+  const totalImpactedTrainees = new Set(_aggregated.flatMap(a => [...a.trainees])).size;
+
+  document.getElementById('stats-area').innerHTML = `
+    <div class="stat-card"><b>${totalResults}</b>提出済み test_results</div>
+    <div class="stat-card"><b>${totalSections}</b>セクション</div>
+    <div class="stat-card"><b>${totalWrongAns}</b>ユニーク不正解パターン</div>
+    <div class="stat-card"><b>${totalImpactedTrainees}</b>影響を受けた学生数</div>
+  `;
+}
+
+function renderTable() {
+  const fTest = document.getElementById('filter-test').value;
+  const fSec = document.getElementById('filter-section').value;
+  const fMin = parseInt(document.getElementById('filter-mincount').value, 10) || 1;
+  const fSearch = document.getElementById('filter-search').value.trim().toLowerCase();
+
+  const rows = _aggregated.filter(a => {
+    if (fTest && a.test_id !== fTest) return false;
+    if (fSec && a.section !== fSec) return false;
+    if (a.count < fMin) return false;
+    if (fSearch) {
+      const hay = [a.block_id, a.field_id, a.raw_answer].join(' ').toLowerCase();
+      if (!hay.includes(fSearch)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('review-body');
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#888">該当なし</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr data-key="${escapeHtml(r.key)}">
+      <td class="col-test">${escapeHtml(r.test_id)}</td>
+      <td>${escapeHtml(r.section)}</td>
+      <td class="col-block">${escapeHtml(r.block_id)}<br>${escapeHtml(r.field_id)}</td>
+      <td><span class="badge-method">${escapeHtml(r.method)}</span></td>
+      <td class="col-answer">${escapeHtml(r.raw_answer)}</td>
+      <td class="col-current">${escapeHtml(r.current_correct)}</td>
+      <td class="col-count">${r.count}</td>
+      <td>
+        <button class="btn-add" onclick="addAsCorrect('${escapeHtml(r.key)}', this)">＋これも正解にする</button>
+        <span class="added-mark" style="display:none">✓ 追加済み</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ===== 「これも正解にする」 =====
+async function addAsCorrect(key, btn) {
+  const item = _aggregated.find(a => a.key === key);
+  if (!item) return;
+
+  if (!confirm(`「${item.raw_answer}」を ${item.test_id}/${item.section}/${item.block_id}/${item.field_id} の正解に追加します。\nよろしいですか？`)) return;
+
+  btn.disabled = true;
+  btn.textContent = '更新中...';
+
+  try {
+    // 該当セクションを取得
+    const sec = _sections.find(s => s.test_id === item.test_id && s.section_type === item.section);
+    if (!sec) throw new Error('セクションが見つかりません');
+
+    const newAk = JSON.parse(JSON.stringify(sec.answer_key || {}));
+    const akBlock = newAk[item.block_id];
+
+    // 追加処理（method別）
+    const updated = appendAnswer(akBlock, item.field_id, item.idx, item.raw_answer, item.method, newAk);
+    if (!updated) throw new Error('answer_key の更新に失敗（構造未対応）');
+    if (updated !== akBlock && akBlock === undefined) {
+      newAk[item.block_id] = updated;
+    } else if (typeof akBlock !== 'object' || akBlock === null) {
+      newAk[item.block_id] = updated;
+    }
+
+    const { error } = await supabase
+      .from('test_sections')
+      .update({ answer_key: newAk })
+      .eq('test_id', item.test_id)
+      .eq('section_type', item.section);
+
+    if (error) throw error;
+
+    // 成功 → ローカル _sections も更新
+    sec.answer_key = newAk;
+    showToast('追加しました', 'success');
+
+    // 行を「追加済み」表示に
+    const tr = document.querySelector(`tr[data-key="${key}"]`);
+    if (tr) {
+      tr.classList.add('row-added');
+      tr.querySelector('.btn-add').style.display = 'none';
+      tr.querySelector('.added-mark').style.display = 'inline';
+      const curCell = tr.querySelector('.col-current');
+      if (curCell) {
+        const sec2 = _sections.find(s => s.test_id === item.test_id && s.section_type === item.section);
+        curCell.textContent = formatExpected(sec2.answer_key[item.block_id], item.field_id, item.idx);
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('エラー: ' + (e.message || e), 'error');
+    btn.disabled = false;
+    btn.textContent = '＋これも正解にする';
+  }
+}
+
+// answer_key への正解追加（method別）
+function appendAnswer(akBlock, fid, idx, newAnswer, method, parentAk) {
+  // separator 系（／ 区切り文字列）
+  if (method === 'flex_match' || method === 'vietnamese_fuzzy' || method === 'array_flex') {
+    if (akBlock && typeof akBlock === 'object' && !Array.isArray(akBlock)) {
+      const cur = akBlock[fid];
+      const sep = '／';
+      akBlock[fid] = cur ? (cur + sep + newAnswer) : newAnswer;
+      return akBlock;
+    }
+    if (Array.isArray(akBlock)) {
+      const cur = akBlock[idx];
+      const sep = '／';
+      akBlock[idx] = cur ? (cur + sep + newAnswer) : newAnswer;
+      return akBlock;
+    }
+    return null;
+  }
+
+  // 配列許容系（normalized_match / exact_match）
+  if (method === 'normalized_match' || method === 'exact_match') {
+    if (Array.isArray(akBlock)) {
+      const cur = akBlock[idx];
+      if (Array.isArray(cur)) {
+        cur.push(newAnswer);
+      } else {
+        akBlock[idx] = [cur, newAnswer];
+      }
+      return akBlock;
+    }
+    if (akBlock && typeof akBlock === 'object') {
+      const cur = akBlock[fid];
+      if (Array.isArray(cur)) {
+        cur.push(newAnswer);
+      } else if (cur === undefined) {
+        akBlock[fid] = [newAnswer];
+      } else {
+        akBlock[fid] = [cur, newAnswer];
+      }
+      return akBlock;
+    }
+    return null;
+  }
+
+  return null;
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+// ページロード時に既存セッションあれば自動ログイン
+(async function initSession() {
+  const { data } = await supabase.auth.getSession();
+  if (data && data.session) {
+    const { data: profile } = await supabase
+      .from('user_profiles').select('role').eq('id', data.session.user.id).single();
+    if (profile && ['admin', 'org'].includes(profile.role)) {
+      document.getElementById('admin-email-display').textContent = data.session.user.email;
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('admin-page').style.display = 'block';
+      await reload();
+    }
+  }
+})();
+</script>
+</body>
+</html>
