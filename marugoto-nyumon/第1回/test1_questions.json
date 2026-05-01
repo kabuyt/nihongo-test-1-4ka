@@ -1,0 +1,1462 @@
+{
+  "test_id": "marugoto_nyumon_test_01",
+  "test_name": "まるごと入門A1 第1回テスト",
+  "lesson_range": "L1-L5",
+  "topics": [
+    "T1 にほんご",
+    "T2 わたし",
+    "T3 たべもの (L5のみ)"
+  ],
+  "language": "ja-vi",
+  "total_points": 300,
+  "sections": {
+    "vocabulary": {
+      "name": "ごい / Từ vựng",
+      "points": 100,
+      "total_questions": 60,
+      "subsections": [
+        {
+          "id": "v1",
+          "name": "問1: ひらがなのことばの いみ / Nghĩa của từ viết bằng Hiragana",
+          "instruction": "したの ことばの いみとして ただしい ベトナムごを えらびなさい。 / Chọn nghĩa tiếng Việt đúng của từ sau.",
+          "points_per_question": 2,
+          "questions": [
+            {
+              "id": "v1_01",
+              "q": "おはようございます",
+              "choices": [
+                "Chào buổi sáng",
+                "Xin chào (buổi trưa/chiều)",
+                "Chào buổi tối",
+                "Tạm biệt"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v1_02",
+              "q": "こんばんは",
+              "choices": [
+                "Chào buổi sáng",
+                "Xin chào (buổi trưa/chiều)",
+                "Chào buổi tối",
+                "Cảm ơn"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v1_03",
+              "q": "さようなら",
+              "choices": [
+                "Tạm biệt",
+                "Xin lỗi",
+                "Cảm ơn",
+                "Vâng"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v1_04",
+              "q": "ありがとうございます",
+              "choices": [
+                "Xin lỗi",
+                "Cảm ơn",
+                "Tạm biệt",
+                "Không có gì"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v1_05",
+              "q": "すみません",
+              "choices": [
+                "Cảm ơn",
+                "Vâng",
+                "Xin lỗi / Xin phép",
+                "Không"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v1_06",
+              "q": "ちち",
+              "choices": [
+                "mẹ",
+                "bố",
+                "anh trai",
+                "chị gái"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v1_07",
+              "q": "はは",
+              "choices": [
+                "bố",
+                "mẹ",
+                "em gái",
+                "em trai"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v1_08",
+              "q": "あに",
+              "choices": [
+                "em trai",
+                "anh trai",
+                "chị gái",
+                "em gái"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v1_09",
+              "q": "いもうと",
+              "choices": [
+                "em gái",
+                "em trai",
+                "chị gái",
+                "anh trai"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v1_10",
+              "q": "いしゃ",
+              "choices": [
+                "giáo viên",
+                "kỹ sư",
+                "bác sĩ",
+                "học sinh"
+              ],
+              "correct": 2
+            }
+          ]
+        },
+        {
+          "id": "v2",
+          "name": "問2: カタカナのことばの いみ / Nghĩa của từ viết bằng Katakana",
+          "instruction": "したの ことばの いみとして ただしい ベトナムごを えらびなさい。 / Chọn nghĩa tiếng Việt đúng của từ sau.",
+          "points_per_question": 2,
+          "questions": [
+            {
+              "id": "v2_01",
+              "q": "コーヒー",
+              "choices": [
+                "trà",
+                "cà phê",
+                "nước hoa quả",
+                "sữa"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v2_02",
+              "q": "ジュース",
+              "choices": [
+                "trà",
+                "cà phê",
+                "nước hoa quả",
+                "nước"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v2_03",
+              "q": "パン",
+              "choices": [
+                "cơm",
+                "thịt",
+                "bánh mì",
+                "trứng"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v2_04",
+              "q": "チーズ",
+              "choices": [
+                "sữa chua",
+                "phô mai",
+                "thịt bò",
+                "bánh mì"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v2_05",
+              "q": "トマト",
+              "choices": [
+                "cà chua",
+                "khoai tây",
+                "hành tây",
+                "bắp cải"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v2_06",
+              "q": "ノート",
+              "choices": [
+                "sách giáo khoa",
+                "bút",
+                "vở",
+                "từ điển"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v2_07",
+              "q": "ペン",
+              "choices": [
+                "bút chì",
+                "bút",
+                "tẩy",
+                "vở"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v2_08",
+              "q": "コンピューター",
+              "choices": [
+                "máy tính",
+                "điện thoại di động",
+                "bảng trắng",
+                "sách giáo khoa"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v2_09",
+              "q": "エンジニア",
+              "choices": [
+                "bác sĩ",
+                "giáo viên",
+                "kỹ sư",
+                "công chức"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v2_10",
+              "q": "タイ",
+              "choices": [
+                "Thái Lan",
+                "Nga",
+                "Tây Ban Nha",
+                "Philippines"
+              ],
+              "correct": 0
+            }
+          ]
+        },
+        {
+          "id": "v3a",
+          "name": "問3-A: かんじのよみかた / Cách đọc Kanji",
+          "instruction": "したの かんじの よみかたを えらびなさい。 / Chọn cách đọc đúng của Kanji sau.",
+          "points_per_question": 2,
+          "questions": [
+            {
+              "id": "v3a_01",
+              "q": "魚",
+              "choices": [
+                "にく",
+                "さかな",
+                "たまご",
+                "やさい"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v3a_02",
+              "q": "肉",
+              "choices": [
+                "にく",
+                "さかな",
+                "みず",
+                "たまご"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v3a_03",
+              "q": "卵",
+              "choices": [
+                "にく",
+                "さかな",
+                "たまご",
+                "みず"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v3a_04",
+              "q": "水",
+              "choices": [
+                "みず",
+                "やさい",
+                "ごはん",
+                "おちゃ"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v3a_05",
+              "q": "魚",
+              "choices": [
+                "さかな",
+                "とりにく",
+                "ぎゅうにく",
+                "ぶたにく"
+              ],
+              "correct": 0
+            }
+          ]
+        },
+        {
+          "id": "v3b",
+          "name": "問3-B: かんじのいみ / Nghĩa của Kanji",
+          "instruction": "したの かんじの いみとして ただしい ベトナムごを えらびなさい。 / Chọn nghĩa tiếng Việt đúng của Kanji sau.",
+          "points_per_question": 2,
+          "questions": [
+            {
+              "id": "v3b_01",
+              "q": "魚",
+              "choices": [
+                "thịt",
+                "cá",
+                "trứng",
+                "rau"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v3b_02",
+              "q": "肉",
+              "choices": [
+                "thịt",
+                "cá",
+                "nước",
+                "trứng"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v3b_03",
+              "q": "卵",
+              "choices": [
+                "thịt",
+                "cá",
+                "trứng",
+                "nước"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v3b_04",
+              "q": "水",
+              "choices": [
+                "nước",
+                "trà",
+                "sữa",
+                "cà phê"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v3b_05",
+              "q": "「魚と 肉が すきです」のいみは？",
+              "choices": [
+                "Tôi thích trứng và rau.",
+                "Tôi thích cá và thịt.",
+                "Tôi thích nước và cơm.",
+                "Tôi thích thịt và rau."
+              ],
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "id": "v4",
+          "name": "問4: ベトナムご → にほんご / Từ tiếng Việt sang tiếng Nhật",
+          "instruction": "したの ベトナムごに あう にほんごを えらびなさい。 / Chọn từ tiếng Nhật tương ứng với từ tiếng Việt sau.",
+          "points_per_question": 2,
+          "questions": [
+            {
+              "id": "v4_01",
+              "q": "kỹ sư",
+              "choices": [
+                "いしゃ",
+                "エンジニア",
+                "きょうし",
+                "がくせい"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v4_02",
+              "q": "nhân viên công ty",
+              "choices": [
+                "かいしゃいん",
+                "こうむいん",
+                "しゅふ",
+                "いしゃ"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v4_03",
+              "q": "Trung Quốc",
+              "choices": [
+                "かんこく",
+                "ちゅうごく",
+                "にほん",
+                "ベトナム"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v4_04",
+              "q": "Hàn Quốc",
+              "choices": [
+                "ちゅうごく",
+                "かんこく",
+                "タイ",
+                "フィリピン"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v4_05",
+              "q": "tiếng Nhật",
+              "choices": [
+                "えいご",
+                "ちゅうごくご",
+                "にほんご",
+                "かんこくご"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v4_06",
+              "q": "bố",
+              "choices": [
+                "はは",
+                "ちち",
+                "あに",
+                "あね"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v4_07",
+              "q": "anh trai",
+              "choices": [
+                "あに",
+                "あね",
+                "おとうと",
+                "いもうと"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v4_08",
+              "q": "thịt bò",
+              "choices": [
+                "とりにく",
+                "ぶたにく",
+                "ぎゅうにく",
+                "さかな"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v4_09",
+              "q": "sữa",
+              "choices": [
+                "おちゃ",
+                "ぎゅうにゅう",
+                "みず",
+                "コーヒー"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v4_10",
+              "q": "súp miso",
+              "choices": [
+                "ごはん",
+                "みそしる",
+                "やさい",
+                "くだもの"
+              ],
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "id": "v5",
+          "name": "問5: えと ことば / Hình ảnh → Từ vựng",
+          "instruction": "えを みて、ただしい ことばを えらびなさい。 / Xem hình và chọn từ đúng.",
+          "points_per_question": 1,
+          "note": "画像はテストアプリのHTMLで表示します。/ Hình ảnh sẽ hiển thị trong ứng dụng test HTML.",
+          "questions": [
+            {
+              "id": "v5_01",
+              "image": "tabemono_niku.svg",
+              "image_alt": "thịt",
+              "choices": [
+                "やさい",
+                "にく",
+                "さかな",
+                "たまご"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_02",
+              "image": "tabemono_yasai.svg",
+              "image_alt": "rau",
+              "choices": [
+                "にく",
+                "さかな",
+                "やさい",
+                "くだもの"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v5_03",
+              "image": "tabemono_sakana.svg",
+              "image_alt": "cá",
+              "choices": [
+                "にく",
+                "さかな",
+                "たまご",
+                "パン"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_04",
+              "image": "tabemono_tamago.svg",
+              "image_alt": "trứng",
+              "choices": [
+                "にく",
+                "さかな",
+                "たまご",
+                "チーズ"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v5_05",
+              "image": "tabemono_kudamono.svg",
+              "image_alt": "hoa quả",
+              "choices": [
+                "やさい",
+                "くだもの",
+                "パン",
+                "チーズ"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_06",
+              "image": "tabemono_pan.svg",
+              "image_alt": "bánh mì",
+              "choices": [
+                "ごはん",
+                "パン",
+                "みそしる",
+                "やさい"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_07",
+              "image": "tabemono_chiizu.svg",
+              "image_alt": "phô mai",
+              "choices": [
+                "ヨーグルト",
+                "チーズ",
+                "パン",
+                "たまご"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_08",
+              "image": "tabemono_gohan_misoshiru.svg",
+              "image_alt": "cơm và súp miso",
+              "choices": [
+                "パンとコーヒー",
+                "ごはんとみそしる",
+                "やさいとくだもの",
+                "にくとさかな"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_09",
+              "image": "nomimono_koohii.svg",
+              "image_alt": "cà phê",
+              "choices": [
+                "コーヒー",
+                "ジュース",
+                "おちゃ",
+                "みず"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v5_10",
+              "image": "nomimono_juice.svg",
+              "image_alt": "nước hoa quả",
+              "choices": [
+                "コーヒー",
+                "ジュース",
+                "ぎゅうにゅう",
+                "おちゃ"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_11",
+              "image": "nomimono_gyuunyuu.svg",
+              "image_alt": "sữa",
+              "choices": [
+                "みず",
+                "ジュース",
+                "ぎゅうにゅう",
+                "コーヒー"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v5_12",
+              "image": "nomimono_mizu.svg",
+              "image_alt": "nước",
+              "choices": [
+                "みず",
+                "ぎゅうにゅう",
+                "おちゃ",
+                "コーヒー"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "v5_13",
+              "image": "kazoku_chichi.svg",
+              "image_alt": "bố",
+              "choices": [
+                "はは",
+                "ちち",
+                "あに",
+                "あね"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_14",
+              "image": "kazoku_haha.svg",
+              "image_alt": "mẹ",
+              "choices": [
+                "ちち",
+                "はは",
+                "あね",
+                "いもうと"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_15",
+              "image": "kazoku_ani.svg",
+              "image_alt": "anh trai",
+              "choices": [
+                "あね",
+                "あに",
+                "おとうと",
+                "ちち"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_16",
+              "image": "kazoku_imouto.svg",
+              "image_alt": "em gái",
+              "choices": [
+                "あね",
+                "いもうと",
+                "おとうと",
+                "あに"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_17",
+              "image": "shigoto_engineer.svg",
+              "image_alt": "kỹ sư",
+              "choices": [
+                "いしゃ",
+                "きょうし",
+                "エンジニア",
+                "がくせい"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "v5_18",
+              "image": "shigoto_isha.svg",
+              "image_alt": "bác sĩ",
+              "choices": [
+                "エンジニア",
+                "いしゃ",
+                "きょうし",
+                "がくせい"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_19",
+              "image": "kyoushitsu_nooto.svg",
+              "image_alt": "vở",
+              "choices": [
+                "じしょ",
+                "ノート",
+                "きょうかしょ",
+                "けいたいでんわ"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "v5_20",
+              "image": "kyoushitsu_tsukue.svg",
+              "image_alt": "bàn",
+              "choices": [
+                "いす",
+                "つくえ",
+                "コンピューター",
+                "ホワイトボード"
+              ],
+              "correct": 1
+            }
+          ]
+        }
+      ]
+    },
+    "grammar": {
+      "name": "ぶんぽう / Ngữ pháp",
+      "points": 100,
+      "total_questions": 25,
+      "subsections": [
+        {
+          "id": "g1",
+          "name": "問1: じょしの あなうめ / Điền trợ từ",
+          "instruction": "(  )に はいる ただしい じょしを えらびなさい。 / Chọn trợ từ đúng để điền vào (  ).",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "g1_01",
+              "q": "わたし(  )ベトナムじんです。",
+              "vi": "Tôi là người Việt Nam.",
+              "choices": [
+                "は",
+                "が",
+                "を",
+                "に"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g1_02",
+              "q": "なに(  )すきですか。",
+              "vi": "Bạn thích cái gì?",
+              "choices": [
+                "は",
+                "が",
+                "を",
+                "の"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g1_03",
+              "q": "コーヒー(  )のみます。",
+              "vi": "Tôi uống cà phê.",
+              "choices": [
+                "は",
+                "が",
+                "を",
+                "に"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "g1_04",
+              "q": "わたしは いしゃです。あに(  )いしゃです。",
+              "vi": "Tôi là bác sĩ. Anh tôi cũng là bác sĩ.",
+              "choices": [
+                "は",
+                "が",
+                "も",
+                "の"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "g1_05",
+              "q": "にほんご(  )せんせいです。",
+              "vi": "Tôi là giáo viên tiếng Nhật.",
+              "choices": [
+                "は",
+                "が",
+                "の",
+                "を"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "g1_06",
+              "q": "ちちと はは(  )わたしです。",
+              "vi": "(Gia đình tôi gồm) bố, mẹ và tôi.",
+              "choices": [
+                "は",
+                "と",
+                "の",
+                "に"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g1_07",
+              "q": "あには おおさか(  )すんで います。",
+              "vi": "Anh tôi sống ở Osaka.",
+              "choices": [
+                "は",
+                "に",
+                "で",
+                "が"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g1_08",
+              "q": "ちゅうごく(  )シャンハイです。",
+              "vi": "Là Thượng Hải, Trung Quốc.",
+              "choices": [
+                "は",
+                "の",
+                "に",
+                "を"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g1_09",
+              "q": "ごはんと みそしる(  )たべます。",
+              "vi": "Tôi ăn cơm và súp miso.",
+              "choices": [
+                "は",
+                "と",
+                "を",
+                "の"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "g1_10",
+              "q": "やさい(  )すきじゃないです。",
+              "vi": "(Tôi thích thịt nhưng) rau thì không thích.",
+              "choices": [
+                "は",
+                "が",
+                "を",
+                "の"
+              ],
+              "correct": 0
+            }
+          ]
+        },
+        {
+          "id": "g2",
+          "name": "問2: 〜です/〜じゃないです・〜ます/〜ません / Khẳng định / Phủ định",
+          "instruction": "(    )に はいる ただしい かたちを えらびなさい。 / Chọn dạng đúng để điền vào (    ).",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "g2_01",
+              "q": "わたしは エンジニア(    )。",
+              "vi": "Tôi là kỹ sư.",
+              "choices": [
+                "です",
+                "じゃないです",
+                "ですか",
+                "ますか"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g2_02",
+              "q": "やさいは すき(    )。",
+              "vi": "Tôi không thích rau.",
+              "choices": [
+                "です",
+                "じゃないです",
+                "ますか",
+                "ません"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g2_03",
+              "q": "コーヒーを のみますか。 いいえ、(    )。",
+              "vi": "Bạn có uống cà phê không? – Không, tôi không uống.",
+              "choices": [
+                "のみます",
+                "のみません",
+                "のみますか",
+                "のんでください"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g2_04",
+              "q": "キムさんは ちゅうごくじん(    )?",
+              "vi": "Anh Kim là người Trung Quốc à?",
+              "choices": [
+                "です",
+                "じゃないです",
+                "ですか",
+                "ますか"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "g2_05",
+              "q": "あさごはんを たべますか。 はい、(    )。",
+              "vi": "Bạn có ăn sáng không? – Vâng, tôi ăn.",
+              "choices": [
+                "たべます",
+                "たべません",
+                "たべて",
+                "たべますか"
+              ],
+              "correct": 0
+            }
+          ]
+        },
+        {
+          "id": "g3",
+          "name": "問3: ならびかえ / Sắp xếp câu",
+          "instruction": "ただしい ごじゅんの ぶんを えらびなさい。 / Chọn câu có thứ tự từ đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "g3_01",
+              "tokens": "わたし／は／にほんご／が／できます",
+              "vi": "Tôi (có thể) nói được tiếng Nhật.",
+              "choices": [
+                "わたしはにほんごができます。",
+                "わたしのにほんごはできます。",
+                "にほんごはわたしができます。",
+                "わたしににほんごができます。"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g3_02",
+              "tokens": "わたし／の／かぞく／は／3にん／です",
+              "vi": "Gia đình tôi gồm 3 người.",
+              "choices": [
+                "わたしのかぞくは3にんです。",
+                "かぞくのわたしは3にんです。",
+                "わたしは3にんのかぞくです。",
+                "3にんはわたしのかぞくです。"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g3_03",
+              "tokens": "あに／は／とうきょう／に／すんで／います",
+              "vi": "Anh tôi sống ở Tokyo.",
+              "choices": [
+                "あにはとうきょうにすんでいます。",
+                "とうきょうはあににすんでいます。",
+                "あにのすんでいるはとうきょうです。",
+                "あにとうきょうにはすんでいます。"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g3_04",
+              "tokens": "やさい／は／すき／じゃないです",
+              "vi": "Tôi không thích rau.",
+              "choices": [
+                "やさいはすきじゃないです。",
+                "やさいのすきはじゃないです。",
+                "すきはやさいじゃないです。",
+                "じゃないですやさいはすき。"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g3_05",
+              "tokens": "わたし／は／コーヒー／と／みず／を／のみます",
+              "vi": "Tôi uống cà phê và nước.",
+              "choices": [
+                "わたしはコーヒーとみずをのみます。",
+                "わたしのコーヒーとみずをのみます。",
+                "コーヒーはわたしとみずをのみます。",
+                "わたしはコーヒーをみずとのみます。"
+              ],
+              "correct": 0
+            }
+          ]
+        },
+        {
+          "id": "g4",
+          "name": "問4: ぶんけい・たいわ / Hiểu mẫu câu và hội thoại",
+          "instruction": "ただしい こたえを えらびなさい。 / Chọn câu trả lời đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "g4_01",
+              "q": "「いつも」といみがはんたいのふくしはどれですか。",
+              "vi": "Phó từ nào có nghĩa trái ngược với 「いつも (luôn luôn)」?",
+              "choices": [
+                "ぜんぜん (hoàn toàn không)",
+                "よく (thường)",
+                "ときどき (thỉnh thoảng)",
+                "まいにち (hàng ngày)"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "g4_02",
+              "q": "「やさいは あまり たべません」のいみは？",
+              "vi": "Nghĩa của 「やさいは あまり たべません」 là?",
+              "choices": [
+                "Tôi thường ăn rau.",
+                "Tôi ít khi ăn rau.",
+                "Tôi hoàn toàn không ăn rau.",
+                "Tôi luôn ăn rau."
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g4_03",
+              "q": "A: 「(    )」 B: 「かんこくじんです。」",
+              "vi": "A: 「___」 B: 「Tôi là người Hàn Quốc.」",
+              "choices": [
+                "おなまえは？",
+                "どちらからですか？",
+                "おしごとは？",
+                "おいくつですか？"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g4_04",
+              "q": "「はじめまして、ヤマダです。」 ⇒ へんじは？",
+              "vi": "「Rất hân hạnh được gặp bạn, tôi là Yamada.」 → Câu trả lời?",
+              "choices": [
+                "さようなら。",
+                "どうぞよろしくおねがいします。",
+                "おつかれさまでした。",
+                "もういちどおねがいします。"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "g4_05",
+              "q": "A: 「おしごとは？」 B: 「(    )」",
+              "vi": "A: 「Bạn làm nghề gì?」 B: 「___」",
+              "choices": [
+                "はじめまして、たなかです。",
+                "エンジニアです。",
+                "さようなら。",
+                "ありがとうございます。"
+              ],
+              "correct": 1
+            }
+          ]
+        }
+      ]
+    },
+    "listening": {
+      "name": "ちょうかい / Nghe hiểu",
+      "points": 100,
+      "total_questions": 25,
+      "audio_base_path": "../../audio/marugoto-nyumon/",
+      "subsections": [
+        {
+          "id": "l1",
+          "name": "問1: あいさつ・ばめん / Lời chào và Tình huống",
+          "instruction": "おんせいを きいて、ただしい こたえを えらびなさい。 / Hãy nghe và chọn câu trả lời đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "l1_01",
+              "audio": "Lesson01/sa002_2.mp3",
+              "transcript": "おはようございます。",
+              "q": "このあいさつは いつ つかいますか？",
+              "choices": [
+                "あさ / Buổi sáng",
+                "ひる / Buổi trưa",
+                "よる / Buổi tối",
+                "わかれるとき / Khi tạm biệt"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "l1_02",
+              "audio": "Lesson01/sa003.mp3",
+              "transcript": "こんにちは。",
+              "q": "このあいさつは いつ つかいますか？",
+              "choices": [
+                "あさ / Buổi sáng",
+                "ひる / Buổi trưa",
+                "よる / Buổi tối",
+                "わかれるとき / Khi tạm biệt"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l1_03",
+              "audio": "Lesson01/sa004.mp3",
+              "transcript": "こんばんは。",
+              "q": "このあいさつは いつ つかいますか？",
+              "choices": [
+                "あさ / Buổi sáng",
+                "ひる / Buổi trưa",
+                "よる / Buổi tối",
+                "わかれるとき / Khi tạm biệt"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "l1_04",
+              "audio": "Lesson01/sa005.mp3",
+              "transcript": "さようなら。じゃあまた。",
+              "q": "このことばは どんなばめんで つかいますか？",
+              "choices": [
+                "あさのあいさつ / Chào buổi sáng",
+                "わかれるとき / Khi tạm biệt",
+                "おれいをいうとき / Khi cảm ơn",
+                "あやまるとき / Khi xin lỗi"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l1_05",
+              "audio": "Lesson01/sa006.mp3",
+              "transcript": "お先に失礼します。お疲れ様でした。",
+              "q": "このことばは どんなばめんで つかいますか？",
+              "choices": [
+                "あさのあいさつ / Chào buổi sáng",
+                "しごとが おわって かいしゃを でるとき / Khi kết thúc công việc và rời khỏi công ty",
+                "おれいをいうとき / Khi cảm ơn",
+                "あやまるとき / Khi xin lỗi"
+              ],
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "id": "l2",
+          "name": "問2: きょうしつのかいわ / Hội thoại trong lớp học",
+          "instruction": "おんせいを きいて、ただしい こたえを えらびなさい。 / Hãy nghe và chọn câu trả lời đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "l2_01",
+              "audio": "Lesson02/sa011_2.mp3",
+              "transcript": "キムさん、いますか？ はい。",
+              "q": "キムさんは いますか？",
+              "choices": [
+                "はい、います / Có, đang ở đây",
+                "いいえ、いません / Không, không có",
+                "まだです / Chưa đến",
+                "わかりません / Không biết"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "l2_02",
+              "audio": "Lesson02/sa013.mp3",
+              "transcript": "ジョイさん、いますか？ いません。",
+              "q": "ジョイさんは いますか？",
+              "choices": [
+                "はい、います / Có",
+                "いいえ、いません / Không, không có",
+                "まだです / Chưa đến",
+                "わかりません / Không biết"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l2_03",
+              "audio": "Lesson02/sa014.mp3",
+              "transcript": "しんさん、いますか？ いいえ、まだです。",
+              "q": "しんさんは どうですか？",
+              "choices": [
+                "もう きました / Đã đến rồi",
+                "まだ きていません / Chưa đến",
+                "かえりました / Đã về rồi",
+                "やすみです / Hôm nay nghỉ"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l2_04",
+              "audio": "Lesson02/sa017.mp3",
+              "transcript": "先生、教室って どういう意味ですか？ 英語で クラスルームですよ。",
+              "q": "がくせいは なにのいみを きいていますか？",
+              "choices": [
+                "「いす」のいみ / Nghĩa của 'ghế'",
+                "「きょうしつ」のいみ / Nghĩa của 'lớp học'",
+                "「せんせい」のいみ / Nghĩa của 'giáo viên'",
+                "「えいご」のいみ / Nghĩa của 'tiếng Anh'"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l2_05",
+              "audio": "Lesson02/sa018.mp3",
+              "transcript": "わかりました。わかりません。もう一度お願いします。もう少し ゆっくり 言ってください。",
+              "q": "「もういちど おねがいします」は いつ つかいますか？",
+              "choices": [
+                "あさのあいさつのとき / Khi chào buổi sáng",
+                "はなしが わからなかったとき / Khi không hiểu lời nói",
+                "おれいをいうとき / Khi cảm ơn",
+                "わかれるとき / Khi tạm biệt"
+              ],
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "id": "l3",
+          "name": "問3: じこしょうかい・くに・しごと / Tự giới thiệu, Quốc gia, Nghề nghiệp",
+          "instruction": "おんせいを きいて、ただしい こたえを えらびなさい。 / Hãy nghe và chọn câu trả lời đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "l3_01",
+              "audio": "Lesson03/sa029_2.mp3",
+              "transcript": "ワンさんは どちらからですか？ 中国です。中国の上海です。",
+              "q": "ワンさんは どちらから ですか？",
+              "choices": [
+                "ちゅうごく / Trung Quốc",
+                "かんこく / Hàn Quốc",
+                "にほん / Nhật Bản",
+                "ベトナム / Việt Nam"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "l3_02",
+              "audio": "Lesson03/sa031.mp3",
+              "transcript": "ムハンマドさんは どちらから？ エジプトです。エジプトのカイロです。",
+              "q": "ムハンマドさんは どちらから ですか？",
+              "choices": [
+                "ドイツ / Đức",
+                "エジプト / Ai Cập",
+                "オーストラリア / Úc",
+                "かんこく / Hàn Quốc"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l3_03",
+              "audio": "Lesson03/sa034_2.mp3",
+              "transcript": "田中さんは 英語 できますか？ はい、少しできます。",
+              "q": "たなかさんは えいごが できますか？",
+              "choices": [
+                "はい、できます / Có, nói được",
+                "はい、すこしできます / Có, nói được một chút",
+                "いいえ、できません / Không, không nói được",
+                "べんきょうちゅうです / Đang học"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l3_04",
+              "audio": "Lesson03/sa036.mp3",
+              "transcript": "野田さんは 韓国語が できますか？ いいえ、できません。",
+              "q": "のださんは かんこくごが できますか？",
+              "choices": [
+                "はい、できます / Có, nói được",
+                "はい、すこしできます / Có, nói được một chút",
+                "いいえ、できません / Không, không nói được",
+                "べんきょうちゅうです / Đang học"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "l3_05",
+              "audio": "Lesson03/sa043.mp3",
+              "transcript": "お仕事は何ですか？ 教師です。日本語の教師です。",
+              "q": "このひとのしごとはなにですか？",
+              "choices": [
+                "がくせい / Học sinh",
+                "にほんごのきょうし / Giáo viên tiếng Nhật",
+                "エンジニア / Kỹ sư",
+                "しゅふ / Nội trợ"
+              ],
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "id": "l4",
+          "name": "問4: かぞく / Gia đình",
+          "instruction": "おんせいを きいて、ただしい こたえを えらびなさい。 / Hãy nghe và chọn câu trả lời đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "l4_01",
+              "audio": "Lesson04/sa047_2.mp3",
+              "transcript": "私の家族は 3人です。父と母と私です。",
+              "q": "このひとのかぞくは なんにんですか？",
+              "choices": [
+                "2にん",
+                "3にん",
+                "4にん",
+                "5にん"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l4_02",
+              "audio": "Lesson04/sa048.mp3",
+              "transcript": "私の家族は 4人です。私と夫と子供2人です。",
+              "q": "このひとのかぞくは なんにんですか？",
+              "choices": [
+                "3にん",
+                "4にん",
+                "5にん",
+                "6にん"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l4_03",
+              "audio": "Lesson04/sa052_2.mp3",
+              "transcript": "この人は誰ですか？ 姉です。32歳です。大阪に住んでます。教師です。",
+              "q": "あねは なんさいですか？",
+              "choices": [
+                "22さい",
+                "26さい",
+                "32さい",
+                "42さい"
+              ],
+              "correct": 2
+            },
+            {
+              "id": "l4_04",
+              "audio": "Lesson04/sa056_3.mp3",
+              "transcript": "この人は誰ですか？ 私の兄です。おいくつですか？33歳です。どこに住んでますか？東京に住んでいます。会社員です。",
+              "q": "あには どこに すんでいますか？",
+              "choices": [
+                "おおさか / Osaka",
+                "とうきょう / Tokyo",
+                "ソウル / Seoul",
+                "パリ / Paris"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l4_05",
+              "audio": "Lesson04/sa055.mp3",
+              "transcript": "この人は誰ですか?きれいですね妹です。26歳です。ソウルに住んでいます。学生です",
+              "q": "いもうとの しごとは なにですか？",
+              "choices": [
+                "きょうし / Giáo viên",
+                "がくせい / Học sinh",
+                "かいしゃいん / Nhân viên công ty",
+                "エンジニア / Kỹ sư"
+              ],
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "id": "l5",
+          "name": "問5: すきなもの・しょくじ / Sở thích ăn uống",
+          "instruction": "おんせいを きいて、ただしい こたえを えらびなさい。 / Hãy nghe và chọn câu trả lời đúng.",
+          "points_per_question": 4,
+          "questions": [
+            {
+              "id": "l5_01",
+              "audio": "Lesson05/sa061_2.mp3",
+              "transcript": "田中さん、何が好きですか？ 肉が好きです。野菜は 好きじゃないです。",
+              "q": "たなかさんは なにが すきですか？",
+              "choices": [
+                "肉 / Thịt",
+                "魚 / Cá",
+                "やさい / Rau",
+                "くだもの / Hoa quả"
+              ],
+              "correct": 0
+            },
+            {
+              "id": "l5_02",
+              "audio": "Lesson05/sa064.mp3",
+              "transcript": "キムさん、食べ物は 何が好きですか？ 私は 魚が好きです。肉は？ 肉は 好きじゃないです。",
+              "q": "キムさんは 肉がすきですか？",
+              "choices": [
+                "はい、すきです / Có, thích",
+                "いいえ、すきじゃないです / Không, không thích",
+                "すこしすきです / Thích một chút",
+                "わかりません / Không biết"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l5_03",
+              "audio": "Lesson05/sa067_2.mp3",
+              "transcript": "田中さん、コーヒー飲みますか？ はい、お願いします。ジュースは？ ジュースは 結構です。",
+              "q": "たなかさんは ジュースを のみますか？",
+              "choices": [
+                "はい、のみます / Có, uống",
+                "いいえ、のみません（けっこうです）/ Không, không uống",
+                "すこしのみます / Uống một chút",
+                "コーヒーをのみます / Uống cà phê"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l5_04",
+              "audio": "Lesson05/sa071_2.mp3",
+              "transcript": "安倍さん、いつも 朝ごはん 食べますか？ はい、食べます。何を食べますか？ 私は ご飯と味噌汁を食べます。野菜も食べます。",
+              "q": "あべさんは あさごはんに なにを たべますか？",
+              "choices": [
+                "パンとコーヒー / Bánh mì và cà phê",
+                "ごはんとみそしる / Cơm và súp miso",
+                "卵とくだもの / Trứng và hoa quả",
+                "たべません / Không ăn"
+              ],
+              "correct": 1
+            },
+            {
+              "id": "l5_05",
+              "audio": "Lesson05/sa073.mp3",
+              "transcript": "カーラさん、いつも 朝ごはんを 食べますか？ いいえ、食べません。",
+              "q": "カーラさんは あさごはんを たべますか？",
+              "choices": [
+                "はい、たべます / Có, ăn",
+                "いいえ、たべません / Không, không ăn",
+                "ときどきたべます / Thỉnh thoảng ăn",
+                "パンをたべます / Ăn bánh mì"
+              ],
+              "correct": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

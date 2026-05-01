@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0e8f8"/>
+      <stop offset="100%" stop-color="#c8a8d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="200" rx="14" fill="url(#bg)"/>
+  <!-- desk top -->
+  <rect x="60" y="100" width="200" height="14" rx="3" fill="#8b6f47"/>
+  <rect x="60" y="100" width="200" height="6" rx="3" fill="#a08055"/>
+  <!-- desk legs -->
+  <rect x="68" y="114" width="10" height="56" fill="#8b6f47"/>
+  <rect x="242" y="114" width="10" height="56" fill="#8b6f47"/>
+  <!-- notebook on desk -->
+  <rect x="100" y="86" width="50" height="14" rx="2" fill="#fff" stroke="#999" stroke-width="1"/>
+  <line x1="105" y1="91" x2="145" y2="91" stroke="#bbb" stroke-width="0.5"/>
+  <line x1="105" y1="95" x2="145" y2="95" stroke="#bbb" stroke-width="0.5"/>
+  <!-- pen -->
+  <rect x="160" y="94" width="40" height="4" rx="2" fill="#3498db"/>
+  <polygon points="200,94 206,96 200,98" fill="#2c3e50"/>
+</svg>

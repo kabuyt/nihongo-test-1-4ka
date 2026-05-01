@@ -1,3 +1,12 @@
 .DS_Store
 .claude/
 1-4課/
+
+# Marugoto - 公式音源（273MB、別途配置）
+audio/marugoto-nyumon/Lesson*/
+audio/marugoto-nyumon/LessonReview/
+
+# 一時ファイル
+audio/marugoto-nyumon/_wav_tmp/
+audio/marugoto-nyumon/_transcribe.py
+marugoto-nyumon/第1回/images/_generate.py
