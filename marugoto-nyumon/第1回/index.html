@@ -160,9 +160,14 @@ main { flex: 1; padding: 20px 16px 100px; max-width: 600px; margin: 0 auto; widt
       <div class="info-row"><span class="label">所要時間目安 / Thời gian</span><span class="value">約60分</span></div>
 
       <div class="input-group mt-24">
-        <label>お名前 / Tên (任意 / không bắt buộc)</label>
-        <input type="text" id="student-name" placeholder="例: グエン・ヴァン・アン">
+        <label>学生ID / Mã học viên (必須 / bắt buộc)</label>
+        <input type="text" id="student-id" placeholder="例: VJC012" autocapitalize="characters" autocomplete="off">
       </div>
+      <div class="input-group">
+        <label>生年月日 / Ngày sinh (必須)</label>
+        <input type="date" id="student-birth" autocomplete="off">
+      </div>
+      <div id="student-id-status" style="font-size:12px;min-height:18px;margin-top:-12px;margin-bottom:8px"></div>
 
       <button class="btn btn-primary" onclick="App.start()">▶ テストを始める / Bắt đầu</button>
     </div>
@@ -249,10 +254,16 @@ main { flex: 1; padding: 20px 16px 100px; max-width: 600px; margin: 0 auto; widt
   <button class="btn btn-primary" onclick="App.nextQ()" id="btn-next" style="flex:2" disabled>次へ / Tiếp →</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ============================================================
-//  まるごと入門A1 第1回テスト  - スタンドアロン版
+//  まるごと入門A1 第1回テスト
 // ============================================================
+const SUPABASE_URL = 'https://ajmdpkwqyeyzemeoojwd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqbWRwa3dxeWV5emVtZW9vandkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMjIwMzAsImV4cCI6MjA5MDY5ODAzMH0.AfpGFcYvVrS25qTr9RTGWqsvWMKykU2QcXZPtiNxAqY';
+const TEST_NAME = 'marugoto_1';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const App = (function() {
   let testData = null;
   let allQuestions = []; // フラット化した全問題: {section, sub, qIdx, q, points}
@@ -309,13 +320,56 @@ const App = (function() {
     });
   }
 
-  function start() {
-    const name = document.getElementById('student-name').value.trim();
+  async function start() {
+    const studentIdInput = document.getElementById('student-id');
+    const birthInput = document.getElementById('student-birth');
+    const statusEl = document.getElementById('student-id-status');
+    const studentId = (studentIdInput.value || '').trim().toUpperCase();
+    const birth = (birthInput.value || '').trim();
+    if (!studentId) {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '学生IDを入力してください / Vui lòng nhập mã học viên';
+      studentIdInput.focus();
+      return;
+    }
+    if (!birth) {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '生年月日を入力してください / Vui lòng nhập ngày sinh';
+      birthInput.focus();
+      return;
+    }
+    // 学生ID + 生年月日 で Supabase Auth ログイン
+    statusEl.style.color = '#888';
+    statusEl.textContent = '⏳ ログイン中 / Đang đăng nhập...';
+    const email = studentId.toLowerCase() + '@student.trainee.local';
+    const password = birth.replace(/-/g, ''); // YYYYMMDD
+    const { data: loginData, error: loginErr } = await sb.auth.signInWithPassword({ email, password });
+    if (loginErr || !loginData.session) {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '❌ ログイン失敗 / Đăng nhập thất bại（IDか生年月日を確認してください）';
+      return;
+    }
+    // 自分の trainees レコード取得（auth.uid() で RLS 通過）
+    const { data: trainee, error: tErr } = await sb
+      .from('trainees')
+      .select('id, student_id, name_katakana, name_romaji, curriculum')
+      .eq('auth_user_id', loginData.session.user.id)
+      .single();
+    if (tErr || !trainee) {
+      statusEl.style.color = '#c0392b';
+      statusEl.textContent = '❌ 学生プロファイル取得失敗 / Không tìm thấy hồ sơ';
+      await sb.auth.signOut();
+      return;
+    }
+    sessionStorage.setItem('marugoto_trainee_id', trainee.id);
+    sessionStorage.setItem('marugoto_student_id', trainee.student_id);
+    sessionStorage.setItem('marugoto_name', trainee.name_katakana || trainee.name_romaji || '');
+    statusEl.style.color = '#27ae60';
+    statusEl.textContent = '✓ ' + (trainee.name_katakana || trainee.name_romaji || trainee.student_id);
     // Clear previous shuffles
     Object.keys(sessionStorage).forEach(k => {
       if (k.startsWith('shuffle_')) sessionStorage.removeItem(k);
     });
-    if (name) sessionStorage.setItem('marugoto_name', name);
     answers = {};
     audioPlayed = {};
     currentIdx = 0;
@@ -612,7 +666,7 @@ const App = (function() {
       `).join('') + (wrongList.length > 30 ? '<div class="text-small center">...他' + (wrongList.length - 30) + '問</div>' : '');
     }
 
-    // Save to localStorage
+    // Save to localStorage（バックアップ）
     const record = {
       date: new Date().toISOString(),
       name: sessionStorage.getItem('marugoto_name') || '',
@@ -625,6 +679,58 @@ const App = (function() {
     const history = JSON.parse(localStorage.getItem('marugoto_history') || '[]');
     history.push(record);
     localStorage.setItem('marugoto_history', JSON.stringify(history));
+
+    // Submit to Supabase
+    submitToSupabase(sectScores, total).catch(err => console.error('submit error:', err));
+  }
+
+  async function submitToSupabase(sectScores, total) {
+    const studentId = sessionStorage.getItem('marugoto_student_id') || '?';
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      showSubmitStatus('未ログインのため結果を送信できませんでした', false);
+      return;
+    }
+    showSubmitStatus('⏳ 結果を送信中 / Đang gửi kết quả...', null);
+    try {
+      const answersJson = {};
+      for (const [qid, a] of Object.entries(answers)) {
+        answersJson[qid] = { selected: a.selected, correct: a.correct, points: a.points };
+      }
+      const { data, error } = await sb.rpc('submit_test_result', {
+        p_test_id:        TEST_NAME,
+        p_test_date:      new Date().toISOString().slice(0, 10),
+        p_answers:        answersJson,
+        p_score_vocab:    sectScores.vocabulary,
+        p_score_grammar:  sectScores.grammar,
+        p_score_listening: sectScores.listening,
+        p_auto_scored:    true
+      });
+      if (error) throw error;
+      showSubmitStatus('✅ 結果を送信しました / Đã gửi kết quả - ' + studentId, true);
+    } catch (err) {
+      const msg = err.message || String(err);
+      showSubmitStatus('❌ 送信失敗 / Gửi thất bại: ' + msg, false);
+    }
+  }
+
+  function showSubmitStatus(msg, ok) {
+    let el = document.getElementById('submit-status');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'submit-status';
+      el.style.cssText = 'margin:12px 0;padding:12px 16px;border-radius:10px;font-size:13px;text-align:center;font-weight:600';
+      const reviewSection = document.getElementById('review-section');
+      reviewSection.parentNode.insertBefore(el, reviewSection);
+    }
+    el.textContent = msg;
+    if (ok === true) {
+      el.style.background = '#d4f4dd'; el.style.color = '#27ae60';
+    } else if (ok === false) {
+      el.style.background = '#fadbd8'; el.style.color = '#c0392b';
+    } else {
+      el.style.background = '#fef5e7'; el.style.color = '#b9770e';
+    }
   }
 
   function restart() {
