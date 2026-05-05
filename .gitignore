@@ -2,8 +2,20 @@
 .claude/
 1-4課/
 
-# Marugoto - 公式音源（273MB、別途配置）
-audio/marugoto-nyumon/Lesson*/
+# Marugoto - 公式音源（L6以降は容量大のため別途配置、L1-L5 はテスト1で必要なのでコミット）
+audio/marugoto-nyumon/Lesson06/
+audio/marugoto-nyumon/Lesson07/
+audio/marugoto-nyumon/Lesson08/
+audio/marugoto-nyumon/Lesson09/
+audio/marugoto-nyumon/Lesson10/
+audio/marugoto-nyumon/Lesson11/
+audio/marugoto-nyumon/Lesson12/
+audio/marugoto-nyumon/Lesson13/
+audio/marugoto-nyumon/Lesson14/
+audio/marugoto-nyumon/Lesson15/
+audio/marugoto-nyumon/Lesson16/
+audio/marugoto-nyumon/Lesson17/
+audio/marugoto-nyumon/Lesson18/
 audio/marugoto-nyumon/LessonReview/
 
 # 一時ファイル
