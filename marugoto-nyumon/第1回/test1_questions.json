@@ -13,7 +13,7 @@
     "vocabulary": {
       "name": "ごい / Từ vựng",
       "points": 100,
-      "total_questions": 60,
+      "total_questions": 56,
       "subsections": [
         {
           "id": "v1",
@@ -122,11 +122,11 @@
             },
             {
               "id": "v1_10",
-              "q": "いしゃ",
+              "q": "きょうし",
               "choices": [
-                "giáo viên",
                 "kỹ sư",
-                "bác sĩ",
+                "nhân viên công ty",
+                "giáo viên",
                 "học sinh"
               ],
               "correct": 2
@@ -174,58 +174,58 @@
             },
             {
               "id": "v2_04",
-              "q": "チーズ",
+              "q": "シャツ",
               "choices": [
-                "sữa chua",
-                "phô mai",
-                "thịt bò",
-                "bánh mì"
+                "áo phông",
+                "áo sơ mi",
+                "quần",
+                "giày"
               ],
               "correct": 1
             },
             {
               "id": "v2_05",
-              "q": "トマト",
+              "q": "テレビ",
               "choices": [
-                "cà chua",
-                "khoai tây",
-                "hành tây",
-                "bắp cải"
-              ],
-              "correct": 0
-            },
-            {
-              "id": "v2_06",
-              "q": "ノート",
-              "choices": [
-                "sách giáo khoa",
-                "bút",
-                "vở",
-                "từ điển"
+                "máy tính",
+                "tủ lạnh",
+                "tivi",
+                "điện thoại"
               ],
               "correct": 2
             },
             {
-              "id": "v2_07",
-              "q": "ペン",
+              "id": "v2_06",
+              "q": "カメラ",
               "choices": [
-                "bút chì",
-                "bút",
-                "tẩy",
-                "vở"
+                "vở",
+                "máy ảnh",
+                "sách",
+                "bút"
               ],
               "correct": 1
             },
             {
-              "id": "v2_08",
-              "q": "コンピューター",
+              "id": "v2_07",
+              "q": "タクシー",
               "choices": [
-                "máy tính",
-                "điện thoại di động",
-                "bảng trắng",
-                "sách giáo khoa"
+                "xe đạp",
+                "xe buýt",
+                "taxi",
+                "tàu điện"
               ],
-              "correct": 0
+              "correct": 2
+            },
+            {
+              "id": "v2_08",
+              "q": "ホテル",
+              "choices": [
+                "nhà hàng",
+                "siêu thị",
+                "khách sạn",
+                "bệnh viện"
+              ],
+              "correct": 2
             },
             {
               "id": "v2_09",
@@ -255,7 +255,7 @@
           "id": "v3a",
           "name": "問3-A: かんじのよみかた / Cách đọc Kanji",
           "instruction": "したの かんじの よみかたを えらびなさい。 / Chọn cách đọc đúng của Kanji sau.",
-          "points_per_question": 2,
+          "points_per_question": 2.5,
           "questions": [
             {
               "id": "v3a_01",
@@ -298,17 +298,6 @@
                 "やさい",
                 "ごはん",
                 "おちゃ"
-              ],
-              "correct": 0
-            },
-            {
-              "id": "v3a_05",
-              "q": "魚",
-              "choices": [
-                "さかな",
-                "とりにく",
-                "ぎゅうにく",
-                "ぶたにく"
               ],
               "correct": 0
             }
@@ -499,7 +488,7 @@
           "id": "v5",
           "name": "問5: えと ことば / Hình ảnh → Từ vựng",
           "instruction": "えを みて、ただしい ことばを えらびなさい。 / Xem hình và chọn từ đúng.",
-          "points_per_question": 1,
+          "points_per_question": 1.1765,
           "note": "画像はテストアプリのHTMLで表示します。/ Hình ảnh sẽ hiển thị trong ứng dụng test HTML.",
           "questions": [
             {
@@ -571,18 +560,6 @@
                 "パン",
                 "みそしる",
                 "やさい"
-              ],
-              "correct": 1
-            },
-            {
-              "id": "v5_07",
-              "image": "tabemono_chiizu.svg",
-              "image_alt": "phô mai",
-              "choices": [
-                "ヨーグルト",
-                "チーズ",
-                "パン",
-                "たまご"
               ],
               "correct": 1
             },
@@ -705,30 +682,6 @@
                 "がくせい"
               ],
               "correct": 2
-            },
-            {
-              "id": "v5_18",
-              "image": "shigoto_isha.svg",
-              "image_alt": "bác sĩ",
-              "choices": [
-                "エンジニア",
-                "いしゃ",
-                "きょうし",
-                "がくせい"
-              ],
-              "correct": 1
-            },
-            {
-              "id": "v5_19",
-              "image": "kyoushitsu_nooto.svg",
-              "image_alt": "vở",
-              "choices": [
-                "じしょ",
-                "ノート",
-                "きょうかしょ",
-                "けいたいでんわ"
-              ],
-              "correct": 1
             },
             {
               "id": "v5_20",
