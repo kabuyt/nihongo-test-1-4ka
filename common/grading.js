@@ -217,7 +217,9 @@ function grade_multi_field_group(rule, answerKey, userAnswers) {
   let score = 0;
   (rule.groups || []).forEach((group, gi) => {
     const allOk = group.every(fid => {
-      const expected = getExpected(answerKey, fid, i);
+      // BUGFIX: idx 引数は未使用にする（fid から自動引き）— 旧版で `i` を参照して
+      // ReferenceError を起こしていたため block ごと 0 点になっていた
+      const expected = getExpected(answerKey, fid);
       if (expected === undefined) return false;
       // 配列なら「どれかに一致」
       if (Array.isArray(expected)) {
