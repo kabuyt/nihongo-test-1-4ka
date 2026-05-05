@@ -8,11 +8,11 @@
     "T3 たべもの (L5のみ)"
   ],
   "language": "ja-vi",
-  "total_points": 300,
+  "total_points": 295,
   "sections": {
     "vocabulary": {
       "name": "ごい / Từ vựng",
-      "points": 100,
+      "points": 95,
       "total_questions": 56,
       "subsections": [
         {
@@ -255,7 +255,7 @@
           "id": "v3a",
           "name": "問3-A: かんじのよみかた / Cách đọc Kanji",
           "instruction": "したの かんじの よみかたを えらびなさい。 / Chọn cách đọc đúng của Kanji sau.",
-          "points_per_question": 2.5,
+          "points_per_question": 2,
           "questions": [
             {
               "id": "v3a_01",
@@ -488,7 +488,7 @@
           "id": "v5",
           "name": "問5: えと ことば / Hình ảnh → Từ vựng",
           "instruction": "えを みて、ただしい ことばを えらびなさい。 / Xem hình và chọn từ đúng.",
-          "points_per_question": 1.1765,
+          "points_per_question": 1,
           "note": "画像はテストアプリのHTMLで表示します。/ Hình ảnh sẽ hiển thị trong ứng dụng test HTML.",
           "questions": [
             {
@@ -772,8 +772,8 @@
             },
             {
               "id": "g1_06",
-              "q": "ちちと はは(  )わたしです。",
-              "vi": "(Gia đình tôi gồm) bố, mẹ và tôi.",
+              "q": "わたしの かぞくは 3にんです。ちちと はは(  )わたしです。",
+              "vi": "Gia đình tôi có 3 người. Bố, mẹ và tôi.",
               "choices": [
                 "は",
                 "と",
@@ -808,8 +808,8 @@
             },
             {
               "id": "g1_09",
-              "q": "ごはんと みそしる(  )たべます。",
-              "vi": "Tôi ăn cơm và súp miso.",
+              "q": "ごはんと やさい(  )たべます。",
+              "vi": "Tôi ăn cơm và rau.",
               "choices": [
                 "は",
                 "と",
