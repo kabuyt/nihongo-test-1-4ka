@@ -451,6 +451,218 @@ if (t2) {
 }
 
 // ============================================================
+//  自動ジェネレータ: answer_key + scoring_rules から
+//  満点になる解答セットを生成する。
+//  test3〜8 や marugoto を追加するときに、手書きの fixture
+//  を作らずに済むのが目的。
+// ============================================================
+
+// 値を1つに絞る（配列なら最初、separator-aware な method の場合のみ split）
+// 重要: exact_match のように separator を使わない method では「、」で
+// 切ってしまうと正解が壊れるので、明示的に separator を使う method
+// (split_match / flex_match / vietnamese_fuzzy) のみ ／ で分割する。
+const SEPARATOR_AWARE_METHODS = new Set(['split_match', 'flex_match', 'vietnamese_fuzzy']);
+
+function pickOneVariant(expected, rule) {
+  if (expected == null) return expected;
+  if (Array.isArray(expected)) return pickOneVariant(expected[0], rule);
+  if (typeof expected !== 'string') return expected;
+
+  const method = rule && rule.method;
+  if (!SEPARATOR_AWARE_METHODS.has(method)) return expected;
+
+  const sep = (rule && rule.separator) || '／';
+  if (expected.includes(sep)) return expected.split(sep)[0].trim();
+  // separator 既定値以外で ／ が混ざっていた場合のフォールバック
+  if (sep !== '／' && expected.includes('／')) return expected.split('／')[0].trim();
+  return expected;
+}
+
+// 1ブロック分の「全問正解」解答を生成
+function generatePerfectAnswersForBlock(rule, blockAnswerKey) {
+  const ans = {};
+
+  switch (rule.method) {
+    case 'multi_field_group':
+      for (const group of rule.groups || []) {
+        for (const fid of group) {
+          const exp = blockAnswerKey && blockAnswerKey[fid];
+          if (exp != null) ans[fid] = Array.isArray(exp) ? exp[0] : exp;
+        }
+      }
+      break;
+
+    case 'pair_match':
+      (rule.items || []).forEach((item, i) => {
+        let aExp, bExp;
+        if (Array.isArray(blockAnswerKey)) {
+          aExp = blockAnswerKey[i] && blockAnswerKey[i].a;
+          bExp = blockAnswerKey[i] && blockAnswerKey[i].b;
+        } else if (blockAnswerKey) {
+          aExp = blockAnswerKey[item.a_field];
+          bExp = blockAnswerKey[item.b_field];
+        }
+        if (aExp != null) ans[item.a_field] = aExp;
+        if (bExp != null) ans[item.b_field] = bExp;
+      });
+      break;
+
+    case 'price_country':
+      (rule.items || []).forEach(item => {
+        const p = blockAnswerKey && blockAnswerKey[item.price_field];
+        const c = blockAnswerKey && blockAnswerKey[item.country_field];
+        if (p != null) ans[item.price_field] = p;
+        if (c != null) ans[item.country_field] = c;
+      });
+      break;
+
+    case 'bucket_sort':
+      (rule.field_ids || []).forEach((fid, i) => {
+        let exp;
+        if (Array.isArray(blockAnswerKey)) exp = blockAnswerKey[i];
+        else if (blockAnswerKey) exp = blockAnswerKey[fid];
+        if (Array.isArray(exp)) ans[fid] = exp.slice();
+        else if (exp != null) ans[fid] = [exp];
+      });
+      break;
+
+    case 'manual':
+      // 手動採点は自動生成不可（スコアにも寄与しない）
+      break;
+
+    default: {
+      // exact_match, flex_match, split_match, normalized_match, radio_exact,
+      // ox_match, phone_match, substring_match, multi_field_match,
+      // unordered_tokens, vietnamese_fuzzy, array_flex 等
+      const fieldIds = rule.field_ids || [];
+      fieldIds.forEach((fid, i) => {
+        let exp;
+        if (Array.isArray(blockAnswerKey)) exp = blockAnswerKey[i];
+        else if (blockAnswerKey) exp = blockAnswerKey[fid];
+        if (exp == null) return;
+        ans[fid] = pickOneVariant(exp, rule);
+      });
+      break;
+    }
+  }
+  return ans;
+}
+
+// テスト全体（goii/bunpo/chokkai）の満点解答を生成
+function generatePerfectAnswers(testData) {
+  const result = {};
+  for (const sec in testData) {
+    const sd = testData[sec];
+    if (!sd || !sd.scoring_rules) continue;
+    for (const blockId in sd.scoring_rules) {
+      const rule = sd.scoring_rules[blockId];
+      const ak = sd.answer_key && sd.answer_key[blockId];
+      Object.assign(result, generatePerfectAnswersForBlock(rule, ak));
+    }
+  }
+  return result;
+}
+
+// 1ブロックの満点 (= scoring_rules から計算)
+function getBlockMaxPoints(rule) {
+  if (!rule || !rule.method) return 0;
+  if (rule.method === 'multi_field_group') {
+    const ppf = rule.points_per_field || rule.points_each || 1;
+    let max = 0;
+    (rule.groups || []).forEach((g, gi) => {
+      if (rule.group_points && gi < rule.group_points.length) {
+        max += rule.group_points[gi] || 0;
+      } else {
+        max += ppf * g.length;
+      }
+    });
+    return max;
+  }
+  if (rule.method === 'pair_match') {
+    return (rule.points_each || 1) * (rule.items || []).length;
+  }
+  if (rule.method === 'price_country') {
+    return ((rule.price_points || 2) + (rule.country_points || 1)) * (rule.items || []).length;
+  }
+  if (rule.method === 'bucket_sort') {
+    return (rule.points_each || 2) * (rule.field_ids || []).length;
+  }
+  if (rule.method === 'manual') return 0;
+  // exact_match 等の単純メソッド
+  const pts = rule.points_each || rule.points_per_field || 1;
+  return pts * (rule.field_ids || []).length;
+}
+
+// セクション全体の満点
+function getSectionMaxPoints(scoringRules) {
+  let total = 0;
+  for (const blockId in scoringRules) {
+    total += getBlockMaxPoints(scoringRules[blockId]);
+  }
+  return total;
+}
+
+// ============================================================
+//  自動テスト群: 各テストに対して自動生成→検算
+//  test3〜8 を追加するときは、loadAnswerKeys(N) の結果を
+//  下の autoTests 配列に追加するだけ
+// ============================================================
+
+const autoTests = [
+  ['test1', t1],
+  ['test2', t2],
+  // ['test3', loadAnswerKeys(3)],  // ← test3 を追加するときコメント外す
+  // ['test4', loadAnswerKeys(4)],
+  // ...
+];
+
+autoTests.forEach(([name, td]) => {
+  if (!td) {
+    console.log(`  (${name} answer_keys 見つからず、自動テストをスキップ)`);
+    return;
+  }
+
+  // 1. scoring_rules の合計が各セクション 100 点になっているか
+  for (const sec of ['goii', 'bunpo', 'chokkai']) {
+    if (!td[sec]) continue;
+    eq(`${name} ${sec} scoring_rules 合計 = 100`, getSectionMaxPoints(td[sec].scoring_rules), 100);
+  }
+
+  // 2. 自動生成した満点解答 → gradeTest で 100/100/100
+  const perfect = generatePerfectAnswers(td);
+  const perfectScore = TG.gradeTest(td, perfect);
+  // 一部テスト（test5-8）は goii が無い想定なので、存在するセクションだけチェック
+  const expectedPerfect = {
+    score_vocab: td.goii ? 100 : null,
+    score_grammar: td.bunpo ? 100 : null,
+    score_listening: td.chokkai ? 100 : null,
+  };
+  deepEq(`${name} 自動生成・全問正解 → 100/100/100`, perfectScore, expectedPerfect);
+
+  // 3. 全空 → 0/0/0
+  const emptyScore = TG.gradeTest(td, {});
+  const expectedEmpty = {
+    score_vocab: td.goii ? 0 : null,
+    score_grammar: td.bunpo ? 0 : null,
+    score_listening: td.chokkai ? 0 : null,
+  };
+  deepEq(`${name} 全空 → 0/0/0`, emptyScore, expectedEmpty);
+
+  // 4. 各ブロックを単独で見て、満点と一致するか
+  for (const sec of ['goii', 'bunpo', 'chokkai']) {
+    if (!td[sec]) continue;
+    for (const blockId in td[sec].scoring_rules) {
+      const rule = td[sec].scoring_rules[blockId];
+      if (rule.method === 'manual') continue;
+      const blockPerfect = generatePerfectAnswersForBlock(rule, td[sec].answer_key && td[sec].answer_key[blockId]);
+      const blockScore = TG.gradeSection(td[sec].answer_key, { [blockId]: rule }, blockPerfect);
+      const blockMax = getBlockMaxPoints(rule);
+      eq(`${name} ${sec} ${blockId} 単独満点 = ${blockMax}`, blockScore, blockMax);
+    }
+  }
+});
+
+// ============================================================
 //  Result
 // ============================================================
 
