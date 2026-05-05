@@ -131,6 +131,18 @@ main { flex: 1; padding: 20px 16px 100px; max-width: 600px; margin: 0 auto; widt
 .mt-12 { margin-top: 12px; }
 .mt-24 { margin-top: 24px; }
 .text-small { font-size: 12px; color: #888; }
+
+/* Cheat banner (sticky warning while test runs) */
+#cheat-banner { display:none; background:#c0392b; color:#fff; text-align:center; padding:8px 12px; font-size:13px; font-weight:bold; position:sticky; top:64px; z-index:49; line-height:1.4; }
+
+/* In-app browser overlay (LINE / Zalo / Facebook) */
+#line-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); color:#fff; z-index:9999; padding:24px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+#line-overlay .inner { max-width:500px; margin:40px auto; background:#fff; color:#2c3e50; border-radius:14px; padding:24px 22px; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+#line-overlay h2 { color:#c0392b; font-size:20px; margin-bottom:12px; }
+#line-overlay p { font-size:14px; line-height:1.7; margin-bottom:10px; }
+#line-overlay .url-box { background:#f0e8d5; padding:12px; border-radius:8px; font-family:monospace; font-size:12px; word-break:break-all; margin:14px 0; user-select:all; -webkit-user-select:all; color:#d35400; }
+#line-overlay .copy-btn { display:block; width:100%; padding:14px; background:#e67e22; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-top:8px; }
+#line-overlay ol { margin:10px 0 10px 22px; font-size:13px; line-height:1.8; }
 </style>
 </head>
 <body>
@@ -146,6 +158,27 @@ main { flex: 1; padding: 20px 16px 100px; max-width: 600px; margin: 0 auto; widt
     </div>
   </div>
 </header>
+
+<!-- Anti-cheat warning banner (shown while test is running) -->
+<div id="cheat-banner">
+  ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
+</div>
+
+<!-- In-app browser warning overlay (LINE / Zalo / Facebook Messenger) -->
+<div id="line-overlay">
+  <div class="inner">
+    <h2>⚠ Vui lòng mở bằng trình duyệt</h2>
+    <p style="font-weight:700;color:#c0392b">アプリ内ブラウザでは受験できません</p>
+    <p>Bài kiểm tra này không thể thực hiện trong ứng dụng LINE / Zalo / Facebook Messenger. Vui lòng mở trong <b>Chrome</b> hoặc <b>Safari</b>.</p>
+    <ol>
+      <li>Bấm vào nút <b>"⋯"</b> hoặc <b>"chia sẻ"</b> ở góc trên bên phải</li>
+      <li>Chọn <b>"Mở trong Chrome / Safari"</b> (Chromeで開く / Safariで開く)</li>
+      <li>Hoặc copy URL bên dưới và dán vào trình duyệt</li>
+    </ol>
+    <div class="url-box" id="line-overlay-url"></div>
+    <button class="copy-btn" onclick="(function(){var t=document.getElementById('line-overlay-url').textContent;if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>alert('✓ Đã copy URL'));}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('✓ Đã copy URL');}})()">📋 Copy URL</button>
+  </div>
+</div>
 
 <main id="main">
   <!-- Start screen -->
@@ -272,6 +305,110 @@ const App = (function() {
   let answers = {}; // {qid: {selected, correct, points}}
   let audioEl = null;
   let audioPlayed = {}; // {qid: true} 1回のみ制御
+  let _antiCheatActive = false;
+  let _leaveCount = 0;
+
+  // ---------- Anti-cheat ----------
+  function _playBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'square'; osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      osc.start(); osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
+  }
+
+  function _silentReset() {
+    // テスト中の状態を即座にクリア（カンニング検知時）
+    if (audioEl) { try { audioEl.pause(); } catch(e){} audioEl = null; }
+    answers = {};
+    audioPlayed = {};
+    currentIdx = 0;
+    currentSection = null;
+    Object.keys(sessionStorage).forEach(k => {
+      if (k.startsWith('shuffle_')) sessionStorage.removeItem(k);
+    });
+  }
+
+  function startAntiCheat() {
+    if (_antiCheatActive) return;
+    _antiCheatActive = true;
+    document.getElementById('cheat-banner').style.display = 'block';
+
+    // タブ切替・アプリ切替検知
+    document.addEventListener('visibilitychange', () => {
+      if (!_antiCheatActive) return;
+      if (document.hidden) {
+        _leaveCount++;
+        _silentReset();
+      } else {
+        _silentReset();
+        _playBeep();
+        alert('⚠ 警告 / CẢNH BÁO\n\nアプリやタブを切り替えました。カンニング行為とみなし、テストをリセットしました。\n\nBạn đã chuyển ứng dụng/tab. Hành vi này được coi là GIAN LẬN và bài kiểm tra đã bị reset.');
+        // スタート画面へ戻す
+        document.getElementById('cheat-banner').style.display = 'none';
+        document.getElementById('progress-area').classList.add('hidden');
+        document.getElementById('nav-bar').classList.add('hidden');
+        _antiCheatActive = false;
+        showScreen('screen-start');
+      }
+    });
+
+    // ページ離脱警告
+    window.addEventListener('beforeunload', (e) => {
+      if (!_antiCheatActive) return;
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    });
+
+    // ページ非表示時もリセット
+    window.addEventListener('pagehide', () => {
+      if (_antiCheatActive) _silentReset();
+    });
+
+    // bfcache から復帰時もリセット
+    window.addEventListener('pageshow', (e) => {
+      if (_antiCheatActive && e.persisted) _silentReset();
+    });
+
+    // 右クリック・コピー禁止
+    document.addEventListener('contextmenu', (e) => {
+      if (_antiCheatActive) e.preventDefault();
+    });
+    document.addEventListener('copy', (e) => {
+      if (_antiCheatActive) e.preventDefault();
+    });
+    document.addEventListener('cut', (e) => {
+      if (_antiCheatActive) e.preventDefault();
+    });
+  }
+
+  function stopAntiCheat() {
+    _antiCheatActive = false;
+    const banner = document.getElementById('cheat-banner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  // ---------- In-app browser detection (LINE / Zalo / FB) ----------
+  function detectInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    const isInApp = /Line\//i.test(ua)
+      || /Zalo/i.test(ua)
+      || /FBAN|FBAV|FB_IAB|FB4A|MessengerForiOS|Messenger Lite/i.test(ua)
+      || /Instagram/i.test(ua);
+    if (isInApp) {
+      const overlay = document.getElementById('line-overlay');
+      const urlBox = document.getElementById('line-overlay-url');
+      if (urlBox) urlBox.textContent = location.href;
+      if (overlay) overlay.style.display = 'block';
+      return true;
+    }
+    return false;
+  }
 
   // Hide screens
   function showScreen(id) {
@@ -311,6 +448,8 @@ const App = (function() {
 
   // ---------- Start ----------
   function init() {
+    // LINE / Zalo / Facebook in-app browser を検知（検知された時点でロード停止）
+    if (detectInAppBrowser()) return;
     showScreen('screen-loading');
     load().then(() => {
       showScreen('screen-start');
@@ -375,6 +514,8 @@ const App = (function() {
     currentIdx = 0;
     currentSection = null;
     document.getElementById('progress-area').classList.remove('hidden');
+    // カンニング防止を有効化（ログイン成功後）
+    startAntiCheat();
     showSectionIntroIfNeeded();
   }
 
@@ -602,6 +743,8 @@ const App = (function() {
     if (audioEl) { audioEl.pause(); audioEl = null; }
     document.getElementById('nav-bar').classList.add('hidden');
     document.getElementById('progress-area').classList.add('hidden');
+    // 結果表示時はカンニング防止を解除
+    stopAntiCheat();
     showScreen('screen-result');
 
     let total = 0;
