@@ -8,11 +8,11 @@
     "T3 たべもの (L5のみ)"
   ],
   "language": "ja-vi",
-  "total_points": 295,
+  "total_points": 300,
   "sections": {
     "vocabulary": {
       "name": "ごい / Từ vựng",
-      "points": 95,
+      "points": 100,
       "total_questions": 56,
       "subsections": [
         {
@@ -307,7 +307,7 @@
           "id": "v3b",
           "name": "問3-B: かんじのいみ / Nghĩa của Kanji",
           "instruction": "したの かんじの いみとして ただしい ベトナムごを えらびなさい。 / Chọn nghĩa tiếng Việt đúng của Kanji sau.",
-          "points_per_question": 2,
+          "points_per_question": 3,
           "questions": [
             {
               "id": "v3b_01",
