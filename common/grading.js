@@ -50,6 +50,14 @@ function getExpected(answerKey, fid, idx) {
 // ====== method別採点関数 ======
 
 // exact_match: 厳密一致（前後trim）。expected が配列の場合はいずれかに一致でOK
+function splitExpectedVariants(expected, sepRegex, opts) {
+  const values = Array.isArray(expected) ? expected : [expected];
+  return values
+    .flatMap(v => String(v).split(sepRegex))
+    .map(s => normalize(s, opts))
+    .filter(Boolean);
+}
+
 function grade_exact_match(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   let score = 0;
@@ -84,7 +92,7 @@ function grade_flex_match(rule, answerKey, userAnswers) {
     const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
-    const expVariants = String(expected).split(sepRegex).map(s => normalize(s, opts)).filter(Boolean);
+    const expVariants = splitExpectedVariants(expected, sepRegex, opts);
     // 学生の回答も区切って複数表現対応
     const actVariants = String(actual || '').split(sepRegex).map(s => normalize(s, opts)).filter(Boolean);
     if (actVariants.length === 0) return;
@@ -126,7 +134,7 @@ function grade_split_match(rule, answerKey, userAnswers) {
     const expected = getExpected(answerKey, fid, i);
     const actual = userAnswers[fid];
     if (expected === undefined || expected === null) return;
-    const variants = String(expected).split(sep).map(v => normalize(v, opts));
+    const variants = splitExpectedVariants(expected, sep, opts);
     const actN = normalize(actual, opts);
     if (!actN) return;
     if (variants.some(v => v === actN)) score += pts;
@@ -354,12 +362,16 @@ const METHOD_MAP = {
   normalized_match: grade_normalized_match,
   split_match: grade_split_match,
   array_flex: grade_array_flex,
+  array_exact: grade_exact_match,
   radio_exact: grade_radio_exact,
   ox_match: grade_ox_match,
   phone_match: grade_phone_match,
   substring_match: grade_substring_match,
   multi_field_group: grade_multi_field_group,
   multi_field_match: grade_multi_field_match,
+  multi_field_exact: grade_multi_field_match,
+  multi_field_flex: grade_array_flex,
+  mixed_select_manual: grade_exact_match,
   pair_match: grade_pair_match,
   bucket_sort: grade_bucket_sort,
   unordered_tokens: grade_unordered_tokens,

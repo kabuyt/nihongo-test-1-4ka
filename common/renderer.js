@@ -38,14 +38,27 @@ function makeSelect(fieldId, options, style) {
     const o = document.createElement('option');
     if (typeof opt === 'object') {
       o.value = opt.value;
-      o.textContent = opt.label;
+      o.textContent = stripHtml(opt.label);
     } else {
       o.value = opt;
-      o.textContent = opt;
+      o.textContent = stripHtml(opt);
     }
     sel.appendChild(o);
   });
   return sel;
+}
+
+function stripHtml(value) {
+  const div = document.createElement('div');
+  div.innerHTML = String(value || '');
+  div.querySelectorAll('ruby').forEach(ruby => {
+    const rt = ruby.querySelector('rt');
+    const reading = rt ? rt.textContent.trim() : '';
+    if (rt) rt.remove();
+    const base = ruby.textContent.trim();
+    ruby.replaceWith(document.createTextNode(reading ? `${base}（${reading}）` : base));
+  });
+  return div.textContent || div.innerText || '';
 }
 
 // ===== 問題タイプ別レンダラー =====
@@ -124,6 +137,14 @@ R.render_tile_sort_buckets = function(q, container) {
     inst.style.cssText = 'font-size:12px;color:#888;margin-bottom:10px';
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
+  }
+  let exampleHtml = q.example_html;
+  if (exampleHtml) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+    ex.innerHTML = exampleHtml;
+    block.appendChild(ex);
   }
 
   // 状態管理
@@ -272,7 +293,150 @@ R.render_tile_sort_buckets = function(q, container) {
 };
 
 // table_fill: 表の穴埋め
+function renderTest3G6CategoryTiles(q, container) {
+  const block = createQBlock(q.title_html);
+  const inst = document.createElement('div');
+  inst.style.cssText = 'font-size:12px;color:#666;margin-bottom:10px;line-height:1.7';
+  inst.innerHTML = 'カードを選んで、合うカテゴリーを押してください。置いたカードをもう一度押すと戻ります。';
+  block.appendChild(inst);
+
+  const example = document.createElement('div');
+  example.className = 'sentence';
+  example.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+  example.innerHTML = '<ruby>例<rt>れい</rt></ruby>） <ruby>名前<rt>なまえ</rt></ruby>: A, D, F';
+  block.appendChild(example);
+
+  const tiles = [
+    { key: 'A', label: 'A. ティエンさん' },
+    { key: 'B', label: 'B. <ruby>雨<rt>あめ</rt></ruby>' },
+    { key: 'C', label: 'C. <ruby>銀行員<rt>ぎんこういん</rt></ruby>' },
+    { key: 'D', label: 'D. <ruby>佐藤<rt>さとう</rt></ruby>さん' },
+    { key: 'E', label: 'E. <ruby>秋<rt>あき</rt></ruby>' },
+    { key: 'F', label: 'F. <ruby>山田<rt>やまだ</rt></ruby>さん' },
+    { key: 'G', label: 'G. <ruby>警察署<rt>けいさつしょ</rt></ruby>' },
+    { key: 'H', label: 'H. <ruby>図書館<rt>としょかん</rt></ruby>' },
+    { key: 'I', label: 'I. くもり' },
+    { key: 'J', label: 'J. <ruby>春<rt>はる</rt></ruby>' },
+    { key: 'K', label: 'K. エンジニア' },
+    { key: 'L', label: 'L. <ruby>神社<rt>じんじゃ</rt></ruby>' },
+    { key: 'M', label: 'M. <ruby>雪<rt>ゆき</rt></ruby>' },
+    { key: 'N', label: 'N. <ruby>駅員<rt>えきいん</rt></ruby>' },
+    { key: 'O', label: 'O. <ruby>夏<rt>なつ</rt></ruby>' }
+  ];
+  const buckets = [
+    { id: 'g6_1', label: '１） <ruby>天気<rt>てんき</rt></ruby>' },
+    { id: 'g6_2', label: '２） <ruby>季節<rt>きせつ</rt></ruby>' },
+    { id: 'g6_3', label: '３） <ruby>職業<rt>しょくぎょう</rt></ruby> (nghề nghiệp)' },
+    { id: 'g6_4', label: '４） <ruby>町<rt>まち</rt></ruby>の<ruby>中<rt>なか</rt></ruby>' }
+  ];
+  const exampleKeys = new Set(['A', 'D', 'F']);
+  const state = { selectedKey: null, placement: {} };
+  const tileMap = {};
+  tiles.forEach(t => { tileMap[t.key] = t; });
+
+  const pool = document.createElement('div');
+  pool.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#f8f9fa;border:2px dashed #aaa;border-radius:6px;margin-bottom:10px';
+  block.appendChild(pool);
+
+  const bucketWrap = document.createElement('div');
+  bucketWrap.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px';
+  block.appendChild(bucketWrap);
+
+  const bucketDrops = {};
+  buckets.forEach(b => {
+    const box = document.createElement('div');
+    box.style.cssText = 'border:1.5px solid #1a5276;border-radius:6px;padding:8px;background:#fff;cursor:pointer;min-height:92px';
+    box.innerHTML = `<div style="font-weight:bold;color:#1a5276;font-size:13px;margin-bottom:6px">${b.label}</div>`;
+    const drop = document.createElement('div');
+    drop.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;min-height:42px';
+    box.appendChild(drop);
+    bucketDrops[b.id] = drop;
+    box.onclick = (e) => { e.stopPropagation(); placeSelected(b.id); };
+    bucketWrap.appendChild(box);
+
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.id = b.id;
+    block.appendChild(hidden);
+  });
+
+  const resetDiv = document.createElement('div');
+  resetDiv.style.cssText = 'text-align:right;margin-top:8px';
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.textContent = 'リセット';
+  resetBtn.style.cssText = 'font-size:12px;padding:4px 12px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555';
+  resetBtn.onclick = () => {
+    state.selectedKey = null;
+    state.placement = {};
+    rerender();
+  };
+  resetDiv.appendChild(resetBtn);
+  block.appendChild(resetDiv);
+
+  function makeTile(key) {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    const selected = state.selectedKey === key;
+    const isExample = exampleKeys.has(key);
+    tile.disabled = isExample;
+    tile.style.cssText = isExample
+      ? 'padding:6px 10px;border:2px solid #b8c2cc;background:#eef1f4;color:#6c757d;border-radius:6px;cursor:not-allowed;font-size:13px;font-family:inherit;line-height:1.7;opacity:.9'
+      : `padding:6px 10px;border:2px solid ${selected ? '#e67e22' : '#1a5276'};background:${selected ? '#fff3cd' : '#fff'};color:#1a5276;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;line-height:1.7`;
+    tile.innerHTML = tileMap[key].label;
+    tile.onclick = (e) => {
+      e.stopPropagation();
+      if (isExample) return;
+      if (state.placement[key]) {
+        delete state.placement[key];
+        state.selectedKey = null;
+      } else {
+        state.selectedKey = selected ? null : key;
+      }
+      rerender();
+    };
+    return tile;
+  }
+
+  function placeSelected(bucketId) {
+    if (!state.selectedKey) return;
+    state.placement[state.selectedKey] = bucketId;
+    state.selectedKey = null;
+    rerender();
+  }
+
+  function updateHiddenFields() {
+    buckets.forEach(b => {
+      const keys = tiles.map(t => t.key).filter(k => state.placement[k] === b.id);
+      const hidden = document.getElementById(b.id);
+      if (hidden) hidden.value = keys.join(',');
+    });
+  }
+
+  function rerender() {
+    pool.innerHTML = '';
+    tiles.forEach(t => {
+      if (exampleKeys.has(t.key) || !state.placement[t.key]) pool.appendChild(makeTile(t.key));
+    });
+    Object.keys(bucketDrops).forEach(bucketId => {
+      const drop = bucketDrops[bucketId];
+      drop.innerHTML = '';
+      tiles.forEach(t => {
+        if (state.placement[t.key] === bucketId) drop.appendChild(makeTile(t.key));
+      });
+    });
+    updateHiddenFields();
+  }
+
+  rerender();
+  container.appendChild(block);
+}
+
 R.render_table_fill = function(q, container) {
+  if (_basePath === 'static/test3/' && q.id === 'g6') {
+    renderTest3G6CategoryTiles(q, container);
+    return;
+  }
   const block = createQBlock(q.title_html);
   if (q.instruction) {
     const note = document.createElement('div');
@@ -375,10 +539,16 @@ R.render_table_fill = function(q, container) {
       const bodyTr = document.createElement('tr');
       tbl.items.forEach(item => {
         const td = document.createElement('td');
+        if (item.image_src) {
+          const img = document.createElement('div');
+          img.style.cssText = 'text-align:center;margin:4px 0 8px';
+          img.innerHTML = `<img src="${asset(item.image_src)}" style="max-width:160px;max-height:120px;border:1px solid #ddd;border-radius:6px;background:#fff">`;
+          td.appendChild(img);
+        }
         if (item.field_id === null) {
           td.className = 'already';
           td.style.cssText = 'text-align:center;font-size:12px';
-          td.innerHTML = item.fixed_value;
+          td.insertAdjacentHTML('beforeend', item.fixed_value);
         } else if (item.input_type === 'text') {
           const inp = document.createElement('input');
           inp.type = 'text'; inp.id = item.field_id;
@@ -396,6 +566,12 @@ R.render_table_fill = function(q, container) {
         const tr = document.createElement('tr');
         const tdLabel = document.createElement('td');
         tdLabel.innerHTML = item.label || '';
+        if (item.image_src) {
+          const img = document.createElement('div');
+          img.style.cssText = 'text-align:center;margin:6px 0 2px';
+          img.innerHTML = `<img src="${asset(item.image_src)}" style="max-width:170px;max-height:125px;border:1px solid #ddd;border-radius:6px;background:#fff">`;
+          tdLabel.appendChild(img);
+        }
         tdLabel.style.cssText = 'font-size:13px;padding:6px 8px;white-space:nowrap';
         tr.appendChild(tdLabel);
         const tdInput = document.createElement('td');
@@ -491,8 +667,13 @@ R.render_fill_particle = function(q, container) {
     div.className = 'sentence';
     let html = item.sentence_html;
     item.fields.forEach(f => {
-      const selectHtml = `<span class="fill-inline"><select id="${f.field_id}" class="sel-particle"><option value="">-</option>${f.options.map(o => `<option>${o}</option>`).join('')}</select></span>`;
-      html = html.replace('{' + f.field_id + '}', selectHtml);
+      let fieldHtml;
+      if (f.input_type === 'text') {
+        fieldHtml = `<span class="fill-inline"><input type="text" id="${f.field_id}" style="font-size:14px;padding:3px;border:1px solid #aaa;border-radius:4px;min-width:56px;max-width:90px"></span>`;
+      } else {
+        fieldHtml = `<span class="fill-inline"><select id="${f.field_id}" class="sel-particle"><option value="">-</option>${(f.options || []).map(o => `<option>${o}</option>`).join('')}</select></span>`;
+      }
+      html = html.replace('{' + f.field_id + '}', fieldHtml);
     });
     div.innerHTML = html;
     block.appendChild(div);
@@ -680,13 +861,19 @@ R.render_select_choice = function(q, container) {
       div.innerHTML = html;
     } else {
       div.innerHTML = (item.prompt || item.label || '') + ' ';
+      if (item.image_src) {
+        const imgWrap = document.createElement('div');
+        imgWrap.style.cssText = 'margin:8px 0;text-align:center';
+        imgWrap.innerHTML = `<img src="${asset(item.image_src)}" style="max-width:180px;max-height:140px;border:1px solid #ddd;border-radius:6px;background:#fff">`;
+        div.appendChild(imgWrap);
+      }
       if (item.input_type === 'text') {
         const inp = document.createElement('input');
         inp.type = 'text'; inp.id = item.field_id;
         inp.style.cssText = 'font-size:14px;padding:4px;border:1px solid #aaa;border-radius:4px;min-width:200px';
         div.appendChild(inp);
       } else {
-        div.appendChild(makeSelect(item.field_id, item.options || []));
+        div.appendChild(makeSelect(item.field_id, item.options || q.options_pool || []));
       }
     }
     block.appendChild(div);
@@ -703,6 +890,17 @@ R.render_reading_comprehension = function(q, container) {
     imgDiv.style.cssText = 'text-align:center;margin:10px 0';
     imgDiv.innerHTML = `<img src="${asset(q.passage_image)}" style="max-width:100%;border:1px solid #ddd;border-radius:6px">`;
     block.appendChild(imgDiv);
+  }
+  if (q.passage_html) {
+    const note = document.createElement('div');
+    note.className = 'q-instruction';
+    note.style.cssText = 'background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12';
+    note.textContent = '※ Hãy đọc đoạn văn dưới đây rồi trả lời.';
+    block.appendChild(note);
+    const passage = document.createElement('div');
+    passage.style.cssText = 'background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;font-size:14px;line-height:2.2';
+    passage.innerHTML = q.passage_html;
+    block.appendChild(passage);
   }
   // sub_sections: ○×と記述などの複合構造
   if (q.sub_sections) {
@@ -741,17 +939,6 @@ R.render_reading_comprehension = function(q, container) {
     });
     container.appendChild(block);
     return;
-  }
-  if (q.passage_html) {
-    const note = document.createElement('div');
-    note.className = 'q-instruction';
-    note.style.cssText = 'background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12';
-    note.textContent = '※ Hãy đọc đoạn văn dưới đây rồi trả lời.';
-    block.appendChild(note);
-    const passage = document.createElement('div');
-    passage.style.cssText = 'background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;font-size:14px;line-height:2.2';
-    passage.innerHTML = q.passage_html;
-    block.appendChild(passage);
   }
   const qDiv = document.createElement('div');
   qDiv.style.marginTop = '10px';
@@ -845,6 +1032,17 @@ R.render_radio_choice = function(q, container) {
     inst.style.cssText = 'background:#fffde7;padding:10px;border-radius:4px;border-left:4px solid #f39c12';
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
+  }
+  let exampleHtml = q.example_html;
+  if (!exampleHtml && _basePath === 'static/test3/' && q.id === 'g5') {
+    exampleHtml = '<ruby>例<rt>れい</rt></ruby>）　けさ9<ruby>時<rt>じ</rt></ruby>に（　<b>①</b>　）を<ruby>食<rt>た</rt></ruby>べました。<br>①<ruby>朝<rt>あさ</rt></ruby>ごはん　　②<ruby>昼<rt>ひる</rt></ruby>ごはん　　③<ruby>夜<rt>よる</rt></ruby>ごはん　　④ジュース　　⑤お<ruby>茶<rt>ちゃ</rt></ruby>';
+  }
+  if (exampleHtml) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+    ex.innerHTML = exampleHtml;
+    block.appendChild(ex);
   }
   // 全体共通の音声（audio_src / intro_audio）
   if (q.audio_src) {
@@ -1120,6 +1318,13 @@ R.render_audio_multi_select = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
+  if (q.intro_audio) {
+    const intro = document.createElement('div');
+    intro.className = 'audio-q';
+    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}"></audio>`;
+    if (q.intro_image) intro.innerHTML += `<div style="margin-top:8px"><img src="${asset(q.intro_image)}" style="max-width:100%;max-height:200px;border:1px solid #ddd;border-radius:4px"></div>`;
+    block.appendChild(intro);
+  }
   if (q.option_pool_html) {
     const pool = document.createElement('div');
     pool.style.cssText = 'background:#f0f8ff;padding:8px 12px;border-radius:4px;border:1px dashed #1a5276;margin:6px 0;font-size:13px';
@@ -1244,6 +1449,12 @@ R.render_audio_ox = function(q, container) {
     inst.className = 'q-instruction';
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
+  }
+  if (q.image_src) {
+    const imgDiv = document.createElement('div');
+    imgDiv.style.cssText = 'text-align:center;margin:10px 0';
+    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;max-height:420px;border:1px solid #ddd;border-radius:6px;background:#fff">`;
+    block.appendChild(imgDiv);
   }
   q.items.forEach(item => {
     const aq = document.createElement('div');
