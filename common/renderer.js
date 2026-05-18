@@ -20,7 +20,7 @@ function asset(src) {
 }
 
 // select要素を生成（options配列をシャッフルして正解が先頭に来ないように）
-function makeSelect(fieldId, options, style) {
+function makeSelect(fieldId, options, style, preserveOrder) {
   const sel = document.createElement('select');
   sel.id = fieldId;
   if (style) sel.style.cssText = style;
@@ -28,11 +28,13 @@ function makeSelect(fieldId, options, style) {
   blank.value = '';
   blank.textContent = '--';
   sel.appendChild(blank);
-  // シャッフル（Fisher-Yates）
   const shuffled = (options || []).slice();
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  if (!preserveOrder && !shouldPreserveOptionOrder(shuffled)) {
+    // シャッフル（Fisher-Yates）
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
   }
   shuffled.forEach(opt => {
     const o = document.createElement('option');
@@ -46,6 +48,22 @@ function makeSelect(fieldId, options, style) {
     sel.appendChild(o);
   });
   return sel;
+}
+
+function optionValue(opt) {
+  if (typeof opt === 'object' && opt !== null) return String(opt.value || opt.label || '').trim();
+  return String(opt || '').trim();
+}
+
+function shouldPreserveOptionOrder(options) {
+  const vals = (options || []).map(optionValue).filter(Boolean);
+  if (vals.length < 2) return false;
+  const joined = vals.join('|');
+  if (joined === '○|×' || joined === '×|○') return true;
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.slice(0, vals.length).split('');
+  if (vals.every((v, i) => v.toLowerCase() === letters[i])) return true;
+  if (vals.every((v, i) => v === String(i + 1))) return true;
+  return false;
 }
 
 function stripHtml(value) {
@@ -1259,7 +1277,7 @@ R.render_audio_select = function(q, container) {
           inp.style.cssText = 'flex:1;min-width:160px;padding:4px;border:1px solid #aaa;border-radius:4px';
           r.appendChild(inp);
         } else if (item.options) {
-          r.appendChild(makeSelect(item.field_id, item.options));
+          r.appendChild(makeSelect(item.field_id, item.options, '', q.preserve_option_order || item.preserve_option_order));
         }
         block.appendChild(r);
       });
@@ -1297,7 +1315,7 @@ R.render_audio_select = function(q, container) {
       ansBox.className = 'answer-box';
       ansBox.style.marginTop = '6px';
       if (item.prefix) ansBox.innerHTML = item.prefix;
-      ansBox.appendChild(makeSelect(item.field_id, item.options || [], ''));
+      ansBox.appendChild(makeSelect(item.field_id, item.options || [], '', q.preserve_option_order || item.preserve_option_order));
       if (item.suffix) {
         const suf = document.createTextNode(item.suffix);
         ansBox.appendChild(suf);
