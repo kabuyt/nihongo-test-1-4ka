@@ -256,6 +256,7 @@ function loadAnswerKeys(testNum) {
 
 const t1 = loadAnswerKeys(1);
 const t2 = loadAnswerKeys(2);
+const t3 = loadAnswerKeys(3);
 
 // ----- test1 セクション全体 -----
 
@@ -448,6 +449,20 @@ if (t2) {
   deepEq('test2 gradeTest 全空 = 0/0/0', TG.gradeTest(t2, {}), { score_vocab: 0, score_grammar: 0, score_listening: 0 });
 } else {
   console.log('  (test2 answer_keys 見つからず、test2 全体テストをスキップ)');
+}
+
+// ----- test3 個別回帰 -----
+if (t3) {
+  const test3B3ToShokan = Array.isArray(t3.bunpo.answer_key.b3[3])
+    ? t3.bunpo.answer_key.b3[3].find(v => String(v).includes('としょかん'))
+    : null;
+  eq(
+    'test3 bunpo b3_4 としょかん表記も正解',
+    TG.gradeSection(t3.bunpo.answer_key, { b3: t3.bunpo.scoring_rules.b3 }, { b3_4: test3B3ToShokan }),
+    3
+  );
+} else {
+  console.log('  (test3 answer_keys 見つからず、test3 個別テストをスキップ)');
 }
 
 // ============================================================
