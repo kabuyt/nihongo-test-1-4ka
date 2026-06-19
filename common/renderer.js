@@ -1474,10 +1474,18 @@ R.render_audio_ox = function(q, container) {
     imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;max-height:420px;border:1px solid #ddd;border-radius:6px;background:#fff">`;
     block.appendChild(imgDiv);
   }
+  if (q.audio_src) {
+    const audioDiv = document.createElement('div');
+    audioDiv.style.cssText = 'margin:8px 0';
+    audioDiv.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    block.appendChild(audioDiv);
+  }
   q.items.forEach(item => {
     const aq = document.createElement('div');
     aq.className = 'audio-q';
-    aq.innerHTML = `<audio controls src="${asset(item.audio_src)}"></audio>`;
+    if (item.audio_src) {
+      aq.innerHTML = `<audio controls src="${asset(item.audio_src)}"></audio>`;
+    }
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;margin-top:4px';
     p.innerHTML = (item.label || '') + ' ';
