@@ -190,6 +190,7 @@ R.render_tile_sort_buckets = function(q, container) {
   const bucketDrops = {};         // bucketId -> drop element
   q.buckets.forEach(b => {
     const bucket = document.createElement('div');
+    bucket.className = 'g3-bucket';
     bucket.style.cssText = 'flex:1;min-width:120px;border:1.5px solid #1a5276;border-radius:6px;padding:8px;background:#fff;cursor:pointer';
     const bucketId = 'g3-b-' + String(b.id).replace('g3_', '');
     bucket.innerHTML = `<div style="font-weight:bold;color:#1a5276;font-size:13px;margin-bottom:6px">${b.label}</div>`;
@@ -205,6 +206,7 @@ R.render_tile_sort_buckets = function(q, container) {
 
   if (q.none_bucket) {
     const nb = document.createElement('div');
+    nb.className = 'g3-bucket';
     nb.style.cssText = 'flex:1;min-width:120px;border:1.5px solid #aaa;border-radius:6px;padding:8px;background:#fafafa;cursor:pointer';
     nb.innerHTML = `<div style="font-weight:bold;color:#777;font-size:13px;margin-bottom:6px">${q.none_bucket.label}</div>`;
     const drop = document.createElement('div');
@@ -363,6 +365,7 @@ function renderTest3G6CategoryTiles(q, container) {
   const bucketDrops = {};
   buckets.forEach(b => {
     const box = document.createElement('div');
+    box.className = 'g3-bucket';
     box.style.cssText = 'border:1.5px solid #1a5276;border-radius:6px;padding:8px;background:#fff;cursor:pointer;min-height:92px';
     box.innerHTML = `<div style="font-weight:bold;color:#1a5276;font-size:13px;margin-bottom:6px">${b.label}</div>`;
     const drop = document.createElement('div');
@@ -1871,6 +1874,58 @@ function createQBlock(titleHtml) {
   return block;
 }
 
+function makeAccessibleName(el) {
+  const closest = el.closest('.answer-box,.audio-q,tr,.q-block,.img-choice,.img-item,.puzzle-wrap') || el.parentElement;
+  const text = stripHtml((closest && closest.textContent) || el.id || el.name || '回答欄')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return (text || el.id || el.name || '回答欄').slice(0, 120);
+}
+
+function postProcessAccessibility(container) {
+  container.querySelectorAll('img').forEach((img) => {
+    if (img.hasAttribute('alt')) return;
+    const closest = img.closest('.img-choice,.img-item,tr,.audio-q,.q-block');
+    const text = stripHtml((closest && closest.textContent) || img.getAttribute('src') || '問題の画像')
+      .replace(/\s+/g, ' ')
+      .trim();
+    img.alt = text ? text.slice(0, 120) : '問題の画像';
+  });
+
+  container.querySelectorAll('select,input:not([type="hidden"]),textarea').forEach((el) => {
+    if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return;
+    if (el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`)) return;
+    el.setAttribute('aria-label', makeAccessibleName(el));
+  });
+
+  container.querySelectorAll('button:not([type])').forEach((btn) => {
+    btn.type = 'button';
+  });
+
+  container.querySelectorAll('.word-tile,.g3-tile,.g3-bucket').forEach((el) => {
+    if (['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL'].includes(el.tagName)) return;
+    if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', makeAccessibleName(el));
+    if (el.dataset.keyboardReady === '1') return;
+    el.dataset.keyboardReady = '1';
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        el.click();
+      }
+    });
+  });
+
+  container.querySelectorAll('table.qa-table').forEach((table) => {
+    if (table.parentElement && table.parentElement.classList.contains('table-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    table.parentNode.insertBefore(wrap, table);
+    wrap.appendChild(table);
+  });
+}
+
 /**
  * セクション全体をレンダリング
  * @param {Array} questions - 問題JSONの配列
@@ -1899,6 +1954,7 @@ R.renderSection = function(questions, container) {
     }
   });
   // 学生モード（window.ONE_SHOT_AUDIO=true）のみ音声1回再生制限を適用
+  postProcessAccessibility(container);
   if (window.ONE_SHOT_AUDIO === true) {
     container.querySelectorAll('audio').forEach(R.sealAudio);
   }
