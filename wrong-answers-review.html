@@ -39,6 +39,12 @@
   table.review tbody tr:hover { background:#fafbfc; }
   .col-test { white-space:nowrap; font-weight:bold; color:#2c3e50; }
   .col-block { font-family:monospace; color:#666; font-size:12px; }
+  .col-question { min-width:260px; max-width:360px; line-height:1.55; }
+  .question-title { color:#1a5276; font-size:11px; font-weight:bold; margin-bottom:4px; }
+  .question-text { background:#f8fbff; border:1px solid #d7e8f7; border-radius:4px; padding:6px 8px; }
+  .question-passage { max-height:130px; overflow:auto; background:#fff; border:1px solid #e5edf6; border-radius:4px; padding:6px; margin-bottom:6px; font-size:12px; }
+  .question-img { display:block; max-width:120px; max-height:100px; object-fit:contain; margin:6px 0; border:1px solid #ddd; border-radius:4px; background:#fff; }
+  .review-blank { display:inline-block; background:#fff; border:1px solid #7fb3d5; border-radius:3px; padding:0 8px; color:#1a5276; font-weight:bold; }
   .col-answer { max-width:280px; word-break:break-all; }
   .col-current { max-width:280px; word-break:break-all; color:#666; font-size:12px; }
   .col-count { text-align:center; font-weight:bold; }
@@ -103,7 +109,8 @@
       <label>検索:
         <input type="text" id="filter-search" placeholder="block_id / 回答" oninput="renderTable()" style="width:160px">
       </label>
-      <span style="margin-left:auto">
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn-action" style="background:#e67e22" onclick="regradeAllResults(this)" title="現在の answer_key で既存の全提出を再採点（今日すでに正解にした分もここで反映）">🔁 全件再採点</button>
         <button class="btn-action" onclick="reload()">🔄 再読込</button>
       </span>
     </div>
@@ -115,6 +122,7 @@
             <th style="width:80px">テスト</th>
             <th style="width:80px">セクション</th>
             <th style="width:100px">block / field</th>
+            <th>問題</th>
             <th style="width:100px">採点method</th>
             <th>学生の回答</th>
             <th>現在の正解</th>
@@ -123,7 +131,7 @@
           </tr>
         </thead>
         <tbody id="review-body">
-          <tr><td colspan="8" style="text-align:center;padding:40px;color:#888">読み込み中...</td></tr>
+          <tr><td colspan="9" style="text-align:center;padding:40px;color:#888">読み込み中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -184,7 +192,7 @@ async function doLogout() {
 
 // ===== データ取得 =====
 async function reload() {
-  document.getElementById('review-body').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#888">読み込み中...</td></tr>';
+  document.getElementById('review-body').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">読み込み中...</td></tr>';
 
   const [secRes, resRes] = await Promise.all([
     supabase.from('test_sections').select('test_id,section_type,answer_key,scoring_rules,questions'),
@@ -192,7 +200,7 @@ async function reload() {
   ]);
 
   if (secRes.error || resRes.error) {
-    document.getElementById('review-body').innerHTML = '<tr><td colspan="8" style="color:red;padding:20px">読み込みエラー: ' + (secRes.error || resRes.error).message + '</td></tr>';
+    document.getElementById('review-body').innerHTML = '<tr><td colspan="9" style="color:red;padding:20px">読み込みエラー: ' + (secRes.error || resRes.error).message + '</td></tr>';
     return;
   }
 
@@ -281,6 +289,68 @@ function buildFieldTypeIndex(questions) {
   return fieldKinds;
 }
 
+function buildFieldContextIndex(testId, questions) {
+  const contexts = {};
+  (questions || []).forEach(block => {
+    registerFieldContexts(testId, block, block, contexts);
+    (block.sub_sections || []).forEach(sub => registerFieldContexts(testId, block, sub, contexts));
+  });
+  return contexts;
+}
+
+function registerFieldContexts(testId, parentBlock, node, contexts) {
+  function visit(value, nearest) {
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach(item => visit(item, nearest));
+      return;
+    }
+    if (typeof value !== 'object') return;
+
+    const nextNearest = hasQuestionContext(value) ? value : nearest;
+    if (value.field_id && typeof value.field_id === 'string') {
+      contexts[value.field_id] = makeQuestionContext(testId, parentBlock, node, nextNearest);
+    }
+    if (Array.isArray(value.fields)) {
+      value.fields.forEach(f => {
+        if (f && f.field_id) contexts[f.field_id] = makeQuestionContext(testId, parentBlock, node, value);
+      });
+    }
+    for (const key in value) {
+      if (key === 'fields') continue;
+      if (typeof value[key] === 'object') visit(value[key], nextNearest);
+    }
+  }
+  visit(node, node);
+}
+
+function hasQuestionContext(value) {
+  return !!(value.question || value.prompt || value.dialogue_html || value.text || value.label || value.words || value.image_src || value.src);
+}
+
+function makeQuestionContext(testId, parentBlock, block, source) {
+  let questionHtml = source.question || source.prompt || source.dialogue_html || source.text || source.label || block.sub_title || parentBlock.instruction || '';
+  if (source.dialogue_html) {
+    questionHtml = source.dialogue_html.replace(/\{[^}]+\}/g, '<span class="review-blank">answer</span>');
+  }
+  if (!questionHtml && Array.isArray(source.words)) questionHtml = source.words.join(' / ');
+  const imageSrc = source.image_src || source.src || block.image_src || block.src || '';
+  return {
+    title: stripHtml(parentBlock.title_html || block.sub_title || parentBlock.id || ''),
+    questionHtml: questionHtml || '',
+    passageHtml: parentBlock.passage_html || block.passage_html || '',
+    imageSrc: imageSrc ? resolveQuestionImage(testId, imageSrc) : '',
+  };
+}
+
+function resolveQuestionImage(testId, src) {
+  const s = String(src || '');
+  if (!s) return '';
+  if (/^(https?:)?\/\//.test(s) || s.startsWith('/') || s.startsWith('data:')) return s;
+  if (s.startsWith('static/')) return s;
+  return `static/${testId}/${s}`;
+}
+
 // ===== 集計（不正解抽出） =====
 function aggregate() {
   // (test_id, section, block_id, field_id, normalized_answer) → { raw, count, ... }
@@ -290,7 +360,11 @@ function aggregate() {
   const secIdx = {};
   _sections.forEach(s => {
     secIdx[s.test_id] = secIdx[s.test_id] || {};
-    secIdx[s.test_id][s.section_type] = { ...s, _fieldTypes: buildFieldTypeIndex(s.questions || []) };
+    secIdx[s.test_id][s.section_type] = {
+      ...s,
+      _fieldTypes: buildFieldTypeIndex(s.questions || []),
+      _fieldContexts: buildFieldContextIndex(s.test_id, s.questions || [])
+    };
   });
 
   _results.forEach(r => {
@@ -339,6 +413,7 @@ function aggregate() {
               raw_answer: String(userAns).trim(),
               norm_answer: normAns,
               current_correct: formatExpected(akBlock, fid, idx),
+              question_context: secRow._fieldContexts[fid] || null,
               count: 0, trainees: new Set(),
               key
             };
@@ -392,7 +467,8 @@ function renderTable() {
     if (fSec && a.section !== fSec) return false;
     if (a.count < fMin) return false;
     if (fSearch) {
-      const hay = [a.block_id, a.field_id, a.raw_answer].join(' ').toLowerCase();
+      const q = a.question_context || {};
+      const hay = [a.block_id, a.field_id, a.raw_answer, q.title, stripHtml(q.questionHtml || ''), stripHtml(q.passageHtml || '')].join(' ').toLowerCase();
       if (!hay.includes(fSearch)) return false;
     }
     return true;
@@ -400,7 +476,7 @@ function renderTable() {
 
   const tbody = document.getElementById('review-body');
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#888">該当なし</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">該当なし</td></tr>';
     return;
   }
 
@@ -409,6 +485,7 @@ function renderTable() {
       <td class="col-test">${escapeHtml(r.test_id)}</td>
       <td>${escapeHtml(r.section)}</td>
       <td class="col-block">${escapeHtml(r.block_id)}<br>${escapeHtml(r.field_id)}</td>
+      <td class="col-question">${renderQuestionContext(r.question_context)}</td>
       <td><span class="badge-method">${escapeHtml(r.method)}</span></td>
       <td class="col-answer">${escapeHtml(r.raw_answer)}</td>
       <td class="col-current">${escapeHtml(r.current_correct)}</td>
@@ -425,6 +502,21 @@ function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function stripHtml(s) {
+  const div = document.createElement('div');
+  div.innerHTML = String(s || '');
+  return div.textContent || div.innerText || '';
+}
+
+function renderQuestionContext(ctx) {
+  if (!ctx) return '<span style="color:#999">-</span>';
+  const title = ctx.title ? `<div class="question-title">${escapeHtml(ctx.title)}</div>` : '';
+  const passage = ctx.passageHtml ? `<div class="question-passage">${ctx.passageHtml}</div>` : '';
+  const image = ctx.imageSrc ? `<img class="question-img" src="${escapeHtml(ctx.imageSrc)}" alt="">` : '';
+  const question = ctx.questionHtml ? `<div class="question-text">${ctx.questionHtml}</div>` : '';
+  return `${title}${passage}${image}${question}` || '<span style="color:#999">-</span>';
 }
 
 // ===== 「これも正解にする」 =====
@@ -464,7 +556,22 @@ async function addAsCorrect(key, btn) {
 
     // 成功 → ローカル _sections も更新
     sec.answer_key = newAk;
-    showToast('追加しました', 'success');
+
+    // 既存の提出済み結果を再採点して集計スコアに反映（answer_key更新だけでは反映されないため）
+    showToast('追加しました。既存の結果を再採点中...', 'success');
+    let regradeMsg = '追加しました';
+    let regradeOk = true;
+    try {
+      const { updated, checked } = await regradeAffectedResults(item);
+      regradeMsg = updated > 0
+        ? `追加 ＋ ${updated}件のスコアを再計算しました（${checked}件確認）`
+        : `追加しました（再採点でスコア変動なし／${checked}件確認）`;
+    } catch (re) {
+      console.error('再採点エラー', re);
+      regradeOk = false;
+      regradeMsg = '正解は追加しましたが再採点に失敗: ' + (re.message || re);
+    }
+    showToast(regradeMsg, regradeOk ? 'success' : 'error');
 
     // 行を「追加済み」表示に
     const tr = document.querySelector(`tr[data-key="${key}"]`);
@@ -531,6 +638,109 @@ function appendAnswer(akBlock, fid, idx, newAnswer, method, parentAk) {
   }
 
   return null;
+}
+
+// ===== 既存の提出済み結果を再採点してスコア列を更新 =====
+// answer_key を直しただけでは test_results の保存済みスコアは変わらないため、
+// 該当テスト×セクションの全結果を再採点し、変化したものだけ DB を更新する。
+const SECTION_SCORE_COL = { goii: 'score_vocab', bunpo: 'score_grammar', chokkai: 'score_listening' };
+
+async function regradeAffectedResults(item) {
+  const col = SECTION_SCORE_COL[item.section];
+  if (!col) return { updated: 0, checked: 0 };
+
+  const sec = _sections.find(s => s.test_id === item.test_id && s.section_type === item.section);
+  if (!sec) return { updated: 0, checked: 0 };
+
+  // test_name は旧形式（例: 第1-4課）の場合があるので正規化して一致を取る
+  const targets = _results.filter(r => (ALT_TEST_ID[r.test_name] || r.test_name) === item.test_id);
+  if (targets.length === 0) return { updated: 0, checked: 0 };
+
+  // 現在保存されているスコアを取得（_results には入っていないため別途取得）
+  const ids = targets.map(r => r.id);
+  const { data: cur, error: curErr } = await supabase
+    .from('test_results').select('id,' + col).in('id', ids);
+  if (curErr) throw curErr;
+  const curMap = {};
+  (cur || []).forEach(row => { curMap[row.id] = row[col]; });
+
+  let updated = 0;
+  for (const r of targets) {
+    const newScore = window.TestGrading.gradeSection(
+      sec.answer_key, sec.scoring_rules || {}, r.answers_json || {}
+    );
+    const oldScore = curMap[r.id];
+    if (newScore !== oldScore) {
+      const { error } = await supabase.from('test_results').update({ [col]: newScore }).eq('id', r.id);
+      if (error) throw error;
+      updated++;
+    }
+  }
+  return { updated, checked: targets.length };
+}
+
+// ===== 全件再採点 =====
+// 現在の answer_key で既存の全提出を再採点する。
+// 過去に「正解にする」を押したが当時は再採点されなかった分も、ここでまとめて反映される。
+async function regradeAllResults(btn) {
+  if (!confirm(
+    '既存の全提出を、現在の answer_key で再採点してスコアを更新します。\n' +
+    '・今日すでに「正解にする」を押した分もここで反映されます。\n' +
+    '・各セクション（語彙/文法/聴解）のスコアを再計算します（会話の手動点は対象外）。\n' +
+    '・スコアが変わった結果だけ更新します（加点・減点の両方あり得ます）。\n\n実行しますか？'
+  )) return;
+
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '再採点中...'; }
+  try {
+    // test_id → section_type → secRow
+    const secIdx = {};
+    _sections.forEach(s => { (secIdx[s.test_id] = secIdx[s.test_id] || {})[s.section_type] = s; });
+
+    // 現在のスコアを一括取得（_results には入っていないため別途取得・チャンク分割）
+    const curMap = {};
+    const ids = _results.map(r => r.id);
+    for (let i = 0; i < ids.length; i += 500) {
+      const chunk = ids.slice(i, i + 500);
+      const { data, error } = await supabase
+        .from('test_results')
+        .select('id,score_vocab,score_grammar,score_listening')
+        .in('id', chunk);
+      if (error) throw error;
+      (data || []).forEach(row => { curMap[row.id] = row; });
+    }
+
+    let updated = 0, checked = 0, up = 0, down = 0;
+    for (const r of _results) {
+      const testId = ALT_TEST_ID[r.test_name] || r.test_name;
+      const secs = secIdx[testId];
+      if (!secs) continue;
+      checked++;
+      const cur = curMap[r.id] || {};
+      const patch = {};
+      for (const secType in secs) {
+        const col = SECTION_SCORE_COL[secType];
+        if (!col) continue;
+        const sec = secs[secType];
+        const newScore = window.TestGrading.gradeSection(sec.answer_key, sec.scoring_rules || {}, r.answers_json || {});
+        if (newScore !== cur[col]) {
+          patch[col] = newScore;
+          if (cur[col] == null || newScore > cur[col]) up++; else down++;
+        }
+      }
+      if (Object.keys(patch).length > 0) {
+        const { error } = await supabase.from('test_results').update(patch).eq('id', r.id);
+        if (error) throw error;
+        updated++;
+      }
+    }
+    showToast(`全件再採点完了: ${updated}件更新（加点 ${up} / 減点 ${down} セクション）／ ${checked}件確認`, 'success');
+  } catch (e) {
+    console.error('全件再採点エラー', e);
+    showToast('全件再採点エラー: ' + (e.message || e), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+  }
 }
 
 function showToast(msg, type) {
