@@ -670,7 +670,8 @@ async function regradeAffectedResults(item) {
       sec.answer_key, sec.scoring_rules || {}, r.answers_json || {}
     );
     const oldScore = curMap[r.id];
-    if (newScore !== oldScore) {
+    // 加点のみ：正解追加で上がる時だけ更新。下げない（DB採点キーが未完成なテストで誤って下げる事故を防ぐ）。
+    if (oldScore == null || newScore > oldScore) {
       const { error } = await supabase.from('test_results').update({ [col]: newScore }).eq('id', r.id);
       if (error) throw error;
       updated++;
@@ -684,10 +685,10 @@ async function regradeAffectedResults(item) {
 // 過去に「正解にする」を押したが当時は再採点されなかった分も、ここでまとめて反映される。
 async function regradeAllResults(btn) {
   if (!confirm(
-    '既存の全提出を、現在の answer_key で再採点してスコアを更新します。\n' +
-    '・今日すでに「正解にする」を押した分もここで反映されます。\n' +
-    '・各セクション（語彙/文法/聴解）のスコアを再計算します（会話の手動点は対象外）。\n' +
-    '・スコアが変わった結果だけ更新します（加点・減点の両方あり得ます）。\n\n実行しますか？'
+    '既存の全提出を、現在の answer_key で再採点します。\n' +
+    '・今日「正解にする」を押した分の加点をまとめて反映します。\n' +
+    '・【安全】スコアが上がる場合だけ更新します。下げることはありません。\n' +
+    '・会話の手動点は対象外。\n\n実行しますか？'
   )) return;
 
   const origText = btn ? btn.textContent : '';
@@ -710,7 +711,7 @@ async function regradeAllResults(btn) {
       (data || []).forEach(row => { curMap[row.id] = row; });
     }
 
-    let updated = 0, checked = 0, up = 0, down = 0;
+    let updated = 0, checked = 0, up = 0;
     for (const r of _results) {
       const testId = ALT_TEST_ID[r.test_name] || r.test_name;
       const secs = secIdx[testId];
@@ -723,9 +724,10 @@ async function regradeAllResults(btn) {
         if (!col) continue;
         const sec = secs[secType];
         const newScore = window.TestGrading.gradeSection(sec.answer_key, sec.scoring_rules || {}, r.answers_json || {});
-        if (newScore !== cur[col]) {
+        // 加点のみ：上がる時だけ。下げない（DB採点キー未完成のテストでの誤減点を防ぐ）。
+        if (cur[col] == null || newScore > cur[col]) {
           patch[col] = newScore;
-          if (cur[col] == null || newScore > cur[col]) up++; else down++;
+          up++;
         }
       }
       if (Object.keys(patch).length > 0) {
@@ -734,7 +736,7 @@ async function regradeAllResults(btn) {
         updated++;
       }
     }
-    showToast(`全件再採点完了: ${updated}件更新（加点 ${up} / 減点 ${down} セクション）／ ${checked}件確認`, 'success');
+    showToast(`全件再採点完了: ${updated}件更新（加点 ${up} セクション）／ ${checked}件確認 ※下げた行なし`, 'success');
   } catch (e) {
     console.error('全件再採点エラー', e);
     showToast('全件再採点エラー: ' + (e.message || e), 'error');

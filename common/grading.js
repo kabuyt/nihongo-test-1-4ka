@@ -317,9 +317,10 @@ function grade_bucket_sort(rule, answerKey, userAnswers) {
   return Math.max(0, score);
 }
 
-// unordered_tokens: word_puzzle用。現在は順番も含めて正しい文だけを正解扱い。
-// 以前は文字構成一致で○にしていたが、語順が壊れた文も通るため厳格化。
-// 語順違いを許す場合は answer_key 側を配列にして明示的に許容する。
+// unordered_tokens: word_puzzle用。文字構成一致（並べ替え）で○。
+// 同じタイルを並べ替えた文字列なら正解扱い（regrade_all.py と同じ緩い判定）。
+// 例: 「りんごを2つと切手を2枚ください」≡「切手を2枚とりんごを2つください」
+// ※ 一度「語順完全一致のみ」に厳格化したが、既存スコアと運用方針に合わせて緩い判定へ戻した。
 function grade_unordered_tokens(rule, answerKey, userAnswers) {
   const pts = rule.points_each || 1;
   let score = 0;
@@ -330,7 +331,11 @@ function grade_unordered_tokens(rule, answerKey, userAnswers) {
     // 期待値が複数許容（配列）の場合は各要素チェック
     const expList = Array.isArray(expected) ? expected : [expected];
     const actNorm = normalize(actual, { case_insensitive: true });
-    const matched = expList.some(e => normalize(e, { case_insensitive: true }) === actNorm);
+    const actSorted = actNorm.split('').sort().join('');
+    const matched = expList.some(e => {
+      const eNorm = normalize(e, { case_insensitive: true });
+      return eNorm === actNorm || eNorm.split('').sort().join('') === actSorted;
+    });
     if (matched) score += pts;
   });
   return score;

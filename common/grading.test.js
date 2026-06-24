@@ -202,9 +202,9 @@ const b3Perfect = {
 };
 eq('test1 b3 (unordered_tokens) 全問正解', TG.gradeSection(t1Bunpo.answer_key, { b3: t1Bunpo.scoring_rules.b3 }, b3Perfect), 15);
 eq(
-  'test1 b3 語順違いは不正解',
+  'test1 b3 語順違い(文字構成一致)は緩い判定で正解',
   TG.gradeSection(t1Bunpo.answer_key, { b3: t1Bunpo.scoring_rules.b3 }, { b3_1: 'このはあなたのかばんですか' }),
-  0
+  3
 );
 
 const b6Perfect = {
@@ -467,9 +467,9 @@ if (t3) {
     3
   );
   eq(
-    'test3 bunpo b3_5 語順違いは不正解',
+    'test3 bunpo b3_5 語順違い(文字構成一致)は緩い判定で正解',
     TG.gradeSection(t3.bunpo.answer_key, { b3: t3.bunpo.scoring_rules.b3 }, { b3_5: '大迫さんにボタンを押す前に聞いてください' }),
-    0
+    3
   );
 } else {
   console.log('  (test3 answer_keys 見つからず、test3 個別テストをスキップ)');
