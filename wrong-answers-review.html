@@ -285,7 +285,35 @@ function buildFieldTypeIndex(questions) {
     });
   });
 
+  markManualFields(questions || [], false, fieldKinds);
+
   return fieldKinds;
+}
+
+function markManualFields(node, inheritedManual, fieldKinds) {
+  if (!node) return;
+  if (Array.isArray(node)) {
+    node.forEach(item => markManualFields(item, inheritedManual, fieldKinds));
+    return;
+  }
+  if (typeof node !== 'object') return;
+
+  const isManual = inheritedManual || node.grading === 'manual';
+  if (isManual && node.field_id && typeof node.field_id === 'string') {
+    fieldKinds[node.field_id] = 'manual';
+  }
+
+  if (Array.isArray(node.fields)) {
+    node.fields.forEach(f => {
+      if (isManual && f && f.field_id) fieldKinds[f.field_id] = 'manual';
+      markManualFields(f, isManual, fieldKinds);
+    });
+  }
+
+  for (const key in node) {
+    if (key === 'fields') continue;
+    if (typeof node[key] === 'object') markManualFields(node[key], isManual, fieldKinds);
+  }
 }
 
 function buildFieldContextIndex(testId, questions) {
@@ -390,7 +418,7 @@ function aggregate() {
 
           // 選択式はスキップ（自由入力系・word_puzzle のみ対象）
           const kind = secRow._fieldTypes[fid];
-          if (kind === 'select') return;
+          if (kind === 'select' || kind === 'manual') return;
 
           // 採点: 元の rule のまま、対象 fid だけ userAnswers に含める
           // → 正解なら pts 点、不正解なら 0 点が返る（他のfidは answer 無しなので 0 点）
