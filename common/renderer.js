@@ -850,6 +850,64 @@ R.render_word_puzzle = function(q, container) {
   container.appendChild(block);
 };
 
+// tile_select: 語をタイルで並べ、まちがいの語を1つ選ぶ（間違い探し）
+R.render_tile_select = function(q, container) {
+  const block = createQBlock(q.title_html);
+  if (q.instruction) {
+    const inst = document.createElement('div');
+    inst.className = 'q-instruction';
+    inst.innerHTML = q.instruction;
+    block.appendChild(inst);
+  }
+  if (q.example_html) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px;line-height:1.9';
+    ex.innerHTML = q.example_html;
+    block.appendChild(ex);
+  }
+  (q.items || []).forEach(item => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin:14px 0;padding:12px;background:#f8f9fa;border-radius:8px';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:15px;line-height:2.4';
+    if (item.prefix) {
+      const pre = document.createElement('span');
+      pre.innerHTML = item.prefix;
+      row.appendChild(pre);
+    }
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.id = item.field_id;
+    (item.tiles || []).forEach(t => {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'tile-select';
+      tile.style.cssText = 'padding:8px 14px 6px;border:1.5px solid #1a5276;background:#fff;color:#1a5276;border-radius:6px;cursor:pointer;font-size:15px;font-family:inherit;line-height:1.8';
+      tile.innerHTML = t.label;
+      tile.dataset.value = t.value;
+      tile.setAttribute('aria-pressed', 'false');
+      tile.onclick = () => {
+        row.querySelectorAll('button.tile-select').forEach(b => {
+          b.style.background = '#fff'; b.style.color = '#1a5276'; b.setAttribute('aria-pressed', 'false');
+        });
+        tile.style.background = '#e67e22'; tile.style.color = '#fff'; tile.setAttribute('aria-pressed', 'true');
+        hidden.value = t.value;
+      };
+      row.appendChild(tile);
+    });
+    if (item.suffix) {
+      const suf = document.createElement('span');
+      suf.innerHTML = item.suffix;
+      row.appendChild(suf);
+    }
+    wrap.appendChild(row);
+    wrap.appendChild(hidden);
+    block.appendChild(wrap);
+  });
+  container.appendChild(block);
+};
+
 // select_choice: 選択式問題
 R.render_select_choice = function(q, container) {
   const block = createQBlock(q.title_html);
