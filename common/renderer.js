@@ -1409,8 +1409,28 @@ R.render_audio_select = function(q, container) {
     if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
     if (item.image_src) aq.innerHTML += `<div style="margin-top:8px;text-align:center"><img src="${asset(item.image_src)}" style="width:100%;max-width:480px;height:auto;display:block;margin:0 auto;border:1px solid #ddd;border-radius:4px"></div>`;
     if (item.question) aq.innerHTML += `<p style="font-size:13px;margin-top:8px">${item.question}</p>`;
-    if (item.fields) {
-      // 複数フィールド
+    if (item.sentence_html && item.fields) {
+      // 文中の{field_id}を空欄入力に置き換え（前後の文脈を保持）
+      let html = item.sentence_html;
+      item.fields.forEach(f => {
+        let fieldHtml;
+        if (f.input_type === 'text') {
+          fieldHtml = `<input type="text" id="${f.field_id}" style="font-size:14px;padding:3px;border:1px solid #aaa;border-radius:4px;min-width:110px">`;
+        } else {
+          const opts = (f.options || []).map(o => {
+            if (typeof o === 'object') return `<option value="${o.value}">${o.label}</option>`;
+            return `<option value="${o}">${o}</option>`;
+          }).join('');
+          fieldHtml = `<select id="${f.field_id}" style="font-size:14px;padding:3px;border-radius:4px;border:1px solid #aaa"><option value="">--</option>${opts}</select>`;
+        }
+        html = html.replace('{' + f.field_id + '}', fieldHtml);
+      });
+      const sentDiv = document.createElement('div');
+      sentDiv.style.cssText = 'margin-top:8px;font-size:14px;line-height:2.4';
+      sentDiv.innerHTML = html;
+      aq.appendChild(sentDiv);
+    } else if (item.fields) {
+      // 複数フィールド（文脈文なし・従来どおり）
       const row = document.createElement('div');
       row.style.cssText = 'margin-top:6px;display:flex;flex-direction:column;gap:4px';
       item.fields.forEach(f => {
