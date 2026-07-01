@@ -187,8 +187,13 @@ function showError(title, detail) {
     sTitle.textContent = titleMap[sec] || sec;
     secDiv.appendChild(sTitle);
 
-    // 聴解の場合は速度コントロールを追加
+    // 聴解の場合は「1回のみ再生」の注意書き＋速度コントロールを追加
     if (sec === 'chokkai') {
+      const oneShotNotice = document.createElement('div');
+      oneShotNotice.style.cssText = 'background:#fdecea;border:1px solid #e74c3c;border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#c0392b;font-weight:bold;font-size:14px';
+      oneShotNotice.textContent = '⚠ CHÚ Ý: Mỗi đoạn âm thanh CHỈ ĐƯỢC PHÁT MỘT LẦN. Hãy nghe thật kỹ trước khi chuyển sang câu tiếp theo.';
+      secDiv.appendChild(oneShotNotice);
+
       const speedBar = document.createElement('div');
       speedBar.style.cssText = 'background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap';
       speedBar.innerHTML = `
