@@ -583,6 +583,14 @@ R.render_table_fill = function(q, container) {
       table.appendChild(bodyTr);
     } else {
       // label + input per row
+      // 2列（ラベル＋入力）の場合、ラベルを広めに配分（長文の折返し対応）
+      if (colCount === 0 && tbl.items.every(it => it.col === undefined)) {
+        const cg = document.createElement('colgroup');
+        const cl = document.createElement('col'); cl.style.width = '64%';
+        const ci = document.createElement('col'); ci.style.width = '36%';
+        cg.appendChild(cl); cg.appendChild(ci);
+        table.insertBefore(cg, table.firstChild);
+      }
       tbl.items.forEach(item => {
         const tr = document.createElement('tr');
         const tdLabel = document.createElement('td');
@@ -593,7 +601,7 @@ R.render_table_fill = function(q, container) {
           img.innerHTML = `<img src="${asset(item.image_src)}" style="max-width:170px;max-height:125px;border:1px solid #ddd;border-radius:6px;background:#fff">`;
           tdLabel.appendChild(img);
         }
-        tdLabel.style.cssText = 'font-size:13px;padding:6px 8px;white-space:nowrap';
+        tdLabel.style.cssText = 'font-size:13px;padding:6px 8px;line-height:1.9;vertical-align:middle;word-break:break-word';
         tr.appendChild(tdLabel);
         const tdInput = document.createElement('td');
         if (item.input_type === 'text') {
