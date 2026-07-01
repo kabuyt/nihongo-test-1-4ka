@@ -850,7 +850,7 @@ R.render_word_puzzle = function(q, container) {
   container.appendChild(block);
 };
 
-// tile_select: 語をタイルで並べ、まちがいの語を1つ選ぶ（間違い探し）
+// tile_select: 正しい語順にタイルを並べていく。最後に残った1枚がまちがいの語（自動でグレーアウト）
 R.render_tile_select = function(q, container) {
   const block = createQBlock(q.title_html);
   if (q.instruction) {
@@ -866,43 +866,90 @@ R.render_tile_select = function(q, container) {
     ex.innerHTML = q.example_html;
     block.appendChild(ex);
   }
-  (q.items || []).forEach(item => {
+  (q.items || []).forEach((item, idx) => {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'margin:14px 0;padding:12px;background:#f8f9fa;border-radius:8px';
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:15px;line-height:2.4';
+
+    const sentRow = document.createElement('div');
+    sentRow.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;line-height:2.2;margin-bottom:10px';
     if (item.prefix) {
       const pre = document.createElement('span');
       pre.innerHTML = item.prefix;
-      row.appendChild(pre);
+      sentRow.appendChild(pre);
     }
-    const hidden = document.createElement('input');
-    hidden.type = 'hidden';
-    hidden.id = item.field_id;
-    (item.tiles || []).forEach(t => {
-      const tile = document.createElement('button');
-      tile.type = 'button';
-      tile.className = 'tile-select';
-      tile.style.cssText = 'padding:8px 14px 6px;border:1.5px solid #1a5276;background:#fff;color:#1a5276;border-radius:6px;cursor:pointer;font-size:15px;font-family:inherit;line-height:1.8';
-      tile.innerHTML = t.label;
-      tile.dataset.value = t.value;
-      tile.setAttribute('aria-pressed', 'false');
-      tile.onclick = () => {
-        row.querySelectorAll('button.tile-select').forEach(b => {
-          b.style.background = '#fff'; b.style.color = '#1a5276'; b.setAttribute('aria-pressed', 'false');
-        });
-        tile.style.background = '#e67e22'; tile.style.color = '#fff'; tile.setAttribute('aria-pressed', 'true');
-        hidden.value = t.value;
-      };
-      row.appendChild(tile);
-    });
+    const answerArea = document.createElement('span');
+    answerArea.style.cssText = 'display:inline-flex;flex-wrap:wrap;gap:4px;min-width:60px;min-height:32px;padding:4px 8px;border:2px dashed #aaa;border-radius:6px;align-items:center;background:#fff';
+    sentRow.appendChild(answerArea);
     if (item.suffix) {
       const suf = document.createElement('span');
       suf.innerHTML = item.suffix;
-      row.appendChild(suf);
+      sentRow.appendChild(suf);
     }
-    wrap.appendChild(row);
+    wrap.appendChild(sentRow);
+
+    const tilesArea = document.createElement('div');
+    tilesArea.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+    wrap.appendChild(tilesArea);
+
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.id = item.field_id;
     wrap.appendChild(hidden);
+
+    const state = { selected: [], remaining: (item.tiles || []).slice() };
+
+    function makeTile(t, placed, disabled) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tile-select';
+      btn.style.cssText = placed
+        ? 'padding:6px 12px 4px;border:1.5px solid #1a5276;background:#1a5276;color:#fff;border-radius:6px;cursor:pointer;font-size:14px;font-family:inherit;line-height:1.7'
+        : disabled
+          ? 'padding:6px 12px 4px;border:1.5px dashed #bbb;background:#eee;color:#999;border-radius:6px;cursor:default;font-size:14px;font-family:inherit;line-height:1.7;opacity:.55'
+          : 'padding:6px 12px 4px;border:1.5px solid #1a5276;background:#fff;color:#1a5276;border-radius:6px;cursor:pointer;font-size:14px;font-family:inherit;line-height:1.7';
+      btn.innerHTML = t.label;
+      btn.dataset.value = t.value;
+      btn.disabled = !!disabled;
+      return btn;
+    }
+
+    function render() {
+      answerArea.innerHTML = '';
+      if (state.selected.length === 0) {
+        const ph = document.createElement('span');
+        ph.style.cssText = 'color:#aaa;font-size:12px';
+        ph.textContent = '↓ ことばをじゅんに選んでください';
+        answerArea.appendChild(ph);
+      }
+      state.selected.forEach(t => {
+        const btn = makeTile(t, true, false);
+        btn.onclick = () => {
+          const i = state.selected.indexOf(t);
+          if (i >= 0) state.selected.splice(i, 1);
+          state.remaining.push(t);
+          render();
+        };
+        answerArea.appendChild(btn);
+      });
+
+      tilesArea.innerHTML = '';
+      const isLast = state.remaining.length === 1;
+      state.remaining.forEach(t => {
+        const btn = makeTile(t, false, isLast);
+        if (!isLast) {
+          btn.onclick = () => {
+            const i = state.remaining.indexOf(t);
+            if (i >= 0) state.remaining.splice(i, 1);
+            state.selected.push(t);
+            render();
+          };
+        }
+        tilesArea.appendChild(btn);
+      });
+
+      hidden.value = isLast ? state.remaining[0].value : '';
+    }
+    render();
     block.appendChild(wrap);
   });
   container.appendChild(block);
