@@ -1444,7 +1444,7 @@ R.render_audio_select = function(q, container) {
       const inp = document.createElement('input');
       inp.type = 'text'; inp.id = item.field_id;
       inp.style.cssText = 'width:100%;padding:6px;margin-top:6px;border:1px solid #aaa;border-radius:4px';
-      if (item.placeholder) inp.placeholder = item.placeholder;
+      if (item.placeholder) inp.placeholder = stripHtml(item.placeholder);
       aq.appendChild(inp);
     } else {
       const ansBox = document.createElement('div');
