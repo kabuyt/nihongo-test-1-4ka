@@ -233,10 +233,10 @@ function readingForTerm(term) {
   const kanaReading = cleanKanaReading(term.kana);
   if (inlineReading.length) {
     const joined = inlineReading.join('・');
-    return shouldPreferKanaReading(text, joined, kanaReading) ? kanaReading : joined;
+    return shouldPreferKanaReading(text, joined, kanaReading) ? katakanaToHiragana(kanaReading) : joined;
   }
-  if (isKatakanaOnly(text)) return text;
-  return kanaReading || '';
+  if (isKatakanaOnly(text)) return katakanaToHiragana(text);
+  return kanaReading ? katakanaToHiragana(kanaReading) : '';
 }
 
 function displayTermForTerm(term) {
@@ -412,9 +412,14 @@ function renderList() {
   const list = document.getElementById('termList');
   list.innerHTML = termState.filtered.map((term, index) => {
     const progress = getProgress(term.id);
+    const reading = readingForTerm(term);
     return `
       <button type="button" class="term-row ${index === termState.currentIndex ? 'active' : ''}" data-index="${index}">
-        <span><strong>${esc(term.term)}</strong><small>${esc(term.meaningVi)}</small></span>
+        <span>
+          <strong>${esc(displayTermForTerm(term))}</strong>
+          ${reading ? `<small class="term-reading">Cách đọc: ${esc(reading)}</small>` : ''}
+          <small>${esc(term.meaningVi)}</small>
+        </span>
         <em class="status-pill status-${esc(progress.status)}">${esc(statusLabel(progress.status))}</em>
       </button>
     `;
