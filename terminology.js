@@ -451,14 +451,18 @@ function moveImageCard(delta) {
   renderImageCard();
 }
 
-function showImageSubMode(mode) {
-  const quiz = mode === 'quiz';
-  document.getElementById('imageCardBox').classList.toggle('hidden', quiz);
-  document.getElementById('imageQuizBox').classList.toggle('hidden', !quiz);
-  document.getElementById('imageCardModeBtn').classList.toggle('active', !quiz);
-  document.getElementById('imageQuizModeBtn').classList.toggle('active', quiz);
-  if (quiz) renderImageOverview();
-  else renderImageCard();
+function showTestSubMode(mode) {
+  const image = mode === 'image';
+  const quizResult = document.getElementById('quizResult');
+  const imageResult = document.getElementById('imageResult');
+  document.getElementById('wordQuizBox').classList.toggle('hidden', image);
+  quizResult.classList.toggle('hidden', image || !quizResult.innerHTML.trim());
+  document.getElementById('imageQuizBox').classList.toggle('hidden', !image);
+  imageResult.classList.toggle('hidden', !image || !imageResult.innerHTML.trim());
+  document.getElementById('wordTestModeBtn').classList.toggle('active', !image);
+  document.getElementById('imageTestModeBtn').classList.toggle('active', image);
+  if (image) renderImageOverview();
+  else renderQuizOverview();
 }
 
 function moveCard(delta) {
@@ -475,13 +479,11 @@ function showMode(mode) {
   document.getElementById('cardPanel').classList.toggle('hidden', test || image);
   document.getElementById('testPanel').classList.toggle('hidden', !test);
   document.getElementById('imagePanel').classList.toggle('hidden', !image);
-  document.getElementById('cardModeBtn').classList.toggle('active', !test && !image);
+  document.getElementById('wordMemoryModeBtn').classList.toggle('active', !test && !image);
+  document.getElementById('imageMemoryModeBtn').classList.toggle('active', image);
   document.getElementById('testModeBtn').classList.toggle('active', test);
-  document.getElementById('imageModeBtn').classList.toggle('active', image);
-  if (image) {
-    showImageSubMode('card');
-    renderImageCard();
-  }
+  if (image) renderImageCard();
+  if (test) showTestSubMode('word');
 }
 
 function startQuiz() {
@@ -685,11 +687,11 @@ function setupEvents() {
     applyFilters();
     renderStats();
   });
-  document.getElementById('cardModeBtn').addEventListener('click', () => showMode('card'));
+  document.getElementById('wordMemoryModeBtn').addEventListener('click', () => showMode('card'));
+  document.getElementById('imageMemoryModeBtn').addEventListener('click', () => showMode('image'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
-  document.getElementById('imageModeBtn').addEventListener('click', () => showMode('image'));
-  document.getElementById('imageCardModeBtn').addEventListener('click', () => showImageSubMode('card'));
-  document.getElementById('imageQuizModeBtn').addEventListener('click', () => showImageSubMode('quiz'));
+  document.getElementById('wordTestModeBtn').addEventListener('click', () => showTestSubMode('word'));
+  document.getElementById('imageTestModeBtn').addEventListener('click', () => showTestSubMode('image'));
   document.getElementById('imageCard').addEventListener('click', () => {
     termState.imageCardFlipped = !termState.imageCardFlipped;
     renderImageCard();

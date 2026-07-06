@@ -39,6 +39,7 @@
 .btn-tools{padding:13px 14px;border:1px solid #ccd7df;border-radius:12px;background:#fff;color:#1a5276;font-weight:bold;cursor:pointer}
 .term-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
 .show-tools .term-panel{grid-template-columns:minmax(0,1fr) 340px}
+.show-tools #testPanel,.show-tools #imagePanel{grid-template-columns:1fr}
 .term-panel.hidden{display:none}
 .card-box,.term-list-box,.quiz-box,.quiz-result{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .term-list-box{display:none}
@@ -74,6 +75,9 @@
 .image-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
 .image-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
 .image-mode-tabs button.active{background:#1a5276;color:#fff}
+.test-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
+.test-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
+.test-mode-tabs button.active{background:#1a5276;color:#fff}
 .image-card-img{width:100%;max-height:380px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px;margin-bottom:16px}
 .image-card-answer{text-align:center;color:#1a5276}
 .image-card-answer strong{display:block;font-size:34px;line-height:1.25;margin-bottom:8px}
@@ -150,9 +154,9 @@
     </select>
     <input type="search" id="termSearch" placeholder="日本語・カタカナ・ベトナム語で検索 / Tìm kiếm">
     <div class="mode-tabs">
-      <button type="button" class="active" id="cardModeBtn">暗記カード<br>Thẻ ghi nhớ</button>
-      <button type="button" id="testModeBtn">確認テスト<br>Kiểm tra</button>
-      <button type="button" id="imageModeBtn">画像問題<br>Hình ảnh</button>
+      <button type="button" class="active" id="wordMemoryModeBtn">ことば暗記<br>Từ vựng</button>
+      <button type="button" id="imageMemoryModeBtn">画像暗記<br>Hình ảnh</button>
+      <button type="button" id="testModeBtn">テスト<br>Kiểm tra</button>
     </div>
     <button type="button" class="btn-tools" id="toolsToggleBtn">さがす・一覧<br>Tìm kiếm</button>
   </section>
@@ -184,7 +188,14 @@
   </section>
 
   <section id="testPanel" class="term-panel hidden">
-    <div class="quiz-box">
+    <div>
+      <div class="test-mode-tabs">
+        <button type="button" class="active" id="wordTestModeBtn">ことばテスト<br>Kiểm tra từ</button>
+        <button type="button" id="imageTestModeBtn">画像テスト<br>Kiểm tra hình</button>
+      </div>
+    </div>
+
+    <div class="quiz-box" id="wordQuizBox">
       <div class="quiz-plan">
         <strong>テストの回 / Lần kiểm tra</strong>
         <select id="quizSetSelect" aria-label="テストの回"></select>
@@ -202,31 +213,6 @@
       </div>
     </div>
     <div id="quizResult" class="quiz-result hidden"></div>
-  </section>
-
-  <section id="imagePanel" class="term-panel hidden">
-    <div>
-      <div class="image-mode-tabs">
-        <button type="button" class="active" id="imageCardModeBtn">画像カード<br>Thẻ hình ảnh</button>
-        <button type="button" id="imageQuizModeBtn">画像テスト<br>Kiểm tra hình</button>
-      </div>
-      <div class="card-box" id="imageCardBox">
-        <div class="flash-card" id="imageCard" tabindex="0">
-          <span class="chip" id="imageCardCount">-</span>
-          <div class="card-side-label" id="imageCardSideLabel">写真 / Hình ảnh</div>
-          <img class="image-card-img" id="imageCardImg" alt="物の名前の暗記カード画像">
-          <div class="image-card-answer" id="imageCardAnswer" style="display:none">
-            <strong id="imageCardTerm"></strong>
-            <span id="imageCardReading"></span>
-          </div>
-          <p class="hint" id="imageCardHint">写真をタップしてください / Bấm vào hình</p>
-        </div>
-        <div class="card-actions">
-          <button type="button" class="btn-sub" id="prevImageCardBtn">前へ<br>Trước</button>
-          <button type="button" class="btn-sub" id="nextImageCardBtn">次へ<br>Tiếp</button>
-        </div>
-      </div>
-    </div>
 
     <div class="quiz-box hidden" id="imageQuizBox">
       <div class="quiz-plan">
@@ -250,6 +236,25 @@
     </div>
     <div id="imageResult" class="quiz-result hidden"></div>
   </section>
+
+  <section id="imagePanel" class="term-panel hidden">
+    <div class="card-box" id="imageCardBox">
+        <div class="flash-card" id="imageCard" tabindex="0">
+          <span class="chip" id="imageCardCount">-</span>
+          <div class="card-side-label" id="imageCardSideLabel">写真 / Hình ảnh</div>
+          <img class="image-card-img" id="imageCardImg" alt="物の名前の暗記カード画像">
+          <div class="image-card-answer" id="imageCardAnswer" style="display:none">
+            <strong id="imageCardTerm"></strong>
+            <span id="imageCardReading"></span>
+          </div>
+          <p class="hint" id="imageCardHint">写真をタップしてください / Bấm vào hình</p>
+        </div>
+        <div class="card-actions">
+          <button type="button" class="btn-sub" id="prevImageCardBtn">前へ<br>Trước</button>
+          <button type="button" class="btn-sub" id="nextImageCardBtn">次へ<br>Tiếp</button>
+        </div>
+    </div>
+  </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -257,6 +262,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=8"></script>
+<script src="terminology.js?v=9"></script>
 </body>
 </html>
