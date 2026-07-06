@@ -71,6 +71,13 @@
 .quiz-plan strong{color:#1a5276}
 .quiz-plan select{border:1px solid #bfd4e0;border-radius:9px;background:#fff;padding:10px;font-size:15px;min-width:180px}
 .quiz-plan span{color:#516271;font-size:14px}
+.image-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
+.image-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
+.image-mode-tabs button.active{background:#1a5276;color:#fff}
+.image-card-img{width:100%;max-height:380px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px;margin-bottom:16px}
+.image-card-answer{text-align:center;color:#1a5276}
+.image-card-answer strong{display:block;font-size:34px;line-height:1.25;margin-bottom:8px}
+.image-card-answer span{font-size:18px;color:#667}
 .image-question{display:grid;gap:12px}
 .image-question img{width:100%;max-height:360px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px}
 .quiz-options{display:grid;gap:9px}
@@ -198,7 +205,30 @@
   </section>
 
   <section id="imagePanel" class="term-panel hidden">
-    <div class="quiz-box">
+    <div>
+      <div class="image-mode-tabs">
+        <button type="button" class="active" id="imageCardModeBtn">画像カード<br>Thẻ hình ảnh</button>
+        <button type="button" id="imageQuizModeBtn">画像テスト<br>Kiểm tra hình</button>
+      </div>
+      <div class="card-box" id="imageCardBox">
+        <div class="flash-card" id="imageCard" tabindex="0">
+          <span class="chip" id="imageCardCount">-</span>
+          <div class="card-side-label" id="imageCardSideLabel">写真 / Hình ảnh</div>
+          <img class="image-card-img" id="imageCardImg" alt="物の名前の暗記カード画像">
+          <div class="image-card-answer" id="imageCardAnswer" style="display:none">
+            <strong id="imageCardTerm"></strong>
+            <span id="imageCardReading"></span>
+          </div>
+          <p class="hint" id="imageCardHint">写真をタップしてください / Bấm vào hình</p>
+        </div>
+        <div class="card-actions">
+          <button type="button" class="btn-sub" id="prevImageCardBtn">前へ<br>Trước</button>
+          <button type="button" class="btn-sub" id="nextImageCardBtn">次へ<br>Tiếp</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-box hidden" id="imageQuizBox">
       <div class="quiz-plan">
         <strong>画像問題 / Câu hỏi hình ảnh</strong>
         <select id="imageSetSelect" aria-label="画像問題の回"></select>
@@ -227,6 +257,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=7"></script>
+<script src="terminology.js?v=8"></script>
 </body>
 </html>

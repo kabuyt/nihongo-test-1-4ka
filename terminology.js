@@ -8,7 +8,9 @@ let termState = {
   currentIndex: 0,
   quizSetIndex: 0,
   imageSetIndex: 0,
+  imageCardIndex: 0,
   flipped: false,
+  imageCardFlipped: false,
   quiz: null,
   imageQuiz: null,
   profile: null,
@@ -422,6 +424,43 @@ function renderImageOverview() {
   if (button) button.innerHTML = `第${termState.imageSetIndex + 1}回を始める<br>Bắt đầu lần ${termState.imageSetIndex + 1}`;
 }
 
+function renderImageCard() {
+  const items = getImageItems();
+  if (!items.length) return;
+  if (termState.imageCardIndex >= items.length) termState.imageCardIndex = 0;
+  const item = items[termState.imageCardIndex];
+  document.getElementById('imageCard').classList.toggle('flipped', termState.imageCardFlipped);
+  document.getElementById('imageCardCount').textContent = `${termState.imageCardIndex + 1} / ${items.length}`;
+  document.getElementById('imageCardImg').src = item.image;
+  document.getElementById('imageCardTerm').textContent = item.term;
+  document.getElementById('imageCardReading').textContent = item.reading ? `Cách đọc: ${item.reading}` : '';
+  document.getElementById('imageCardAnswer').style.display = termState.imageCardFlipped ? '' : 'none';
+  document.getElementById('imageCardSideLabel').textContent = termState.imageCardFlipped
+    ? '名前 / Tên'
+    : '写真 / Hình ảnh';
+  document.getElementById('imageCardHint').textContent = termState.imageCardFlipped
+    ? '覚えたら次へ / Nhớ rồi thì bấm tiếp'
+    : '写真をタップしてください / Bấm vào hình';
+}
+
+function moveImageCard(delta) {
+  const items = getImageItems();
+  if (!items.length) return;
+  termState.imageCardIndex = (termState.imageCardIndex + delta + items.length) % items.length;
+  termState.imageCardFlipped = false;
+  renderImageCard();
+}
+
+function showImageSubMode(mode) {
+  const quiz = mode === 'quiz';
+  document.getElementById('imageCardBox').classList.toggle('hidden', quiz);
+  document.getElementById('imageQuizBox').classList.toggle('hidden', !quiz);
+  document.getElementById('imageCardModeBtn').classList.toggle('active', !quiz);
+  document.getElementById('imageQuizModeBtn').classList.toggle('active', quiz);
+  if (quiz) renderImageOverview();
+  else renderImageCard();
+}
+
 function moveCard(delta) {
   if (!termState.filtered.length) return;
   termState.currentIndex = (termState.currentIndex + delta + termState.filtered.length) % termState.filtered.length;
@@ -439,7 +478,10 @@ function showMode(mode) {
   document.getElementById('cardModeBtn').classList.toggle('active', !test && !image);
   document.getElementById('testModeBtn').classList.toggle('active', test);
   document.getElementById('imageModeBtn').classList.toggle('active', image);
-  if (image) renderImageOverview();
+  if (image) {
+    showImageSubMode('card');
+    renderImageCard();
+  }
 }
 
 function startQuiz() {
@@ -646,6 +688,21 @@ function setupEvents() {
   document.getElementById('cardModeBtn').addEventListener('click', () => showMode('card'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
   document.getElementById('imageModeBtn').addEventListener('click', () => showMode('image'));
+  document.getElementById('imageCardModeBtn').addEventListener('click', () => showImageSubMode('card'));
+  document.getElementById('imageQuizModeBtn').addEventListener('click', () => showImageSubMode('quiz'));
+  document.getElementById('imageCard').addEventListener('click', () => {
+    termState.imageCardFlipped = !termState.imageCardFlipped;
+    renderImageCard();
+  });
+  document.getElementById('imageCard').addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      termState.imageCardFlipped = !termState.imageCardFlipped;
+      renderImageCard();
+    }
+  });
+  document.getElementById('prevImageCardBtn').addEventListener('click', () => moveImageCard(-1));
+  document.getElementById('nextImageCardBtn').addEventListener('click', () => moveImageCard(1));
   document.getElementById('quizSetSelect').addEventListener('change', event => {
     termState.quizSetIndex = Number(event.target.value) || 0;
     termState.quiz = null;
@@ -709,6 +766,7 @@ function setupEvents() {
   });
   setupEvents();
   applyFilters();
+  renderImageCard();
   renderImageOverview();
   renderStats();
 })();
