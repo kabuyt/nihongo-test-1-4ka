@@ -288,11 +288,11 @@ function renderCard() {
   document.getElementById('cardKana').style.display = termState.flipped ? 'none' : '';
   document.getElementById('cardMeaning').style.display = termState.flipped ? '' : 'none';
   document.getElementById('cardSideLabel').textContent = termState.flipped
-    ? '裏: ベトナム語 / Mặt sau: Tiếng Việt'
-    : '表: 日本語 / Mặt trước: Tiếng Nhật';
+    ? 'ベトナム語の意味 / Nghĩa tiếng Việt'
+    : '日本語 / Tiếng Nhật';
   document.getElementById('cardHint').textContent = termState.flipped
-    ? '覚えたら下のボタンで記録します / Nếu đã nhớ, hãy bấm nút bên dưới'
-    : 'クリックするとベトナム語の意味を表示します / Nhấn để xem nghĩa tiếng Việt';
+    ? '覚えたら「覚えた」を押します / Nhớ rồi thì bấm “Đã nhớ”'
+    : 'カードをタップしてください / Bấm vào thẻ';
 
   if (!termState.filtered.length) {
     document.getElementById('cardCategory').textContent = '-';
@@ -459,6 +459,12 @@ function setupEvents() {
   });
   document.getElementById('cardModeBtn').addEventListener('click', () => showMode('card'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
+  document.getElementById('toolsToggleBtn').addEventListener('click', () => {
+    const isOpen = document.body.classList.toggle('show-tools');
+    document.getElementById('toolsToggleBtn').innerHTML = isOpen
+      ? '閉じる<br>Đóng'
+      : 'さがす・一覧<br>Tìm kiếm';
+  });
   document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
   document.getElementById('nextQuizBtn').addEventListener('click', () => {
     if (!termState.quiz) return;

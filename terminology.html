@@ -18,29 +18,41 @@
 .term-hero{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:14px}
 .term-hero h2{font-size:20px;color:#1a5276;margin-bottom:4px}
 .term-hero p{font-size:13px;color:#666;line-height:1.6}
+.quick-start{background:linear-gradient(135deg,#eaf7ff,#fff7e8);border:1px solid #d5ecf8;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(26,82,118,.08);margin-bottom:12px}
+.quick-start h2{font-size:22px;color:#1a5276;margin:0 0 8px}
+.quick-start p{font-size:15px;color:#475967;line-height:1.6;margin:0 0 12px}
+.quick-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.quick-steps span{background:#fff;border:1px solid #dcebf4;border-radius:12px;padding:10px;font-size:13px;font-weight:bold;color:#1a5276;text-align:center}
+.term-hero{display:none}
 .term-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:260px}
 .term-stats div{background:#eef6fb;border:1px solid #d6e8f3;border-radius:10px;padding:10px;text-align:center}
 .term-stats b{display:block;color:#1a5276;font-size:22px}
 .term-stats span{font-size:11px;color:#667}
-.term-toolbar{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.term-toolbar{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:4}
 .term-toolbar select,.term-toolbar input{border:1px solid #ccc;border-radius:8px;padding:10px;font-size:15px;background:#fff}
 .term-toolbar input{flex:1;min-width:220px}
-.mode-tabs{display:flex;background:#e8edf2;border-radius:9px;padding:3px;gap:3px}
-.mode-tabs button{border:0;background:transparent;color:#666;border-radius:7px;padding:9px 12px;font-weight:bold;cursor:pointer}
+.term-toolbar select,.term-toolbar input{display:none}
+.show-tools .term-toolbar select,.show-tools .term-toolbar input{display:block}
+.mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;flex:1;min-width:240px}
+.mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:13px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
 .mode-tabs button.active{background:#1a5276;color:#fff}
-.term-panel{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+.btn-tools{padding:13px 14px;border:1px solid #ccd7df;border-radius:12px;background:#fff;color:#1a5276;font-weight:bold;cursor:pointer}
+.term-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+.show-tools .term-panel{grid-template-columns:minmax(0,1fr) 340px}
 .term-panel.hidden{display:none}
 .card-box,.term-list-box,.quiz-box,.quiz-result{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.flash-card{min-height:330px;border:2px solid #dbe7ef;border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;background:linear-gradient(180deg,#f6fbff,#fff)}
+.term-list-box{display:none}
+.show-tools .term-list-box{display:block}
+.flash-card{min-height:390px;border:2px solid #dbe7ef;border-radius:18px;padding:28px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;background:linear-gradient(180deg,#f6fbff,#fff)}
 .flash-card.flipped{background:linear-gradient(180deg,#f3fff0,#fff)}
 .chip{display:inline-block;align-self:flex-start;background:#e8f5e9;color:#287b36;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:bold;margin-bottom:18px}
-.term-main{font-size:38px;line-height:1.3;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere}
-.term-kana{font-size:18px;color:#666;margin-top:10px}
+.term-main{font-size:46px;line-height:1.25;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere;text-align:center}
+.term-kana{font-size:20px;color:#666;margin-top:12px;text-align:center}
 .term-meaning{font-size:30px;line-height:1.4;color:#1a5276;font-weight:bold}
 .card-side-label{font-size:12px;font-weight:bold;color:#6b7b88;margin-bottom:8px;letter-spacing:.04em}
-.flash-card .hint{font-size:13px;color:#999;margin-top:22px}
+.flash-card .hint{font-size:15px;color:#697b88;margin-top:26px;text-align:center}
 .card-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
-.card-actions button,.quiz-actions button{padding:11px 16px;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
+.card-actions button,.quiz-actions button{padding:13px 18px;border:0;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px}
 .btn-sub{background:#eef2f7;color:#1a5276}
 .btn-ok{background:#27ae60;color:#fff}
 .btn-review{background:#e67e22;color:#fff}
@@ -64,11 +76,14 @@
 .quiz-result{margin-top:14px;color:#555;line-height:1.7}
 .quiz-result strong{display:block;color:#1a5276;font-size:20px}
 @media(max-width:720px){
+  .quick-steps{grid-template-columns:1fr}
   .term-hero{flex-direction:column;align-items:stretch}
   .term-stats{min-width:0}
   .term-panel{grid-template-columns:1fr}
-  .term-main{font-size:30px}
+  .show-tools .term-panel{grid-template-columns:1fr}
+  .term-main{font-size:34px}
   .term-meaning{font-size:24px}
+  .flash-card{min-height:360px}
 }
 </style>
 </head>
@@ -89,6 +104,16 @@
 </div>
 
 <main class="term-wrap">
+  <section class="quick-start">
+    <h2>まずカードを1枚見てください</h2>
+    <p>Nhìn thẻ, bấm vào thẻ để xem nghĩa tiếng Việt. Nếu nhớ rồi thì bấm “Đã nhớ”.</p>
+    <div class="quick-steps">
+      <span>1. 日本語を見る<br>Nhìn tiếng Nhật</span>
+      <span>2. カードをタップ<br>Bấm vào thẻ</span>
+      <span>3. 覚えたら次へ<br>Nhớ rồi thì tiếp</span>
+    </div>
+  </section>
+
   <section class="term-hero">
     <div>
       <h2>キンレイ専門用語</h2>
@@ -115,6 +140,7 @@
       <button type="button" class="active" id="cardModeBtn">暗記カード<br>Thẻ ghi nhớ</button>
       <button type="button" id="testModeBtn">確認テスト<br>Kiểm tra</button>
     </div>
+    <button type="button" class="btn-tools" id="toolsToggleBtn">さがす・一覧<br>Tìm kiếm</button>
   </section>
 
   <section id="cardPanel" class="term-panel">
@@ -163,7 +189,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="common/config.js"></script>
 <script src="common/auth.js"></script>
-<script src="data/kinrei-vocab.js?v=3"></script>
-<script src="terminology.js?v=3"></script>
+<script src="data/kinrei-vocab.js?v=4"></script>
+<script src="terminology.js?v=4"></script>
 </body>
 </html>
