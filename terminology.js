@@ -315,7 +315,7 @@ function renderCard() {
   }
   document.getElementById('cardCategory').textContent = term.category;
   document.getElementById('cardTerm').textContent = displayTermForTerm(term);
-  document.getElementById('cardKana').textContent = reading ? `読み: ${reading} / Cách đọc: ${reading}` : '';
+  document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
   renderStats();
 }
@@ -511,7 +511,7 @@ function renderImageQuiz() {
   document.getElementById('imageFeedback').textContent = '';
   document.getElementById('nextImageQuizBtn').disabled = true;
   document.getElementById('imageOptions').innerHTML = options.map(option =>
-    `<button type="button" class="quiz-option" data-id="${esc(option.id)}">${esc(option.term)}<br><small>${esc(option.reading || '')}</small></button>`
+    `<button type="button" class="quiz-option" data-id="${esc(option.id)}">${esc(option.term)}<br><small>${option.reading ? `Cách đọc: ${esc(option.reading)}` : ''}</small></button>`
   ).join('');
   document.querySelectorAll('#imageOptions .quiz-option').forEach(button => button.addEventListener('click', () => answerImageQuiz(button.dataset.id)));
 }
