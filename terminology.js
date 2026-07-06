@@ -1,10 +1,12 @@
 const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
+const QUIZ_SET_SIZE = 10;
 
 let termState = {
   terms: [],
   filtered: [],
   progress: {},
   currentIndex: 0,
+  quizSetIndex: 0,
   flipped: false,
   quiz: null,
   profile: null,
@@ -279,6 +281,7 @@ function applyFilters() {
   termState.flipped = false;
   renderCard();
   renderList();
+  renderQuizOverview();
 }
 
 function renderCard() {
@@ -337,6 +340,47 @@ function renderList() {
   });
 }
 
+function getQuizPool() {
+  return termState.filtered.length >= 4 ? termState.filtered : termState.terms;
+}
+
+function getQuizSets() {
+  const pool = getQuizPool();
+  const sets = [];
+  for (let i = 0; i < pool.length; i += QUIZ_SET_SIZE) {
+    sets.push(pool.slice(i, i + QUIZ_SET_SIZE));
+  }
+  return sets;
+}
+
+function isQuizSetDone(set) {
+  return set.length > 0 && set.every(term => (getProgress(term.id).attempts || 0) > 0);
+}
+
+function renderQuizOverview() {
+  const select = document.getElementById('quizSetSelect');
+  const summary = document.getElementById('quizSetSummary');
+  if (!select || !summary) return;
+
+  const sets = getQuizSets();
+  if (termState.quizSetIndex >= sets.length) termState.quizSetIndex = 0;
+  const completed = sets.filter(isQuizSetDone).length;
+
+  select.innerHTML = sets.map((set, index) => {
+    const start = index * QUIZ_SET_SIZE + 1;
+    const end = start + set.length - 1;
+    const done = isQuizSetDone(set) ? ' ✓' : '';
+    return `<option value="${index}">第${index + 1}回（${start}-${end}語）${done}</option>`;
+  }).join('');
+  select.value = String(termState.quizSetIndex);
+  summary.textContent = sets.length
+    ? `全${sets.length}回・完了${completed}回 / ${sets.length} lần, xong ${completed}`
+    : 'テストできる単語がありません';
+
+  const button = document.getElementById('startQuizBtn');
+  if (button) button.innerHTML = `第${termState.quizSetIndex + 1}回を始める<br>Bắt đầu lần ${termState.quizSetIndex + 1}`;
+}
+
 function moveCard(delta) {
   if (!termState.filtered.length) return;
   termState.currentIndex = (termState.currentIndex + delta + termState.filtered.length) % termState.filtered.length;
@@ -354,8 +398,17 @@ function showMode(mode) {
 }
 
 function startQuiz() {
-  const pool = termState.filtered.length >= 4 ? termState.filtered : termState.terms;
-  termState.quiz = { questions: shuffle(pool).slice(0, Math.min(10, pool.length)), index: 0, correct: 0, answers: [], answered: false };
+  const sets = getQuizSets();
+  if (!sets.length) return;
+  const questions = sets[termState.quizSetIndex] || sets[0];
+  termState.quiz = {
+    setNumber: termState.quizSetIndex + 1,
+    questions: shuffle(questions),
+    index: 0,
+    correct: 0,
+    answers: [],
+    answered: false,
+  };
   document.getElementById('quizResult').classList.add('hidden');
   renderQuiz();
 }
@@ -409,13 +462,16 @@ async function finishQuiz() {
   document.getElementById('quizFeedback').textContent = '';
   document.getElementById('nextQuizBtn').disabled = true;
   document.getElementById('quizResult').classList.remove('hidden');
-  document.getElementById('quizResult').innerHTML = `<strong>${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>間違えた用語は「要復習」に入りました。<br>Từ sai sẽ được đưa vào mục Cần ôn.</p>`;
+  document.getElementById('quizResult').innerHTML = `<strong>第${quiz.setNumber}回 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>間違えた用語は「要復習」に入りました。次の回へ進めます。<br>Từ sai sẽ được đưa vào mục Cần ôn. Có thể học lần tiếp theo.</p>`;
+  const sets = getQuizSets();
+  if (termState.quizSetIndex < sets.length - 1) termState.quizSetIndex += 1;
+  renderQuizOverview();
 
   if (!termState.profile?.id) return;
   try {
     await supabase.from('terminology_quiz_results').insert({
       trainee_id: termState.profile.id,
-      set_id: 'kinrei-2023',
+      set_id: `kinrei-2023-${String(quiz.setNumber).padStart(2, '0')}`,
       total_questions: quiz.questions.length,
       correct_count: quiz.correct,
       score_rate: rate,
@@ -459,6 +515,18 @@ function setupEvents() {
   });
   document.getElementById('cardModeBtn').addEventListener('click', () => showMode('card'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
+  document.getElementById('quizSetSelect').addEventListener('change', event => {
+    termState.quizSetIndex = Number(event.target.value) || 0;
+    termState.quiz = null;
+    document.getElementById('quizResult').classList.add('hidden');
+    document.getElementById('quizOptions').innerHTML = '';
+    document.getElementById('quizFeedback').textContent = '';
+    document.getElementById('quizPrompt').innerHTML = '問題を始めてください<br>Hãy bắt đầu bài kiểm tra';
+    document.getElementById('quizNow').textContent = '0';
+    const set = getQuizSets()[termState.quizSetIndex] || [];
+    document.getElementById('quizTotal').textContent = set.length || QUIZ_SET_SIZE;
+    renderQuizOverview();
+  });
   document.getElementById('toolsToggleBtn').addEventListener('click', () => {
     const isOpen = document.body.classList.toggle('show-tools');
     document.getElementById('toolsToggleBtn').innerHTML = isOpen
