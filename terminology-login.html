@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a5276">
+<title>キンレイ専門用語 ログイン</title>
+<link rel="stylesheet" href="common/style.css">
+<style>
+.login-wrap{max-width:400px;margin:40px auto;padding:0 20px}
+.login-card{background:#fff;border-radius:16px;padding:32px 24px;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.login-card h2{font-size:18px;color:#1a5276;text-align:center;margin-bottom:4px}
+.login-card .sub{font-size:13px;color:#777;text-align:center;margin-bottom:24px;line-height:1.7}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:bold;color:#555;margin-bottom:6px}
+.form-group input{width:100%;border:2px solid #ddd;border-radius:10px;padding:12px 14px;font-size:16px;outline:none;transition:border .2s}
+.form-group input:focus{border-color:#1a5276}
+.form-group .hint{font-size:11px;color:#999;margin-top:4px}
+.btn-login{width:100%;padding:14px;border:none;border-radius:10px;background:#1a5276;color:#fff;font-size:16px;font-weight:bold;cursor:pointer;transition:background .2s}
+.btn-login:hover{background:#154360}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+.error-msg{color:#c0392b;font-size:13px;text-align:center;margin-top:12px;display:none;line-height:1.6}
+.logo-area{text-align:center;margin-bottom:20px;font-size:40px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>キンレイ専門用語</h1>
+  <p>Từ vựng chuyên ngành Kinrei</p>
+</header>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="logo-area">📘</div>
+    <h2>ログイン / Đăng nhập</h2>
+    <p class="sub">キンレイ実習生専用の学習ページです。<br>学生IDと生年月日を入力してください。</p>
+
+    <div class="form-group">
+      <label>学生ID（Student ID）</label>
+      <input type="text" id="student_id" placeholder="例: VJC001" autocomplete="username" style="text-transform:uppercase">
+      <div class="hint">VJC + 数字（例: VJC001）</div>
+    </div>
+
+    <div class="form-group">
+      <label>生年月日（Ngày sinh）</label>
+      <input type="tel" id="birth_date" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="例: 20000115" autocomplete="off" style="letter-spacing:2px;font-family:monospace">
+      <div class="hint">8桁の数字 YYYYMMDD（例: 2000年1月15日 → 20000115）</div>
+    </div>
+
+    <button class="btn-login" id="login-btn" onclick="doLogin()">ログイン / Đăng nhập</button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script>
+(async function() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) window.location.href = 'terminology.html';
+})();
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('error-msg');
+  const studentId = document.getElementById('student_id').value.trim().toUpperCase();
+  const birthDate = document.getElementById('birth_date').value;
+  errEl.style.display = 'none';
+
+  if (!studentId) {
+    errEl.textContent = '学生IDを入力してください / Vui lòng nhập mã sinh viên';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!/^[0-9]{8}$/.test(birthDate)) {
+    errEl.textContent = '生年月日は8桁の数字で入力してください / Nhập ngày sinh 8 chữ số';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'ログイン中...';
+
+  const email = studentId.toLowerCase() + '@student.trainee.local';
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: birthDate });
+  if (error || !data.session) {
+    errEl.textContent = '学生IDまたは生年月日が違います / Mã sinh viên hoặc ngày sinh không đúng';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'ログイン / Đăng nhập';
+    return;
+  }
+
+  window.location.href = 'terminology.html';
+}
+
+document.getElementById('birth_date').addEventListener('input', function() {
+  this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

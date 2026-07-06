@@ -16,6 +16,55 @@ function esc(value) {
   }[ch]));
 }
 
+function isKinreiProfile(profile) {
+  const company = String(profile?.company || '').toLowerCase();
+  const group = String(profile?.class_group || '').toLowerCase();
+  return company.includes('キンレイ') || company.includes('kinrei') || group.includes('キンレイ') || group.includes('kinrei');
+}
+
+async function terminologyLogout() {
+  await supabase.auth.signOut();
+  window.location.href = 'terminology-login.html';
+}
+
+async function checkTerminologyAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'terminology-login.html';
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('trainees')
+    .select('id, student_id, name_katakana, name_romaji, company, class_group, organization_id, auth_user_id')
+    .eq('auth_user_id', session.user.id)
+    .single();
+
+  if (error || !data) {
+    await supabase.auth.signOut();
+    window.location.href = 'terminology-login.html';
+    return null;
+  }
+
+  if (!isKinreiProfile(data)) {
+    document.body.innerHTML = `
+      <header><h1>キンレイ専門用語</h1><p>Từ vựng chuyên ngành Kinrei</p></header>
+      <main class="term-wrap">
+        <section class="term-hero">
+          <div>
+            <h2>この学習ページはキンレイ実習生専用です</h2>
+            <p>対象者ではないため利用できません。必要な場合は管理者に確認してください。</p>
+          </div>
+        </section>
+        <button class="btn-logout" onclick="terminologyLogout()">ログアウト</button>
+      </main>
+    `;
+    return null;
+  }
+
+  return { session, profile: data };
+}
+
 function localKey() {
   const id = termState.profile?.student_id || 'guest';
   return `${TERM_STORAGE_KEY}:${id}`;
@@ -322,7 +371,7 @@ function setupEvents() {
 }
 
 (async function init() {
-  const auth = await checkStudentAuth();
+  const auth = await checkTerminologyAuth();
   if (!auth) return;
   termState.profile = auth.profile;
   document.getElementById('student-bar').style.display = 'flex';

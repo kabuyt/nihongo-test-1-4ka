@@ -78,16 +78,8 @@
   const loadingEl = document.getElementById('loading');
   loadingEl.style.display = 'none';
 
-  const vocabCard = document.createElement('a');
-  vocabCard.className = 'test-card active-card';
-  vocabCard.href = 'terminology.html';
-  vocabCard.innerHTML = `
-    <h2>キンレイ専門用語 <span class="badge badge-ready">暗記・確認テスト</span></h2>
-    <p>職場で使う物の名前・原材料・動詞・作業位置を練習します。</p>
-  `;
-  listEl.appendChild(vocabCard);
-
   if (!tests || tests.length === 0) {
+    listEl.innerHTML = '<div class="loading">テストが見つかりません</div>';
     return;
   }
 
