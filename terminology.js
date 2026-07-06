@@ -7,8 +7,10 @@ let termState = {
   progress: {},
   currentIndex: 0,
   quizSetIndex: 0,
+  imageSetIndex: 0,
   flipped: false,
   quiz: null,
+  imageQuiz: null,
   profile: null,
 };
 
@@ -381,6 +383,45 @@ function renderQuizOverview() {
   if (button) button.innerHTML = `第${termState.quizSetIndex + 1}回を始める<br>Bắt đầu lần ${termState.quizSetIndex + 1}`;
 }
 
+function getImageItems() {
+  return window.KINREI_IMAGE_QUIZ?.items || [];
+}
+
+function getImageSetSize() {
+  return window.KINREI_IMAGE_QUIZ?.set?.questionSize || QUIZ_SET_SIZE;
+}
+
+function getImageSets() {
+  const items = getImageItems();
+  const size = getImageSetSize();
+  const sets = [];
+  for (let i = 0; i < items.length; i += size) {
+    sets.push(items.slice(i, i + size));
+  }
+  return sets;
+}
+
+function renderImageOverview() {
+  const select = document.getElementById('imageSetSelect');
+  const summary = document.getElementById('imageSetSummary');
+  if (!select || !summary) return;
+
+  const sets = getImageSets();
+  if (termState.imageSetIndex >= sets.length) termState.imageSetIndex = 0;
+  select.innerHTML = sets.map((set, index) => {
+    const start = index * getImageSetSize() + 1;
+    const end = start + set.length - 1;
+    return `<option value="${index}">第${index + 1}回（${start}-${end}枚）</option>`;
+  }).join('');
+  select.value = String(termState.imageSetIndex);
+  summary.textContent = sets.length
+    ? `全${sets.length}回 / ${sets.length} lần`
+    : '画像問題がありません';
+
+  const button = document.getElementById('startImageQuizBtn');
+  if (button) button.innerHTML = `第${termState.imageSetIndex + 1}回を始める<br>Bắt đầu lần ${termState.imageSetIndex + 1}`;
+}
+
 function moveCard(delta) {
   if (!termState.filtered.length) return;
   termState.currentIndex = (termState.currentIndex + delta + termState.filtered.length) % termState.filtered.length;
@@ -391,10 +432,14 @@ function moveCard(delta) {
 
 function showMode(mode) {
   const test = mode === 'test';
-  document.getElementById('cardPanel').classList.toggle('hidden', test);
+  const image = mode === 'image';
+  document.getElementById('cardPanel').classList.toggle('hidden', test || image);
   document.getElementById('testPanel').classList.toggle('hidden', !test);
-  document.getElementById('cardModeBtn').classList.toggle('active', !test);
+  document.getElementById('imagePanel').classList.toggle('hidden', !image);
+  document.getElementById('cardModeBtn').classList.toggle('active', !test && !image);
   document.getElementById('testModeBtn').classList.toggle('active', test);
+  document.getElementById('imageModeBtn').classList.toggle('active', image);
+  if (image) renderImageOverview();
 }
 
 function startQuiz() {
@@ -411,6 +456,22 @@ function startQuiz() {
   };
   document.getElementById('quizResult').classList.add('hidden');
   renderQuiz();
+}
+
+function startImageQuiz() {
+  const sets = getImageSets();
+  if (!sets.length) return;
+  const questions = sets[termState.imageSetIndex] || sets[0];
+  termState.imageQuiz = {
+    setNumber: termState.imageSetIndex + 1,
+    questions: shuffle(questions),
+    index: 0,
+    correct: 0,
+    answers: [],
+    answered: false,
+  };
+  document.getElementById('imageResult').classList.add('hidden');
+  renderImageQuiz();
 }
 
 function renderQuiz() {
@@ -433,6 +494,28 @@ function renderQuiz() {
   document.querySelectorAll('.quiz-option').forEach(button => button.addEventListener('click', () => answerQuiz(button.dataset.id)));
 }
 
+function renderImageQuiz() {
+  const quiz = termState.imageQuiz;
+  if (!quiz || quiz.index >= quiz.questions.length) {
+    finishImageQuiz();
+    return;
+  }
+  const question = quiz.questions[quiz.index];
+  const options = shuffle([question, ...shuffle(getImageItems().filter(item => item.id !== question.id && item.term !== question.term)).slice(0, 3)]);
+  quiz.answered = false;
+  document.getElementById('imageNow').textContent = quiz.index + 1;
+  document.getElementById('imageTotal').textContent = quiz.questions.length;
+  document.getElementById('imagePrompt').innerHTML = 'この写真の名前は？<br>Tên của hình này là gì?';
+  document.getElementById('imageQuestionImg').src = question.image;
+  document.getElementById('imageQuestionImg').style.display = '';
+  document.getElementById('imageFeedback').textContent = '';
+  document.getElementById('nextImageQuizBtn').disabled = true;
+  document.getElementById('imageOptions').innerHTML = options.map(option =>
+    `<button type="button" class="quiz-option" data-id="${esc(option.id)}">${esc(option.term)}<br><small>${esc(option.reading || '')}</small></button>`
+  ).join('');
+  document.querySelectorAll('#imageOptions .quiz-option').forEach(button => button.addEventListener('click', () => answerImageQuiz(button.dataset.id)));
+}
+
 function answerQuiz(selectedId) {
   const quiz = termState.quiz;
   if (!quiz || quiz.answered) return;
@@ -451,6 +534,23 @@ function answerQuiz(selectedId) {
   document.getElementById('nextQuizBtn').disabled = false;
   renderStats();
   renderList();
+}
+
+function answerImageQuiz(selectedId) {
+  const quiz = termState.imageQuiz;
+  if (!quiz || quiz.answered) return;
+  const question = quiz.questions[quiz.index];
+  const ok = selectedId === question.id;
+  quiz.answered = true;
+  quiz.correct += ok ? 1 : 0;
+  quiz.answers.push({ image_id: question.id, correct: ok });
+  document.querySelectorAll('#imageOptions .quiz-option').forEach(button => {
+    button.disabled = true;
+    if (button.dataset.id === question.id) button.classList.add('correct');
+    if (button.dataset.id === selectedId && !ok) button.classList.add('wrong');
+  });
+  document.getElementById('imageFeedback').textContent = ok ? '正解です / Đúng rồi' : `正解 / Đáp án: ${question.term}`;
+  document.getElementById('nextImageQuizBtn').disabled = false;
 }
 
 async function finishQuiz() {
@@ -479,6 +579,36 @@ async function finishQuiz() {
     });
   } catch (err) {
     console.warn('quiz result save skipped', err);
+  }
+}
+
+async function finishImageQuiz() {
+  const quiz = termState.imageQuiz;
+  if (!quiz) return;
+  const rate = quiz.questions.length ? Math.round((quiz.correct / quiz.questions.length) * 100) : 0;
+  document.getElementById('imagePrompt').textContent = '画像問題 完了 / Hoàn thành';
+  document.getElementById('imageQuestionImg').style.display = 'none';
+  document.getElementById('imageOptions').innerHTML = '';
+  document.getElementById('imageFeedback').textContent = '';
+  document.getElementById('nextImageQuizBtn').disabled = true;
+  document.getElementById('imageResult').classList.remove('hidden');
+  document.getElementById('imageResult').innerHTML = `<strong>画像 第${quiz.setNumber}回 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>写真を見て名前を選ぶ練習です。<br>Luyện nhìn hình và chọn tên đúng.</p>`;
+  const sets = getImageSets();
+  if (termState.imageSetIndex < sets.length - 1) termState.imageSetIndex += 1;
+  renderImageOverview();
+
+  if (!termState.profile?.id) return;
+  try {
+    await supabase.from('terminology_quiz_results').insert({
+      trainee_id: termState.profile.id,
+      set_id: `kinrei-image-2023-${String(quiz.setNumber).padStart(2, '0')}`,
+      total_questions: quiz.questions.length,
+      correct_count: quiz.correct,
+      score_rate: rate,
+      answers_json: quiz.answers,
+    });
+  } catch (err) {
+    console.warn('image quiz result save skipped', err);
   }
 }
 
@@ -515,6 +645,7 @@ function setupEvents() {
   });
   document.getElementById('cardModeBtn').addEventListener('click', () => showMode('card'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
+  document.getElementById('imageModeBtn').addEventListener('click', () => showMode('image'));
   document.getElementById('quizSetSelect').addEventListener('change', event => {
     termState.quizSetIndex = Number(event.target.value) || 0;
     termState.quiz = null;
@@ -527,6 +658,19 @@ function setupEvents() {
     document.getElementById('quizTotal').textContent = set.length || QUIZ_SET_SIZE;
     renderQuizOverview();
   });
+  document.getElementById('imageSetSelect').addEventListener('change', event => {
+    termState.imageSetIndex = Number(event.target.value) || 0;
+    termState.imageQuiz = null;
+    document.getElementById('imageResult').classList.add('hidden');
+    document.getElementById('imageOptions').innerHTML = '';
+    document.getElementById('imageFeedback').textContent = '';
+    document.getElementById('imagePrompt').innerHTML = '写真を見て、名前を選んでください<br>Nhìn hình và chọn tên đúng';
+    document.getElementById('imageQuestionImg').style.display = 'none';
+    document.getElementById('imageNow').textContent = '0';
+    const set = getImageSets()[termState.imageSetIndex] || [];
+    document.getElementById('imageTotal').textContent = set.length || getImageSetSize();
+    renderImageOverview();
+  });
   document.getElementById('toolsToggleBtn').addEventListener('click', () => {
     const isOpen = document.body.classList.toggle('show-tools');
     document.getElementById('toolsToggleBtn').innerHTML = isOpen
@@ -538,6 +682,12 @@ function setupEvents() {
     if (!termState.quiz) return;
     termState.quiz.index += 1;
     renderQuiz();
+  });
+  document.getElementById('startImageQuizBtn').addEventListener('click', startImageQuiz);
+  document.getElementById('nextImageQuizBtn').addEventListener('click', () => {
+    if (!termState.imageQuiz) return;
+    termState.imageQuiz.index += 1;
+    renderImageQuiz();
   });
 }
 
@@ -559,5 +709,6 @@ function setupEvents() {
   });
   setupEvents();
   applyFilters();
+  renderImageOverview();
   renderStats();
 })();
