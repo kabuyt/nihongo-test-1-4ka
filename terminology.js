@@ -3,14 +3,47 @@ const TEST_STORAGE_KEY = 'kinreiTerminologyTestSets:v1';
 const QUIZ_SET_SIZE = 10;
 const TERM_OVERRIDES = {
   'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
-  'kinrei-mono-103': { display: '済み・未', reading: 'ずみ・み' },
+  'kinrei-mono-011': { display: '手袋（薄手・厚手）', reading: 'てぶくろ', inline: '手袋(てぶくろ)（薄手・厚手）' },
+  'kinrei-mono-015': { display: '水切り', reading: 'みずきり', inline: '水切り(みずきり)' },
+  'kinrei-mono-043': { display: '前日仕込み', reading: 'ぜんじつしこみ', inline: '前日仕込み(ぜんじつしこみ)' },
+  'kinrei-mono-051': { display: '鉄の爪', reading: 'てつのつめ', inline: '鉄の爪(てつのつめ)' },
+  'kinrei-mono-063': { display: '先出し', reading: 'さきだし', inline: '先出し(さきだし)' },
+  'kinrei-mono-077': { display: '歩留り', reading: 'ぶどまり', inline: '歩留り(ぶどまり)' },
+  'kinrei-mono-087': { display: '手洗い', reading: 'てあらい', inline: '手洗い(てあらい)' },
+  'kinrei-mono-089': { display: '外泊申請書', reading: 'がいはくしんせいしょ', inline: '外泊申請書(がいはくしんせいしょ)' },
+  'kinrei-mono-092': { display: '社員、準社員', reading: 'しゃいん、じゅんしゃいん', inline: '社員(しゃいん)、準社員(じゅんしゃいん)' },
+  'kinrei-mono-093': { display: '自社パート', reading: 'じしゃぱーと', inline: '自社パート(じしゃぱーと)' },
+  'kinrei-mono-098': { display: '早ご飯', reading: 'はやごはん', inline: '早ご飯(はやごはん)' },
+  'kinrei-mono-099': { display: '遅ご飯', reading: 'おそごはん', inline: '遅ご飯(おそごはん)' },
+  'kinrei-mono-100': { display: '早番・遅番', reading: 'はやばん・おそばん', inline: '早番(はやばん)・遅番(おそばん)' },
+  'kinrei-mono-103': { display: '済み・未', reading: 'ずみ・み', inline: '済み(ずみ)・未(み)' },
+  'kinrei-mono-104': { display: '引き継ぎ', reading: 'ひきつぎ', inline: '引き継ぎ(ひきつぎ)' },
   'kinrei-ingredients-001': { display: '麺、そば、うどん、ラーメン、きし麺', reading: 'めん、そば、うどん、ラーメン、きしめん' },
   'kinrei-ingredients-015': { display: 'ネギ、九条ネギ、青ネギ、白ネギ', reading: 'ねぎ、くじょうねぎ、あおねぎ、しろねぎ' },
+  'kinrei-ingredients-017': { display: '焦がし玉ねぎ', reading: 'こがしたまねぎ', inline: '焦がし玉ねぎ(こがしたまねぎ)' },
+  'kinrei-ingredients-018': { display: 'ちんげん菜', reading: 'ちんげんさい', inline: 'ちんげん菜(ちんげんさい)' },
+  'kinrei-ingredients-022': { display: 'パン粉', reading: 'ぱんこ', inline: 'パン粉(ぱんこ)' },
+  'kinrei-ingredients-038': { display: '竹の子', reading: 'たけのこ', inline: '竹の子(たけのこ)' },
   'kinrei-ingredients-041': { display: 'さば粉', reading: 'さばこ' },
+  'kinrei-ingredients-044': { display: 'きざみ揚げ', reading: 'きざみあげ', inline: 'きざみ揚げ(きざみあげ)' },
   'kinrei-ingredients-051': { display: '麩、仙台麩', reading: 'ふ、せんだいふ' },
+  'kinrei-ingredients-053': { display: '焼き餅', reading: 'やきもち', inline: '焼き餅(やきもち)' },
+  'kinrei-ingredients-055': { display: '天ぷら、海老天', reading: 'てんぷら、えびてん', inline: '天ぷら(てんぷら)、海老天(えびてん)' },
   'kinrei-ingredients-057': { display: 'のり、焼き海苔', reading: 'のり、やきのり' },
+  'kinrei-ingredients-059': { display: '千切り生姜2ミリ', reading: 'せんぎりしょうが2みり', inline: '千切り生姜2ミリ(せんぎりしょうが2みり)' },
+  'kinrei-verbs-004': { display: '濡れます・濡らします', reading: 'ぬれます・ぬらします', inline: '濡れます(ぬれます)・濡らします(ぬらします)' },
+  'kinrei-verbs-014': { display: '茹でます（ボイル）', reading: 'ゆでます', inline: '茹でます(ゆでます)（ボイル）' },
+  'kinrei-verbs-019': { display: '盛り付けます', reading: 'もりつけます', inline: '盛り付けます(もりつけます)' },
+  'kinrei-verbs-024': { display: '持ち込みます', reading: 'もちこみます', inline: '持ち込みます(もちこみます)' },
   'kinrei-verbs-031': { display: '混入します', reading: 'こんにゅうします' },
+  'kinrei-verbs-033': { display: '閉めます・開けます', reading: 'しめます・あけます', inline: '閉めます(しめます)・開けます(あけます)' },
+  'kinrei-verbs-034': { display: '破れます・破ります', reading: 'やぶれます・やぶります', inline: '破れます(やぶれます)・破ります(やぶります)' },
+  'kinrei-verbs-048': { display: '遅れます', reading: 'おくれます', inline: '遅れます(おくれます)' },
   'kinrei-positions-024': { display: 'ダシ入り口', reading: 'だしいりぐち' },
+  'kinrei-positions-001': { display: '盛り付け', reading: 'もりつけ', inline: '盛り付け(もりつけ)' },
+  'kinrei-positions-005': { display: '具出し', reading: 'ぐだし', inline: '具出し(ぐだし)' },
+  'kinrei-positions-011': { display: '混ぜ室', reading: 'まぜしつ', inline: '混ぜ室(まぜしつ)' },
+  'kinrei-positions-018': { display: '野菜移し替え', reading: 'やさいうつしかえ', inline: '野菜移し替え(やさいうつしかえ)' },
   'kinrei-positions-026': { display: '箱盛り', reading: 'はこもり' },
   'kinrei-positions-027': { display: '盛り付け', reading: 'もりつけ' },
   'kinrei-positions-028': { display: 'はかり使用有り', reading: 'はかりしようあり' },
@@ -249,12 +282,21 @@ function displayTermForTerm(term) {
 }
 
 function displayTermWithReading(term) {
+  if (TERM_OVERRIDES[term.id]?.inline) return TERM_OVERRIDES[term.id].inline;
   const display = displayTermForTerm(term);
   const reading = readingForTerm(term);
   if (!reading || !hasKanji(display)) return display;
 
   const kanjiParts = display.match(/[\u4e00-\u9fff々]+/g) || [];
   if (!kanjiParts.length) return display;
+  const rawReadingParts = collectHiraganaParts(term.term);
+  if (kanjiParts.length === rawReadingParts.length && !rawReadingsIncludeOkurigana(display, rawReadingParts)) {
+    let index = 0;
+    return display.replace(/[\u4e00-\u9fff々]+/g, part => {
+      const partReading = rawReadingParts[index++];
+      return partReading ? `${part}(${partReading})` : part;
+    });
+  }
   if (kanjiParts.length === 1 && !display.trim().endsWith(kanjiParts[0])) return `${display}(${reading})`;
   const readingParts = reading.split(/[・、,，\s]+/).filter(Boolean);
   let parts = [];
@@ -272,6 +314,15 @@ function displayTermWithReading(term) {
   return display.replace(/[\u4e00-\u9fff々]+/g, part => {
     const partReading = parts[index++];
     return partReading ? `${part}(${partReading})` : part;
+  });
+}
+
+function rawReadingsIncludeOkurigana(display, rawReadingParts) {
+  const matches = [...String(display || '').matchAll(/[\u4e00-\u9fff々]+/g)];
+  return matches.some((match, index) => {
+    const after = String(display || '').slice(match.index + match[0].length);
+    const okurigana = (after.match(/^[ぁ-ん]+/) || [''])[0];
+    return okurigana && rawReadingParts[index]?.startsWith(okurigana);
   });
 }
 
