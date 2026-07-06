@@ -1,5 +1,46 @@
 const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
 const QUIZ_SET_SIZE = 10;
+const TERM_OVERRIDES = {
+  'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
+  'kinrei-mono-103': { display: '済み・未', reading: 'ずみ・み' },
+  'kinrei-ingredients-001': { display: '麺、そば、うどん、ラーメン、きし麺', reading: 'めん、そば、うどん、ラーメン、きしめん' },
+  'kinrei-ingredients-015': { display: 'ネギ、九条ネギ、青ネギ、白ネギ', reading: 'ねぎ、くじょうねぎ、あおねぎ、しろねぎ' },
+  'kinrei-ingredients-041': { display: 'さば粉', reading: 'さばこ' },
+  'kinrei-ingredients-051': { display: '麩、仙台麩', reading: 'ふ、せんだいふ' },
+  'kinrei-ingredients-057': { display: 'のり、焼き海苔', reading: 'のり、やきのり' },
+  'kinrei-verbs-031': { display: '混入します', reading: 'こんにゅうします' },
+  'kinrei-positions-024': { display: 'ダシ入り口', reading: 'だしいりぐち' },
+  'kinrei-positions-026': { display: '箱盛り', reading: 'はこもり' },
+  'kinrei-positions-027': { display: '盛り付け', reading: 'もりつけ' },
+  'kinrei-positions-028': { display: 'はかり使用有り', reading: 'はかりしようあり' },
+  'kinrei-positions-029': { display: 'タイマー使用有り', reading: 'たいまーしようあり' },
+  'kinrei-positions-031': { display: 'トレー調整', reading: 'とれーちょうせい' },
+  'kinrei-positions-037': { display: 'トレー流し', reading: 'とれーながし' },
+  'kinrei-positions-041': { display: '小袋', reading: 'こぶくろ' },
+  'kinrei-positions-042': { display: '具チェック', reading: 'ぐちぇっく' },
+  'kinrei-positions-043': { display: '外袋', reading: 'がいぶくろ' },
+  'kinrei-positions-045': { display: '向き替え', reading: 'むきかえ' },
+  'kinrei-positions-048': { display: '箱入れ', reading: 'はこいれ' },
+  'kinrei-positions-052': { display: 'スープ出し', reading: 'すーぷだし' },
+  'kinrei-positions-053': { display: 'スープ入れ', reading: 'すーぷいれ' },
+  'kinrei-positions-054': { display: 'スープ運び', reading: 'すーぷはこび' },
+  'kinrei-positions-055': { display: '押さえ', reading: 'おさえ' },
+  'kinrei-positions-021': { display: 'ごみ場', reading: 'ごみば' },
+  'kinrei-positions-023': { display: '洗い場', reading: 'あらいば' },
+  'kinrei-positions-032': { display: '具出し', reading: 'ぐだし' },
+  'kinrei-positions-034': { display: '入り口', reading: 'いりぐち' },
+  'kinrei-positions-049': { display: '箱作り', reading: 'はこづくり' },
+  'kinrei-mono-066': { display: 'お湯', reading: 'おゆ' },
+  'kinrei-mono-107': { display: '刃こぼれ', reading: 'はこぼれ' },
+  'kinrei-ingredients-005': { display: '玉ねぎ', reading: 'たまねぎ' },
+  'kinrei-ingredients-006': { display: 'ごま油', reading: 'ごまあぶら' },
+  'kinrei-ingredients-027': { display: 'ごま油', reading: 'ごまあぶら' },
+  'kinrei-ingredients-018': { display: 'ちんげん菜', reading: 'ちんげんさい' },
+  'kinrei-ingredients-035': { display: 'ほうれん草', reading: 'ほうれんそう' },
+  'kinrei-ingredients-046': { display: 'さつま揚げ', reading: 'さつまあげ' },
+  'kinrei-ingredients-074': { display: '牛もつ', reading: 'ぎゅうもつ' },
+  'kinrei-ingredients-081': { display: 'なま肉', reading: 'なまにく' },
+};
 
 let termState = {
   terms: [],
@@ -165,6 +206,9 @@ function statusLabel(status) {
 }
 
 function readingForTerm(term) {
+  if (TERM_OVERRIDES[term.id]?.reading) return TERM_OVERRIDES[term.id].reading;
+  const verb = parseVerbReading(term.term);
+  if (verb) return verb.reading;
   const text = String(term.term || '').trim();
   if (!text) return '';
   const inlineReading = collectHiraganaParts(text);
@@ -178,6 +222,9 @@ function readingForTerm(term) {
 }
 
 function displayTermForTerm(term) {
+  if (TERM_OVERRIDES[term.id]?.display) return TERM_OVERRIDES[term.id].display;
+  const verb = parseVerbReading(term.term);
+  if (verb) return verb.display;
   const text = String(term.term || '').trim();
   if (!hasKanji(text)) return text;
   return [...text].filter(ch => !isHiragana(ch)).join('').replace(/\s+/g, ' ').trim();
@@ -186,6 +233,26 @@ function displayTermForTerm(term) {
 function isHiragana(ch) {
   const cp = ch.codePointAt(0);
   return cp >= 0x3041 && cp <= 0x3096;
+}
+
+function parseVerbReading(value) {
+  const text = String(value || '').trim();
+  const match = text.match(/^(.+ます)([ぁ-ん]+)$/);
+  if (!match || !hasKanji(match[1])) return null;
+  const display = match[1];
+  const suffix = collectTrailingHiragana(display);
+  let stem = match[2];
+  if (suffix && stem.endsWith(suffix[0])) stem = stem.slice(0, -1);
+  return { display, reading: `${stem}${suffix}` };
+}
+
+function collectTrailingHiragana(value) {
+  let suffix = '';
+  for (const ch of [...String(value || '')].reverse()) {
+    if (!isHiragana(ch)) break;
+    suffix = ch + suffix;
+  }
+  return suffix;
 }
 
 function isKatakana(ch) {
