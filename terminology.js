@@ -17,6 +17,8 @@ function esc(value) {
 }
 
 function isKinreiProfile(profile) {
+  const studentId = String(profile?.student_id || '').toUpperCase();
+  if (studentId === 'GRV001') return true;
   const company = String(profile?.company || '').toLowerCase();
   const group = String(profile?.class_group || '').toLowerCase();
   return company.includes('キンレイ') || company.includes('kinrei') || group.includes('キンレイ') || group.includes('kinrei');
