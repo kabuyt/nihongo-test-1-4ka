@@ -72,6 +72,9 @@
 .quiz-plan strong{color:#1a5276}
 .quiz-plan select{border:1px solid #bfd4e0;border-radius:9px;background:#fff;padding:10px;font-size:15px;min-width:180px}
 .quiz-plan span{color:#516271;font-size:14px}
+.test-progress{width:100%;height:12px;background:#dce8f0;border-radius:999px;overflow:hidden}
+.test-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#27ae60,#1a5276)}
+.quiz-question-img{width:100%;max-height:340px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px;margin-bottom:12px}
 .image-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
 .image-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
 .image-mode-tabs button.active{background:#1a5276;color:#fff}
@@ -122,12 +125,12 @@
 
 <main class="term-wrap">
   <section class="quick-start">
-    <h2>まずカードを1枚見てください</h2>
-    <p>Nhìn thẻ, bấm vào thẻ để xem nghĩa tiếng Việt. Nếu nhớ rồi thì bấm “Đã nhớ”.</p>
+    <h2>3つだけ進めます</h2>
+    <p>ことばを覚える → 写真で覚える → テストを受ける。テストは全36回です。</p>
     <div class="quick-steps">
-      <span>1. 日本語を見る<br>Nhìn tiếng Nhật</span>
-      <span>2. カードをタップ<br>Bấm vào thẻ</span>
-      <span>3. 覚えたら次へ<br>Nhớ rồi thì tiếp</span>
+      <span>1. ことば暗記<br>Học từ</span>
+      <span>2. 画像暗記<br>Học bằng hình</span>
+      <span>3. テスト 全36回<br>36 lần kiểm tra</span>
     </div>
   </section>
 
@@ -188,53 +191,27 @@
   </section>
 
   <section id="testPanel" class="term-panel hidden">
-    <div>
-      <div class="test-mode-tabs">
-        <button type="button" class="active" id="wordTestModeBtn">ことばテスト<br>Kiểm tra từ</button>
-        <button type="button" id="imageTestModeBtn">画像テスト<br>Kiểm tra hình</button>
-      </div>
-    </div>
-
     <div class="quiz-box" id="wordQuizBox">
       <div class="quiz-plan">
-        <strong>テストの回 / Lần kiểm tra</strong>
+        <strong>テスト / Kiểm tra</strong>
         <select id="quizSetSelect" aria-label="テストの回"></select>
         <span id="quizSetSummary">-</span>
+        <div class="test-progress" aria-label="テスト進捗"><span id="testProgressBar"></span></div>
+        <span id="testProgressText">0 / 36</span>
       </div>
       <div class="quiz-head">
-        <h2 id="quizPrompt">問題を開始してください<br>Hãy bắt đầu bài kiểm tra</h2>
+        <h2 id="quizPrompt">テストを始めてください<br>Bắt đầu kiểm tra</h2>
         <div class="quiz-score"><span id="quizNow">0</span>/<span id="quizTotal">10</span></div>
       </div>
+      <img id="quizQuestionImg" class="quiz-question-img" alt="画像問題" style="display:none">
       <div id="quizOptions" class="quiz-options"></div>
       <div id="quizFeedback" class="quiz-feedback"></div>
       <div class="quiz-actions">
-        <button type="button" class="btn-ok" id="startQuizBtn">10問テスト開始<br>Bắt đầu 10 câu</button>
+        <button type="button" class="btn-ok" id="startQuizBtn">テスト開始<br>Bắt đầu</button>
         <button type="button" class="btn-sub" id="nextQuizBtn" disabled>次の問題<br>Câu tiếp</button>
       </div>
     </div>
     <div id="quizResult" class="quiz-result hidden"></div>
-
-    <div class="quiz-box hidden" id="imageQuizBox">
-      <div class="quiz-plan">
-        <strong>画像問題 / Câu hỏi hình ảnh</strong>
-        <select id="imageSetSelect" aria-label="画像問題の回"></select>
-        <span id="imageSetSummary">-</span>
-      </div>
-      <div class="quiz-head">
-        <h2 id="imagePrompt">写真を見て、名前を選んでください<br>Nhìn hình và chọn tên đúng</h2>
-        <div class="quiz-score"><span id="imageNow">0</span>/<span id="imageTotal">10</span></div>
-      </div>
-      <div class="image-question">
-        <img id="imageQuestionImg" alt="物の名前の問題画像" style="display:none">
-        <div id="imageOptions" class="quiz-options"></div>
-      </div>
-      <div id="imageFeedback" class="quiz-feedback"></div>
-      <div class="quiz-actions">
-        <button type="button" class="btn-ok" id="startImageQuizBtn">画像問題を始める<br>Bắt đầu</button>
-        <button type="button" class="btn-sub" id="nextImageQuizBtn" disabled>次の問題<br>Câu tiếp</button>
-      </div>
-    </div>
-    <div id="imageResult" class="quiz-result hidden"></div>
   </section>
 
   <section id="imagePanel" class="term-panel hidden">
@@ -262,6 +239,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=10"></script>
+<script src="terminology.js?v=11"></script>
 </body>
 </html>
