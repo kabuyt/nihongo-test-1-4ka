@@ -148,7 +148,12 @@ function updateQuizProgress(termId, isCorrect) {
 }
 
 function statusLabel(status) {
-  return { new: '未学習', learning: '学習中', learned: '覚えた', review: '要復習' }[status || 'new'] || status;
+  return {
+    new: '未学習 / Chưa học',
+    learning: '学習中 / Đang học',
+    learned: '覚えた / Đã nhớ',
+    review: '要復習 / Cần ôn',
+  }[status || 'new'] || status;
 }
 
 function shuffle(items) {
@@ -196,7 +201,12 @@ function renderCard() {
   document.getElementById('cardTerm').style.display = termState.flipped ? 'none' : '';
   document.getElementById('cardKana').style.display = termState.flipped ? 'none' : '';
   document.getElementById('cardMeaning').style.display = termState.flipped ? '' : 'none';
-  document.getElementById('cardHint').textContent = termState.flipped ? '覚えたら下のボタンで記録します' : 'クリックすると意味を表示します';
+  document.getElementById('cardSideLabel').textContent = termState.flipped
+    ? '裏: ベトナム語 / Mặt sau: Tiếng Việt'
+    : '表: 日本語 / Mặt trước: Tiếng Nhật';
+  document.getElementById('cardHint').textContent = termState.flipped
+    ? '覚えたら下のボタンで記録します / Nếu đã nhớ, hãy bấm nút bên dưới'
+    : 'クリックするとベトナム語の意味を表示します / Nhấn để xem nghĩa tiếng Việt';
 
   if (!termState.filtered.length) {
     document.getElementById('cardCategory').textContent = '-';
@@ -274,7 +284,7 @@ function renderQuiz() {
   quiz.answered = false;
   document.getElementById('quizNow').textContent = quiz.index + 1;
   document.getElementById('quizTotal').textContent = quiz.questions.length;
-  document.getElementById('quizPrompt').textContent = `「${question.term}」の意味は？`;
+  document.getElementById('quizPrompt').textContent = `「${question.term}」の意味は？ / Nghĩa là gì?`;
   document.getElementById('quizFeedback').textContent = '';
   document.getElementById('nextQuizBtn').disabled = true;
   document.getElementById('quizOptions').innerHTML = options.map(option =>
@@ -297,7 +307,7 @@ function answerQuiz(selectedId) {
     if (button.dataset.id === question.id) button.classList.add('correct');
     if (button.dataset.id === selectedId && !ok) button.classList.add('wrong');
   });
-  document.getElementById('quizFeedback').textContent = ok ? '正解です' : `正解: ${question.meaningVi}`;
+  document.getElementById('quizFeedback').textContent = ok ? '正解です / Đúng rồi' : `正解 / Đáp án: ${question.meaningVi}`;
   document.getElementById('nextQuizBtn').disabled = false;
   renderStats();
   renderList();
@@ -307,12 +317,12 @@ async function finishQuiz() {
   const quiz = termState.quiz;
   if (!quiz) return;
   const rate = quiz.questions.length ? Math.round((quiz.correct / quiz.questions.length) * 100) : 0;
-  document.getElementById('quizPrompt').textContent = 'テスト完了';
+  document.getElementById('quizPrompt').textContent = 'テスト完了 / Hoàn thành';
   document.getElementById('quizOptions').innerHTML = '';
   document.getElementById('quizFeedback').textContent = '';
   document.getElementById('nextQuizBtn').disabled = true;
   document.getElementById('quizResult').classList.remove('hidden');
-  document.getElementById('quizResult').innerHTML = `<strong>${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>間違えた用語は「要復習」に入りました。</p>`;
+  document.getElementById('quizResult').innerHTML = `<strong>${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>間違えた用語は「要復習」に入りました。<br>Từ sai sẽ được đưa vào mục Cần ôn.</p>`;
 
   if (!termState.profile?.id) return;
   try {

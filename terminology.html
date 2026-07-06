@@ -37,6 +37,7 @@
 .term-main{font-size:38px;line-height:1.3;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere}
 .term-kana{font-size:18px;color:#666;margin-top:10px}
 .term-meaning{font-size:30px;line-height:1.4;color:#1a5276;font-weight:bold}
+.card-side-label{font-size:12px;font-weight:bold;color:#6b7b88;margin-bottom:8px;letter-spacing:.04em}
 .flash-card .hint{font-size:13px;color:#999;margin-top:22px}
 .card-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .card-actions button,.quiz-actions button{padding:11px 16px;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
@@ -91,28 +92,28 @@
   <section class="term-hero">
     <div>
       <h2>キンレイ専門用語</h2>
-      <p>カードで覚えて、4択テストで確認します。間違えた単語は「要復習」に入ります。</p>
+      <p>カードをクリックして裏返し、ベトナム語の意味を確認します。<br>Nhấn vào thẻ để lật và kiểm tra nghĩa tiếng Việt.</p>
     </div>
     <div class="term-stats">
-      <div><b id="statLearned">0</b><span>覚えた</span></div>
-      <div><b id="statReview">0</b><span>要復習</span></div>
-      <div><b id="statRate">0%</b><span>正答率</span></div>
+      <div><b id="statLearned">0</b><span>覚えた<br>Đã nhớ</span></div>
+      <div><b id="statReview">0</b><span>要復習<br>Cần ôn</span></div>
+      <div><b id="statRate">0%</b><span>正答率<br>Tỷ lệ đúng</span></div>
     </div>
   </section>
 
   <section class="term-toolbar">
-    <select id="categoryFilter" aria-label="カテゴリ"><option value="">全カテゴリ</option></select>
+    <select id="categoryFilter" aria-label="カテゴリ"><option value="">全カテゴリ / Tất cả</option></select>
     <select id="statusFilter" aria-label="進捗">
-      <option value="">全ステータス</option>
-      <option value="new">未学習</option>
-      <option value="learning">学習中</option>
-      <option value="learned">覚えた</option>
-      <option value="review">要復習</option>
+      <option value="">全ステータス / Tất cả</option>
+      <option value="new">未学習 / Chưa học</option>
+      <option value="learning">学習中 / Đang học</option>
+      <option value="learned">覚えた / Đã nhớ</option>
+      <option value="review">要復習 / Cần ôn</option>
     </select>
-    <input type="search" id="termSearch" placeholder="日本語・カタカナ・ベトナム語で検索">
+    <input type="search" id="termSearch" placeholder="日本語・カタカナ・ベトナム語で検索 / Tìm kiếm">
     <div class="mode-tabs">
-      <button type="button" class="active" id="cardModeBtn">暗記カード</button>
-      <button type="button" id="testModeBtn">確認テスト</button>
+      <button type="button" class="active" id="cardModeBtn">暗記カード<br>Thẻ ghi nhớ</button>
+      <button type="button" id="testModeBtn">確認テスト<br>Kiểm tra</button>
     </div>
   </section>
 
@@ -120,22 +121,23 @@
     <div class="card-box">
       <div class="flash-card" id="termCard" tabindex="0">
         <span class="chip" id="cardCategory">-</span>
+        <div class="card-side-label" id="cardSideLabel">表: 日本語 / Mặt trước: Tiếng Nhật</div>
         <div class="term-main" id="cardTerm">読み込み中...</div>
         <div class="term-kana" id="cardKana"></div>
         <div class="term-meaning" id="cardMeaning" style="display:none"></div>
-        <p class="hint" id="cardHint">クリックすると意味を表示します</p>
+        <p class="hint" id="cardHint">クリックするとベトナム語の意味を表示します</p>
       </div>
       <div class="card-actions">
-        <button type="button" class="btn-sub" id="prevCardBtn">前へ</button>
-        <button type="button" class="btn-review" id="reviewBtn">要復習</button>
-        <button type="button" class="btn-ok" id="learnedBtn">覚えた</button>
-        <button type="button" class="btn-sub" id="nextCardBtn">次へ</button>
+        <button type="button" class="btn-sub" id="prevCardBtn">前へ<br>Trước</button>
+        <button type="button" class="btn-review" id="reviewBtn">要復習<br>Cần ôn</button>
+        <button type="button" class="btn-ok" id="learnedBtn">覚えた<br>Đã nhớ</button>
+        <button type="button" class="btn-sub" id="nextCardBtn">次へ<br>Tiếp</button>
       </div>
     </div>
     <div class="term-list-box">
       <div class="term-list-head">
         <strong id="visibleCount">0語</strong>
-        <button type="button" class="btn-sub" id="resetProgressBtn">リセット</button>
+        <button type="button" class="btn-sub" id="resetProgressBtn">リセット<br>Xóa</button>
       </div>
       <div id="termList" class="term-list"></div>
     </div>
@@ -144,14 +146,14 @@
   <section id="testPanel" class="term-panel hidden">
     <div class="quiz-box">
       <div class="quiz-head">
-        <h2 id="quizPrompt">問題を開始してください</h2>
+        <h2 id="quizPrompt">問題を開始してください<br>Hãy bắt đầu bài kiểm tra</h2>
         <div class="quiz-score"><span id="quizNow">0</span>/<span id="quizTotal">10</span></div>
       </div>
       <div id="quizOptions" class="quiz-options"></div>
       <div id="quizFeedback" class="quiz-feedback"></div>
       <div class="quiz-actions">
-        <button type="button" class="btn-ok" id="startQuizBtn">10問テスト開始</button>
-        <button type="button" class="btn-sub" id="nextQuizBtn" disabled>次の問題</button>
+        <button type="button" class="btn-ok" id="startQuizBtn">10問テスト開始<br>Bắt đầu 10 câu</button>
+        <button type="button" class="btn-sub" id="nextQuizBtn" disabled>次の問題<br>Câu tiếp</button>
       </div>
     </div>
     <div id="quizResult" class="quiz-result hidden"></div>
