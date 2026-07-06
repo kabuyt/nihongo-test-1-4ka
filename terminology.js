@@ -156,6 +156,90 @@ function statusLabel(status) {
   }[status || 'new'] || status;
 }
 
+function readingForTerm(term) {
+  const text = String(term.term || '').trim();
+  if (!text) return '';
+  const inlineReading = collectHiraganaParts(text);
+  const kanaReading = cleanKanaReading(term.kana);
+  if (inlineReading.length) {
+    const joined = inlineReading.join('・');
+    return shouldPreferKanaReading(text, joined, kanaReading) ? kanaReading : joined;
+  }
+  if (isKatakanaOnly(text)) return text;
+  return kanaReading || '';
+}
+
+function displayTermForTerm(term) {
+  const text = String(term.term || '').trim();
+  if (!hasKanji(text)) return text;
+  return [...text].filter(ch => !isHiragana(ch)).join('').replace(/\s+/g, ' ').trim();
+}
+
+function isHiragana(ch) {
+  const cp = ch.codePointAt(0);
+  return cp >= 0x3041 && cp <= 0x3096;
+}
+
+function isKatakana(ch) {
+  const cp = ch.codePointAt(0);
+  return (cp >= 0x30a1 && cp <= 0x30fa) || cp === 0x30fc;
+}
+
+function hasKanji(text) {
+  return [...text].some(ch => {
+    const cp = ch.codePointAt(0);
+    return (cp >= 0x4e00 && cp <= 0x9fff) || cp === 0x3005;
+  });
+}
+
+function isKatakanaOnly(text) {
+  const chars = [...text].filter(ch => !/[\s・（）()、,]/.test(ch));
+  return chars.length > 0 && chars.every(isKatakana);
+}
+
+function cleanKanaReading(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const chars = [...text].filter(ch => !/[\s・（）()、,]/.test(ch));
+  return chars.length > 0 && chars.every(isKatakana) ? text : '';
+}
+
+function shouldPreferKanaReading(termText, inlineReading, kanaReading) {
+  if (!kanaReading) return false;
+  if (!inlineReading) return true;
+  if (normalizeReading(inlineReading) !== normalizeReading(katakanaToHiragana(kanaReading))) return true;
+  if (inlineReading.length <= 2 && kanaReading.length > inlineReading.length) return true;
+  if (hasKanji(termText) && /[\u30a1-\u30fa]/.test(termText) && kanaReading.length > inlineReading.length) return true;
+  return false;
+}
+
+function katakanaToHiragana(value) {
+  return [...String(value || '')].map(ch => {
+    const cp = ch.codePointAt(0);
+    if (cp >= 0x30a1 && cp <= 0x30f6) return String.fromCodePoint(cp - 0x60);
+    return ch;
+  }).join('');
+}
+
+function normalizeReading(value) {
+  return String(value || '').replace(/[\s・（）()、,]/g, '').toLowerCase();
+}
+
+function collectHiraganaParts(text) {
+  const parts = [];
+  let current = '';
+  for (const ch of text) {
+    if (isHiragana(ch)) {
+      current += ch;
+    } else if (current) {
+      parts.push(current);
+      current = '';
+    }
+  }
+  if (current) parts.push(current);
+  return parts;
+}
+
 function shuffle(items) {
   const arr = [...items];
   for (let i = arr.length - 1; i > 0; i -= 1) {
@@ -217,13 +301,14 @@ function renderCard() {
   }
 
   const term = termState.filtered[termState.currentIndex];
+  const reading = readingForTerm(term);
   if (getProgress(term.id).status === 'new') {
     termState.progress[term.id] = { ...getProgress(term.id), status: 'learning', updatedAt: new Date().toISOString() };
     saveLocalProgress();
   }
   document.getElementById('cardCategory').textContent = term.category;
-  document.getElementById('cardTerm').textContent = term.term;
-  document.getElementById('cardKana').textContent = term.kana || '読み未登録';
+  document.getElementById('cardTerm').textContent = displayTermForTerm(term);
+  document.getElementById('cardKana').textContent = reading ? `読み: ${reading} / Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
   renderStats();
 }
