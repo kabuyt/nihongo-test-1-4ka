@@ -248,6 +248,40 @@ function displayTermForTerm(term) {
   return [...text].filter(ch => !isHiragana(ch)).join('').replace(/\s+/g, ' ').trim();
 }
 
+function displayTermWithReading(term) {
+  const display = displayTermForTerm(term);
+  const reading = readingForTerm(term);
+  if (!reading || !hasKanji(display)) return display;
+
+  const kanjiParts = display.match(/[\u4e00-\u9fff々]+/g) || [];
+  if (!kanjiParts.length) return display;
+  if (kanjiParts.length === 1 && !display.trim().endsWith(kanjiParts[0])) return `${display}(${reading})`;
+  const readingParts = reading.split(/[・、,，\s]+/).filter(Boolean);
+  let parts = [];
+
+  if (kanjiParts.length === readingParts.length) {
+    parts = readingParts;
+  } else if (kanjiParts.length > 1 && kanjiParts.every(part => part === kanjiParts[0])) {
+    const repeated = splitRepeatedReading(reading, kanjiParts.length);
+    if (repeated) parts = Array(kanjiParts.length).fill(repeated);
+  }
+
+  if (!parts.length) return `${display}(${reading})`;
+
+  let index = 0;
+  return display.replace(/[\u4e00-\u9fff々]+/g, part => {
+    const partReading = parts[index++];
+    return partReading ? `${part}(${partReading})` : part;
+  });
+}
+
+function splitRepeatedReading(reading, count) {
+  const text = String(reading || '').replace(/[・、,，\s]/g, '');
+  if (!text || text.length % count !== 0) return '';
+  const unit = text.slice(0, text.length / count);
+  return unit.repeat(count) === text ? unit : '';
+}
+
 function isHiragana(ch) {
   const cp = ch.codePointAt(0);
   return cp >= 0x3041 && cp <= 0x3096;
@@ -401,7 +435,7 @@ function renderCard() {
     saveLocalProgress();
   }
   document.getElementById('cardCategory').textContent = term.category;
-  document.getElementById('cardTerm').textContent = displayTermForTerm(term);
+  document.getElementById('cardTerm').textContent = displayTermWithReading(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
   renderStats();
@@ -416,7 +450,7 @@ function renderList() {
     return `
       <button type="button" class="term-row ${index === termState.currentIndex ? 'active' : ''}" data-index="${index}">
         <span>
-          <strong>${esc(displayTermForTerm(term))}</strong>
+          <strong>${esc(displayTermWithReading(term))}</strong>
           ${reading ? `<small class="term-reading">Cách đọc: ${esc(reading)}</small>` : ''}
           <small>${esc(term.meaningVi)}</small>
         </span>
@@ -438,7 +472,7 @@ function getUnifiedTestItems() {
   const wordItems = termState.terms.map(term => ({
     type: 'word',
     id: term.id,
-    prompt: displayTermForTerm(term),
+    prompt: displayTermWithReading(term),
     reading: readingForTerm(term),
     answer: term.meaningVi,
     source: term,
@@ -573,9 +607,7 @@ function renderQuiz() {
   quiz.answered = false;
   document.getElementById('quizNow').textContent = quiz.index + 1;
   document.getElementById('quizTotal').textContent = quiz.questions.length;
-  const wordTitle = question.reading
-    ? `${esc(question.prompt)}(${esc(question.reading)})`
-    : esc(question.prompt);
+  const wordTitle = esc(question.prompt);
   document.getElementById('quizPrompt').innerHTML = question.type === 'image'
     ? '写真を見てください<br><small>正しい名前を選んでください / Chọn tên đúng</small>'
     : `${wordTitle}<br><small>正しい意味を選んでください（ベトナム語） / Chọn nghĩa đúng</small>`;
