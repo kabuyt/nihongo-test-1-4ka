@@ -337,10 +337,10 @@ function updateQuizProgress(termId, isCorrect) {
 
 function statusLabel(status) {
   return {
-    new: '未学習 / Chưa học',
-    learning: '学習中 / Đang học',
-    learned: '覚えた / Đã nhớ',
-    review: '要復習 / Cần ôn',
+    new: 'Chưa học / 未学習',
+    learning: 'Đang học / 学習中',
+    learned: 'Đã nhớ / 覚えた',
+    review: 'Cần ôn / 要復習',
   }[status || 'new'] || status;
 }
 
@@ -563,7 +563,7 @@ function setCardProgress(prefix, globalNumber) {
   const learned = learnedItemCount();
   const learnedRate = total ? Math.round((learned / total) * 100) : 0;
   const positionRate = total ? Math.round((globalNumber / total) * 100) : 0;
-  document.getElementById(`${prefix}ProgressLabel`).textContent = `全体 ${globalNumber} / ${total}・覚えた ${learned} / ${total}`;
+  document.getElementById(`${prefix}ProgressLabel`).textContent = `Thẻ ${globalNumber} / ${total}・Đã nhớ ${learned} / ${total}`;
   document.getElementById(`${prefix}ProgressPercent`).textContent = `${learnedRate}%`;
   document.getElementById(`${prefix}ProgressBar`).style.width = `${positionRate}%`;
 }
@@ -602,35 +602,35 @@ function renderCard() {
   document.getElementById('cardKana').style.display = termState.flipped ? 'none' : '';
   document.getElementById('cardMeaning').style.display = termState.flipped ? '' : 'none';
   document.getElementById('cardSideLabel').textContent = termState.flipped
-    ? 'ベトナム語の意味 / Nghĩa tiếng Việt'
-    : '日本語 / Tiếng Nhật';
+    ? 'Nghĩa tiếng Việt / ベトナム語の意味'
+    : 'Tiếng Nhật / 日本語';
   document.getElementById('cardHint').textContent = termState.flipped
-    ? '覚えたら「覚えた」を押します / Nhớ rồi thì bấm “Đã nhớ”'
-    : 'カードをタップしてください / Bấm vào thẻ';
+    ? 'Nhớ rồi thì bấm “Đã nhớ” / 覚えたら「覚えた」'
+    : 'Bấm vào thẻ / カードをタップ';
 
   if (!termState.filtered.length) {
     document.getElementById('cardCategory').textContent = '-';
-    document.getElementById('cardNumber').textContent = `全体 ${totalLearningItems()} / ${totalLearningItems()}`;
+    document.getElementById('cardNumber').textContent = `Thẻ ${totalLearningItems()} / ${totalLearningItems()}`;
     setCardProgress('card', learnedItemCount());
     document.getElementById('cardImage').style.display = 'none';
     document.getElementById('cardTerm').style.display = '';
-    document.getElementById('cardTerm').textContent = 'すべて覚えました';
+    document.getElementById('cardTerm').textContent = 'Đã nhớ hết';
     document.getElementById('cardKana').textContent = '';
     document.getElementById('cardMeaning').textContent = '';
-    document.getElementById('cardHint').textContent = '覚えたカードタブで確認できます / Xem lại ở tab thẻ đã nhớ';
+    document.getElementById('cardHint').textContent = 'Xem lại ở tab thẻ đã nhớ / 覚えたカードで確認';
     return;
   }
 
   const cardItem = termState.filtered[termState.currentIndex];
   const term = cardItem.source;
   document.getElementById('cardCategory').textContent = cardItem.type === 'word' ? 'ことば' : '写真';
-  document.getElementById('cardNumber').textContent = `全体 ${cardItem.globalNumber} / ${totalLearningItems()}`;
+  document.getElementById('cardNumber').textContent = `Thẻ ${cardItem.globalNumber} / ${totalLearningItems()}`;
   setCardProgress('card', cardItem.globalNumber);
 
   if (cardItem.type === 'image') {
     document.getElementById('cardSideLabel').textContent = termState.flipped
-      ? '名前 / Tên'
-      : '写真 / Hình ảnh';
+      ? 'Tên / 名前'
+      : 'Hình ảnh / 写真';
     document.getElementById('cardImage').style.display = termState.flipped ? 'none' : '';
     document.getElementById('cardImage').src = term.image;
     document.getElementById('cardTerm').style.display = termState.flipped ? '' : 'none';
@@ -640,8 +640,8 @@ function renderCard() {
     document.getElementById('cardKana').textContent = term.reading ? `Cách đọc: ${term.reading}` : '';
     document.getElementById('cardMeaning').textContent = '';
     document.getElementById('cardHint').textContent = termState.flipped
-      ? '覚えたら「覚えた」を押します / Nhớ rồi thì bấm “Đã nhớ”'
-      : '写真をタップしてください / Bấm vào hình';
+      ? 'Nhớ rồi thì bấm “Đã nhớ” / 覚えたら「覚えた」'
+      : 'Bấm vào hình / 写真をタップ';
     renderStats();
     return;
   }
@@ -724,7 +724,7 @@ function renderArchive() {
         <em class="status-pill">${esc(item.type)} / ${esc(item.typeVi)}</em>
       </div>
     `).join('')
-    : '<p class="hint">まだ覚えたカードはありません。<br>Chưa có thẻ đã nhớ.</p>';
+    : '<p class="hint">Chưa có thẻ đã nhớ.<br>まだ覚えたカードはありません。</p>';
 }
 
 function getUnifiedTestItems() {
