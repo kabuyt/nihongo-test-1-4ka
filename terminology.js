@@ -190,7 +190,7 @@ function getImageProgress(imageId) {
 }
 
 async function saveImageCardProgress(status) {
-  const item = getImageItems()[termState.imageCardIndex];
+  const item = getActiveImageItems()[termState.imageCardIndex];
   if (!item) return;
   termState.imageProgress[item.id] = { ...getImageProgress(item.id), status, updatedAt: new Date().toISOString() };
   saveImageProgress();
@@ -206,7 +206,15 @@ async function saveImageCardProgress(status) {
       console.warn('image progress save skipped', err);
     }
   }
-  moveImageCard(1);
+  if (status === 'learned') {
+    termState.imageCardFlipped = false;
+    if (termState.imageCardIndex >= getActiveImageItems().length) termState.imageCardIndex = 0;
+    renderImageCard();
+    renderArchive();
+    renderStats();
+  } else {
+    moveImageCard(1);
+  }
 }
 
 function testSetKey() {
@@ -553,22 +561,15 @@ function renderStats() {
 }
 
 function applyFilters() {
-  const category = document.getElementById('categoryFilter').value;
-  const status = document.getElementById('statusFilter').value;
-  const query = document.getElementById('termSearch').value.trim().toLowerCase();
-
   termState.filtered = termState.terms.filter(term => {
     const progress = getProgress(term.id);
-    if (category && term.category !== category) return false;
-    if (status && progress.status !== status) return false;
-    if (!query) return true;
-    return [term.term, term.kana, term.meaningVi, term.category]
-      .some(value => String(value || '').toLowerCase().includes(query));
+    return progress.status !== 'learned';
   });
   if (termState.currentIndex >= termState.filtered.length) termState.currentIndex = 0;
   termState.flipped = false;
   renderCard();
   renderList();
+  renderArchive();
   renderQuizOverview();
 }
 
@@ -609,8 +610,10 @@ function renderCard() {
 }
 
 function renderList() {
-  document.getElementById('visibleCount').textContent = `${termState.filtered.length}語`;
+  const visibleCount = document.getElementById('visibleCount');
   const list = document.getElementById('termList');
+  if (!visibleCount || !list) return;
+  document.getElementById('visibleCount').textContent = `${termState.filtered.length}語`;
   list.innerHTML = termState.filtered.map((term, index) => {
     const progress = getProgress(term.id);
     const reading = readingForTerm(term);
@@ -633,6 +636,45 @@ function renderList() {
       renderList();
     });
   });
+}
+
+function renderArchive() {
+  const list = document.getElementById('archiveList');
+  const count = document.getElementById('archiveCount');
+  if (!list || !count) return;
+
+  const learnedWords = termState.terms
+    .filter(term => getProgress(term.id).status === 'learned')
+    .map(term => ({
+      type: '文字',
+      typeVi: 'Thẻ chữ',
+      title: displayTermWithReading(term),
+      sub: term.meaningVi,
+      reading: readingForTerm(term),
+    }));
+  const learnedImages = getImageItems()
+    .filter(item => getImageProgress(item.id).status === 'learned')
+    .map(item => ({
+      type: '写真',
+      typeVi: 'Thẻ hình',
+      title: item.term,
+      sub: item.reading ? `Cách đọc: ${item.reading}` : '',
+      reading: '',
+    }));
+  const items = [...learnedWords, ...learnedImages];
+  count.textContent = `${items.length}件`;
+  list.innerHTML = items.length
+    ? items.map(item => `
+      <div class="archive-row">
+        <span>
+          <strong>${esc(item.title)}</strong>
+          ${item.reading ? `<small>Cách đọc: ${esc(item.reading)}</small>` : ''}
+          ${item.sub ? `<small>${esc(item.sub)}</small>` : ''}
+        </span>
+        <em class="status-pill">${esc(item.type)} / ${esc(item.typeVi)}</em>
+      </div>
+    `).join('')
+    : '<p class="hint">まだ覚えたカードはありません。<br>Chưa có thẻ đã nhớ.</p>';
 }
 
 function getUnifiedTestItems() {
@@ -716,9 +758,24 @@ function getImageItems() {
   return window.KINREI_IMAGE_QUIZ?.items || [];
 }
 
+function getActiveImageItems() {
+  return getImageItems().filter(item => getImageProgress(item.id).status !== 'learned');
+}
+
 function renderImageCard() {
-  const items = getImageItems();
-  if (!items.length) return;
+  const items = getActiveImageItems();
+  if (!items.length) {
+    document.getElementById('imageCard').classList.remove('flipped');
+    document.getElementById('imageCardCount').textContent = '写真 No. -';
+    document.getElementById('imageCardStatus').textContent = 'すべて覚えました / Đã nhớ hết';
+    document.getElementById('imageCardImg').removeAttribute('src');
+    document.getElementById('imageCardTerm').textContent = '';
+    document.getElementById('imageCardReading').textContent = '';
+    document.getElementById('imageCardAnswer').style.display = 'none';
+    document.getElementById('imageCardSideLabel').textContent = '完了 / Hoàn thành';
+    document.getElementById('imageCardHint').textContent = '覚えたカードタブで確認できます / Xem lại ở tab thẻ đã nhớ';
+    return;
+  }
   if (termState.imageCardIndex >= items.length) termState.imageCardIndex = 0;
   const item = items[termState.imageCardIndex];
   const progress = getImageProgress(item.id);
@@ -738,7 +795,7 @@ function renderImageCard() {
 }
 
 function moveImageCard(delta) {
-  const items = getImageItems();
+  const items = getActiveImageItems();
   if (!items.length) return;
   termState.imageCardIndex = (termState.imageCardIndex + delta + items.length) % items.length;
   termState.imageCardFlipped = false;
@@ -764,14 +821,19 @@ function showLearnType(type) {
 
 function showMode(mode) {
   const test = mode === 'test';
+  const archive = mode === 'archive';
   const imageSelected = document.getElementById('imageMemoryModeBtn').classList.contains('active');
-  document.getElementById('learnTypeSwitch').classList.toggle('hidden', test);
-  document.getElementById('cardPanel').classList.toggle('hidden', test || imageSelected);
+  document.getElementById('learnTypeSwitch').classList.toggle('hidden', test || archive);
+  document.getElementById('cardPanel').classList.toggle('hidden', test || archive || imageSelected);
   document.getElementById('testPanel').classList.toggle('hidden', !test);
-  document.getElementById('imagePanel').classList.toggle('hidden', test || !imageSelected);
+  document.getElementById('archivePanel').classList.toggle('hidden', !archive);
+  document.getElementById('imagePanel').classList.toggle('hidden', test || archive || !imageSelected);
   document.getElementById('learnModeBtn').classList.toggle('active', !test);
+  document.getElementById('archiveModeBtn').classList.toggle('active', archive);
+  document.getElementById('learnModeBtn').classList.toggle('active', !test && !archive);
   document.getElementById('testModeBtn').classList.toggle('active', test);
-  if (!test && imageSelected) renderImageCard();
+  if (!test && !archive && imageSelected) renderImageCard();
+  if (archive) renderArchive();
   if (test) renderQuizOverview();
 }
 
@@ -894,9 +956,6 @@ async function finishQuiz() {
 }
 
 function setupEvents() {
-  document.getElementById('categoryFilter').addEventListener('change', applyFilters);
-  document.getElementById('statusFilter').addEventListener('change', applyFilters);
-  document.getElementById('termSearch').addEventListener('input', applyFilters);
   document.getElementById('termCard').addEventListener('click', () => { termState.flipped = !termState.flipped; renderCard(); });
   document.getElementById('termCard').addEventListener('keydown', event => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -912,19 +971,14 @@ function setupEvents() {
     if (term) saveProgress(term.id, 'review');
     moveCard(1);
   });
-  document.getElementById('learnedBtn').addEventListener('click', () => {
+  document.getElementById('learnedBtn').addEventListener('click', async () => {
     const term = termState.filtered[termState.currentIndex];
-    if (term) saveProgress(term.id, 'learned');
-    moveCard(1);
-  });
-  document.getElementById('resetProgressBtn').addEventListener('click', () => {
-    if (!confirm('この端末の専門用語の進捗をリセットしますか？')) return;
-    termState.progress = {};
-    saveLocalProgress();
+    if (term) await saveProgress(term.id, 'learned');
     applyFilters();
     renderStats();
   });
   document.getElementById('learnModeBtn').addEventListener('click', () => showMode('learn'));
+  document.getElementById('archiveModeBtn').addEventListener('click', () => showMode('archive'));
   document.getElementById('wordMemoryModeBtn').addEventListener('click', () => showLearnType('word'));
   document.getElementById('imageMemoryModeBtn').addEventListener('click', () => showLearnType('image'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
@@ -955,12 +1009,6 @@ function setupEvents() {
     document.getElementById('quizTotal').textContent = set.length || QUIZ_SET_SIZE;
     renderQuizOverview();
   });
-  document.getElementById('toolsToggleBtn').addEventListener('click', () => {
-    const isOpen = document.body.classList.toggle('show-tools');
-    document.getElementById('toolsToggleBtn').innerHTML = isOpen
-      ? '閉じる<br>Đóng'
-      : 'さがす・一覧<br>Tìm kiếm';
-  });
   document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
   document.getElementById('startFinalQuizBtn').addEventListener('click', startFinalQuiz);
   document.getElementById('nextQuizBtn').addEventListener('click', () => {
@@ -983,12 +1031,6 @@ function setupEvents() {
   await loadSupabaseProgress();
   await loadSupabaseImageProgress();
   await loadSupabaseQuizHistory();
-  (window.KINREI_VOCAB?.set?.categories || []).forEach(category => {
-    const opt = document.createElement('option');
-    opt.value = category;
-    opt.textContent = category;
-    document.getElementById('categoryFilter').appendChild(opt);
-  });
   setupEvents();
   applyFilters();
   renderImageCard();

@@ -31,8 +31,6 @@
 .term-toolbar{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:4}
 .term-toolbar select,.term-toolbar input{border:1px solid #ccc;border-radius:8px;padding:10px;font-size:15px;background:#fff}
 .term-toolbar input{flex:1;min-width:220px}
-.term-toolbar select,.term-toolbar input{display:none}
-.show-tools .term-toolbar select,.show-tools .term-toolbar input{display:block}
 .mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;flex:1;min-width:240px}
 .mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:13px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
 .mode-tabs button.active{background:#1a5276;color:#fff}
@@ -41,12 +39,8 @@
 .learn-type-switch button.active{background:#fff;color:#1a5276;box-shadow:0 4px 12px rgba(20,55,80,.12)}
 .btn-tools{padding:13px 14px;border:1px solid #ccd7df;border-radius:12px;background:#fff;color:#1a5276;font-weight:bold;cursor:pointer}
 .term-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
-.show-tools .term-panel{grid-template-columns:minmax(0,1fr) 340px}
-.show-tools #testPanel,.show-tools #imagePanel{grid-template-columns:1fr}
 .term-panel.hidden{display:none}
 .card-box,.term-list-box,.quiz-box,.quiz-result{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.term-list-box{display:none}
-.show-tools .term-list-box{display:block}
 .flash-card{min-height:390px;border:2px solid #dbe7ef;border-radius:18px;padding:28px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;background:linear-gradient(180deg,#f6fbff,#fff)}
 .flash-card.flipped{background:linear-gradient(180deg,#f3fff0,#fff)}
 .chip{display:inline-block;align-self:flex-start;background:#e8f5e9;color:#287b36;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:bold;margin-bottom:18px}
@@ -67,6 +61,14 @@
 .term-row strong,.term-row small{display:block}
 .term-row small{color:#666;margin-top:2px}
 .term-row .term-reading{color:#1a5276;font-weight:bold}
+.archive-box{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.archive-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap}
+.archive-head h2{color:#1a5276;font-size:20px}
+.archive-head p{color:#607080;line-height:1.6;margin-top:4px}
+.archive-list{display:grid;gap:8px}
+.archive-row{border:1px solid #e1e6ec;background:#f8fafc;border-radius:10px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.archive-row strong,.archive-row small{display:block}
+.archive-row small{color:#607080;margin-top:3px}
 .status-pill{white-space:nowrap;border-radius:999px;background:#fff;padding:3px 8px;font-size:11px;color:#666}
 .status-learned{color:#27ae60}.status-review{color:#e67e22}
 .quiz-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
@@ -111,7 +113,6 @@
   .term-hero{flex-direction:column;align-items:stretch}
   .term-stats{min-width:0}
   .term-panel{grid-template-columns:1fr}
-  .show-tools .term-panel{grid-template-columns:1fr}
   .term-main{font-size:34px}
   .term-meaning{font-size:24px}
   .flash-card{min-height:360px}
@@ -157,24 +158,15 @@
   </section>
 
   <section class="term-toolbar">
-    <select id="categoryFilter" aria-label="カテゴリ"><option value="">全カテゴリ / Tất cả</option></select>
-    <select id="statusFilter" aria-label="進捗">
-      <option value="">全ステータス / Tất cả</option>
-      <option value="new">未学習 / Chưa học</option>
-      <option value="learning">学習中 / Đang học</option>
-      <option value="learned">覚えた / Đã nhớ</option>
-      <option value="review">要復習 / Cần ôn</option>
-    </select>
-    <input type="search" id="termSearch" placeholder="日本語・カタカナ・ベトナム語で検索 / Tìm kiếm">
     <div class="mode-tabs">
       <button type="button" class="active" id="learnModeBtn">覚える<br>Học từ</button>
+      <button type="button" id="archiveModeBtn">覚えたカード<br>Thẻ đã nhớ</button>
       <button type="button" id="testModeBtn">テスト<br>Kiểm tra</button>
     </div>
     <div class="learn-type-switch" id="learnTypeSwitch">
       <button type="button" class="active" id="wordMemoryModeBtn">文字カード<br>Thẻ chữ</button>
       <button type="button" id="imageMemoryModeBtn">写真カード<br>Thẻ hình</button>
     </div>
-    <button type="button" class="btn-tools" id="toolsToggleBtn">さがす・一覧<br>Tìm kiếm</button>
   </section>
 
   <section id="cardPanel" class="term-panel">
@@ -195,12 +187,18 @@
         <button type="button" class="btn-sub" id="nextCardBtn">次へ<br>Tiếp</button>
       </div>
     </div>
-    <div class="term-list-box">
-      <div class="term-list-head">
-        <strong id="visibleCount">0語</strong>
-        <button type="button" class="btn-sub" id="resetProgressBtn">リセット<br>Xóa</button>
+  </section>
+
+  <section id="archivePanel" class="term-panel hidden">
+    <div class="archive-box">
+      <div class="archive-head">
+        <div>
+          <h2>覚えたカード<br>Thẻ đã nhớ</h2>
+          <p>「覚えた」を押したカードはここに入ります。必要なときに確認できます。<br>Những thẻ đã bấm “Đã nhớ” sẽ được lưu ở đây.</p>
+        </div>
+        <strong id="archiveCount">0件</strong>
       </div>
-      <div id="termList" class="term-list"></div>
+      <div id="archiveList" class="archive-list"></div>
     </div>
   </section>
 
@@ -262,6 +260,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=21"></script>
+<script src="terminology.js?v=22"></script>
 </body>
 </html>
