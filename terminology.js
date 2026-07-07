@@ -560,6 +560,26 @@ function renderStats() {
   document.getElementById('statRate').textContent = attempts ? `${Math.round((correct / attempts) * 100)}%` : '0%';
 }
 
+function totalLearningItems() {
+  return termState.terms.length + getImageItems().length;
+}
+
+function learnedItemCount() {
+  const wordLearned = Object.values(termState.progress).filter(item => item.status === 'learned').length;
+  const imageLearned = Object.values(termState.imageProgress).filter(item => item.status === 'learned').length;
+  return wordLearned + imageLearned;
+}
+
+function setCardProgress(prefix, globalNumber) {
+  const total = totalLearningItems();
+  const learned = learnedItemCount();
+  const learnedRate = total ? Math.round((learned / total) * 100) : 0;
+  const positionRate = total ? Math.round((globalNumber / total) * 100) : 0;
+  document.getElementById(`${prefix}ProgressLabel`).textContent = `全体 ${globalNumber} / ${total}・覚えた ${learned} / ${total}`;
+  document.getElementById(`${prefix}ProgressPercent`).textContent = `${learnedRate}%`;
+  document.getElementById(`${prefix}ProgressBar`).style.width = `${positionRate}%`;
+}
+
 function applyFilters() {
   termState.filtered = termState.terms.filter(term => {
     const progress = getProgress(term.id);
@@ -589,6 +609,7 @@ function renderCard() {
   if (!termState.filtered.length) {
     document.getElementById('cardCategory').textContent = '-';
     document.getElementById('cardNumber').textContent = 'No. -';
+    setCardProgress('card', learnedItemCount());
     document.getElementById('cardTerm').textContent = '該当する用語がありません';
     document.getElementById('cardKana').textContent = '';
     document.getElementById('cardMeaning').textContent = '-';
@@ -602,7 +623,9 @@ function renderCard() {
     saveLocalProgress();
   }
   document.getElementById('cardCategory').textContent = term.category;
-  document.getElementById('cardNumber').textContent = `ことば ${termState.currentIndex + 1} / ${termState.terms.length}`;
+  const globalNumber = termState.terms.findIndex(item => item.id === term.id) + 1;
+  document.getElementById('cardNumber').textContent = `全体 ${globalNumber} / ${totalLearningItems()}`;
+  setCardProgress('card', globalNumber);
   document.getElementById('cardTerm').textContent = displayTermWithReading(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
@@ -768,6 +791,7 @@ function renderImageCard() {
     document.getElementById('imageCard').classList.remove('flipped');
     document.getElementById('imageCardCount').textContent = '写真 No. -';
     document.getElementById('imageCardStatus').textContent = 'すべて覚えました / Đã nhớ hết';
+    setCardProgress('imageCard', totalLearningItems());
     document.getElementById('imageCardImg').removeAttribute('src');
     document.getElementById('imageCardTerm').textContent = '';
     document.getElementById('imageCardReading').textContent = '';
@@ -779,8 +803,10 @@ function renderImageCard() {
   if (termState.imageCardIndex >= items.length) termState.imageCardIndex = 0;
   const item = items[termState.imageCardIndex];
   const progress = getImageProgress(item.id);
+  const globalNumber = termState.terms.length + getImageItems().findIndex(image => image.id === item.id) + 1;
   document.getElementById('imageCard').classList.toggle('flipped', termState.imageCardFlipped);
-  document.getElementById('imageCardCount').textContent = `写真 ${termState.imageCardIndex + 1} / ${getImageItems().length}`;
+  document.getElementById('imageCardCount').textContent = `全体 ${globalNumber} / ${totalLearningItems()}`;
+  setCardProgress('imageCard', globalNumber);
   document.getElementById('imageCardStatus').textContent = statusLabel(progress.status);
   document.getElementById('imageCardImg').src = item.image;
   document.getElementById('imageCardTerm').textContent = item.term;
