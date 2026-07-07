@@ -1,5 +1,6 @@
 const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
 const TEST_STORAGE_KEY = 'kinreiTerminologyTestSets:v1';
+const IMAGE_STORAGE_KEY = 'kinreiImageMemoryProgress:v1';
 const QUIZ_SET_SIZE = 10;
 const TERM_OVERRIDES = {
   'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
@@ -81,6 +82,7 @@ let termState = {
   terms: [],
   filtered: [],
   progress: {},
+  imageProgress: {},
   currentIndex: 0,
   quizSetIndex: 0,
   imageCardIndex: 0,
@@ -152,6 +154,11 @@ function localKey() {
   return `${TERM_STORAGE_KEY}:${id}`;
 }
 
+function imageLocalKey() {
+  const id = termState.profile?.student_id || 'guest';
+  return `${IMAGE_STORAGE_KEY}:${id}`;
+}
+
 function loadLocalProgress() {
   try {
     return JSON.parse(localStorage.getItem(localKey()) || '{}');
@@ -162,6 +169,30 @@ function loadLocalProgress() {
 
 function saveLocalProgress() {
   localStorage.setItem(localKey(), JSON.stringify(termState.progress));
+}
+
+function loadImageProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(imageLocalKey()) || '{}');
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveImageProgress() {
+  localStorage.setItem(imageLocalKey(), JSON.stringify(termState.imageProgress));
+}
+
+function getImageProgress(imageId) {
+  return termState.imageProgress[imageId] || { status: 'new', updatedAt: null };
+}
+
+function saveImageCardProgress(status) {
+  const item = getImageItems()[termState.imageCardIndex];
+  if (!item) return;
+  termState.imageProgress[item.id] = { ...getImageProgress(item.id), status, updatedAt: new Date().toISOString() };
+  saveImageProgress();
+  moveImageCard(1);
 }
 
 function testSetKey() {
@@ -587,8 +618,10 @@ function renderImageCard() {
   if (!items.length) return;
   if (termState.imageCardIndex >= items.length) termState.imageCardIndex = 0;
   const item = items[termState.imageCardIndex];
+  const progress = getImageProgress(item.id);
   document.getElementById('imageCard').classList.toggle('flipped', termState.imageCardFlipped);
   document.getElementById('imageCardCount').textContent = `${termState.imageCardIndex + 1} / ${items.length}`;
+  document.getElementById('imageCardStatus').textContent = statusLabel(progress.status);
   document.getElementById('imageCardImg').src = item.image;
   document.getElementById('imageCardTerm').textContent = item.term;
   document.getElementById('imageCardReading').textContent = item.reading ? `Cách đọc: ${item.reading}` : '';
@@ -772,6 +805,8 @@ function setupEvents() {
   });
   document.getElementById('prevImageCardBtn').addEventListener('click', () => moveImageCard(-1));
   document.getElementById('nextImageCardBtn').addEventListener('click', () => moveImageCard(1));
+  document.getElementById('reviewImageCardBtn').addEventListener('click', () => saveImageCardProgress('review'));
+  document.getElementById('learnedImageCardBtn').addEventListener('click', () => saveImageCardProgress('learned'));
   document.getElementById('quizSetSelect').addEventListener('change', event => {
     termState.quizSetIndex = Number(event.target.value) || 0;
     termState.quiz = null;
@@ -807,6 +842,7 @@ function setupEvents() {
   document.getElementById('student-id-display').textContent = `（${auth.profile.student_id || ''}）`;
   termState.terms = window.KINREI_VOCAB?.terms || [];
   termState.progress = loadLocalProgress();
+  termState.imageProgress = loadImageProgress();
   await loadSupabaseProgress();
   (window.KINREI_VOCAB?.set?.categories || []).forEach(category => {
     const opt = document.createElement('option');

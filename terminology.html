@@ -219,6 +219,7 @@
     <div class="card-box" id="imageCardBox">
         <div class="flash-card" id="imageCard" tabindex="0">
           <span class="chip" id="imageCardCount">-</span>
+          <span class="chip" id="imageCardStatus">未学習 / Chưa học</span>
           <div class="card-side-label" id="imageCardSideLabel">写真 / Hình ảnh</div>
           <img class="image-card-img" id="imageCardImg" alt="物の名前の暗記カード画像">
           <div class="image-card-answer" id="imageCardAnswer" style="display:none">
@@ -229,6 +230,8 @@
         </div>
         <div class="card-actions">
           <button type="button" class="btn-sub" id="prevImageCardBtn">前へ<br>Trước</button>
+          <button type="button" class="btn-review" id="reviewImageCardBtn">要復習<br>Cần ôn</button>
+          <button type="button" class="btn-ok" id="learnedImageCardBtn">覚えた<br>Đã nhớ</button>
           <button type="button" class="btn-sub" id="nextImageCardBtn">次へ<br>Tiếp</button>
         </div>
     </div>
@@ -240,6 +243,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=16"></script>
+<script src="terminology.js?v=17"></script>
 </body>
 </html>
