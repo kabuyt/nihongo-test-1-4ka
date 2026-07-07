@@ -76,6 +76,13 @@
 .test-progress{width:100%;height:12px;background:#dce8f0;border-radius:999px;overflow:hidden}
 .test-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#27ae60,#1a5276)}
 .quiz-question-img{width:100%;max-height:340px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px;margin-bottom:12px}
+.final-test-box{margin-top:14px;border:2px solid #d9ead7;background:linear-gradient(135deg,#f4fff1,#fff);border-radius:16px;padding:16px}
+.final-test-box h3{margin:0 0 6px;color:#1a5276;font-size:18px}
+.final-test-box p{margin:0 0 12px;color:#516271;line-height:1.6}
+.final-test-box.locked{border-color:#e2e8f0;background:#f8fafc}
+.final-test-box.locked h3{color:#7a8792}
+.final-test-status{display:inline-block;margin-bottom:10px;font-weight:bold;color:#287b36}
+.final-test-box.locked .final-test-status{color:#7a8792}
 .image-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
 .image-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
 .image-mode-tabs button.active{background:#1a5276;color:#fff}
@@ -213,6 +220,12 @@
       </div>
     </div>
     <div id="quizResult" class="quiz-result hidden"></div>
+    <div class="final-test-box locked" id="finalTestBox">
+      <h3>総合修了テスト 100問<br>Kiểm tra hoàn thành 100 câu</h3>
+      <span class="final-test-status" id="finalTestStatus">全36回が終わると受けられます / Hoàn thành 36 lần để mở</span>
+      <p>出題内容は受ける人ごとに変わります。<br>Nội dung câu hỏi sẽ khác nhau theo từng người.</p>
+      <button type="button" class="btn-ok" id="startFinalQuizBtn" disabled>総合修了テストを始める<br>Bắt đầu kiểm tra hoàn thành</button>
+    </div>
   </section>
 
   <section id="imagePanel" class="term-panel hidden">
@@ -243,6 +256,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=17"></script>
+<script src="terminology.js?v=18"></script>
 </body>
 </html>

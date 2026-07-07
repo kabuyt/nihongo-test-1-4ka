@@ -2,6 +2,8 @@ const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
 const TEST_STORAGE_KEY = 'kinreiTerminologyTestSets:v1';
 const IMAGE_STORAGE_KEY = 'kinreiImageMemoryProgress:v1';
 const QUIZ_SET_SIZE = 10;
+const FINAL_QUIZ_SIZE = 100;
+const FINAL_QUIZ_SET_ID = 'kinrei-final-2023';
 const TERM_OVERRIDES = {
   'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
   'kinrei-mono-011': { display: '手袋（薄手・厚手）', reading: 'てぶくろ', inline: '手袋(てぶくろ)（薄手・厚手）' },
@@ -214,6 +216,12 @@ function saveCompletedTestSet(setNumber) {
   localStorage.setItem(testSetKey(), JSON.stringify([...completed].sort((a, b) => a - b)));
 }
 
+function isAllQuizSetsCompleted() {
+  const total = getQuizSets().length;
+  const completed = loadCompletedTestSets();
+  return total > 0 && [...completed].filter(n => n >= 1 && n <= total).length >= total;
+}
+
 function getProgress(termId) {
   return termState.progress[termId] || { status: 'new', attempts: 0, correct: 0 };
 }
@@ -239,6 +247,24 @@ async function loadSupabaseProgress() {
     saveLocalProgress();
   } catch (err) {
     console.warn('progress load skipped', err);
+  }
+}
+
+async function loadSupabaseQuizHistory() {
+  if (!termState.profile?.id) return;
+  try {
+    const { data, error } = await supabase
+      .from('terminology_quiz_results')
+      .select('set_id')
+      .eq('trainee_id', termState.profile.id)
+      .like('set_id', 'kinrei-test-2023-%');
+    if (error || !data) return;
+    data.forEach(item => {
+      const match = String(item.set_id || '').match(/^kinrei-test-2023-(\d+)$/);
+      if (match) saveCompletedTestSet(Number(match[1]));
+    });
+  } catch (err) {
+    console.warn('quiz history load skipped', err);
   }
 }
 
@@ -459,6 +485,24 @@ function shuffle(items) {
   return arr;
 }
 
+function seededShuffle(items, seedText) {
+  let seed = 2166136261;
+  for (const ch of String(seedText || 'kinrei')) {
+    seed ^= ch.charCodeAt(0);
+    seed = Math.imul(seed, 16777619);
+  }
+  const rand = () => {
+    seed += 0x6D2B79F5;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return [...items].map(item => ({ item, sort: rand() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(entry => entry.item);
+}
+
 function renderStats() {
   const values = Object.values(termState.progress);
   const learned = values.filter(item => item.status === 'learned').length;
@@ -581,6 +625,24 @@ function getQuizSets() {
   return sets;
 }
 
+function getFinalQuizQuestions() {
+  const seed = `${termState.profile?.student_id || 'guest'}:${FINAL_QUIZ_SET_ID}`;
+  return seededShuffle(getUnifiedTestItems(), seed).slice(0, FINAL_QUIZ_SIZE);
+}
+
+function renderFinalQuizOverview() {
+  const box = document.getElementById('finalTestBox');
+  const status = document.getElementById('finalTestStatus');
+  const button = document.getElementById('startFinalQuizBtn');
+  if (!box || !status || !button) return;
+  const unlocked = isAllQuizSetsCompleted();
+  box.classList.toggle('locked', !unlocked);
+  button.disabled = !unlocked;
+  status.textContent = unlocked
+    ? '受験できます / Có thể làm bài'
+    : '全36回が終わると受けられます / Hoàn thành 36 lần để mở';
+}
+
 function renderQuizOverview() {
   const select = document.getElementById('quizSetSelect');
   const summary = document.getElementById('quizSetSummary');
@@ -607,6 +669,7 @@ function renderQuizOverview() {
 
   const button = document.getElementById('startQuizBtn');
   if (button) button.innerHTML = `第${termState.quizSetIndex + 1}回を始める<br>Bắt đầu lần ${termState.quizSetIndex + 1}`;
+  renderFinalQuizOverview();
 }
 
 function getImageItems() {
@@ -668,8 +731,26 @@ function startQuiz() {
   if (!sets.length) return;
   const questions = sets[termState.quizSetIndex] || sets[0];
   termState.quiz = {
+    kind: 'standard',
     setNumber: termState.quizSetIndex + 1,
     questions: shuffle(questions),
+    index: 0,
+    correct: 0,
+    answers: [],
+    answered: false,
+  };
+  document.getElementById('quizResult').classList.add('hidden');
+  renderQuiz();
+}
+
+function startFinalQuiz() {
+  if (!isAllQuizSetsCompleted()) return;
+  const questions = getFinalQuizQuestions();
+  if (!questions.length) return;
+  termState.quiz = {
+    kind: 'final',
+    setNumber: 'final',
+    questions,
     index: 0,
     correct: 0,
     answers: [],
@@ -715,7 +796,7 @@ function answerQuiz(selectedId) {
   quiz.answered = true;
   quiz.correct += ok ? 1 : 0;
   quiz.answers.push({ type: question.type, id: question.id, correct: ok });
-  if (question.type === 'word') updateQuizProgress(question.id, ok);
+  if (question.type === 'word' && quiz.kind !== 'final') updateQuizProgress(question.id, ok);
   document.querySelectorAll('.quiz-option').forEach(button => {
     button.disabled = true;
     if (button.dataset.id === question.id) button.classList.add('correct');
@@ -730,24 +811,29 @@ function answerQuiz(selectedId) {
 async function finishQuiz() {
   const quiz = termState.quiz;
   if (!quiz) return;
+  const isFinal = quiz.kind === 'final';
   const rate = quiz.questions.length ? Math.round((quiz.correct / quiz.questions.length) * 100) : 0;
-  document.getElementById('quizPrompt').textContent = 'テスト完了 / Hoàn thành';
+  document.getElementById('quizPrompt').textContent = isFinal ? '総合修了テスト完了 / Hoàn thành' : 'テスト完了 / Hoàn thành';
   document.getElementById('quizOptions').innerHTML = '';
   document.getElementById('quizFeedback').textContent = '';
   document.getElementById('quizQuestionImg').style.display = 'none';
   document.getElementById('nextQuizBtn').disabled = true;
   document.getElementById('quizResult').classList.remove('hidden');
-  document.getElementById('quizResult').innerHTML = `<strong>第${quiz.setNumber}回 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>この回が完了しました。進捗バーに反映されます。<br>Đã hoàn thành lần này. Thanh tiến độ đã được cập nhật.</p>`;
-  saveCompletedTestSet(quiz.setNumber);
-  const sets = getQuizSets();
-  if (termState.quizSetIndex < sets.length - 1) termState.quizSetIndex += 1;
+  document.getElementById('quizResult').innerHTML = isFinal
+    ? `<strong>総合修了テスト 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>修了テストの結果を保存しました。<br>Đã lưu kết quả kiểm tra hoàn thành.</p>`
+    : `<strong>第${quiz.setNumber}回 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>この回が完了しました。進捗バーに反映されます。<br>Đã hoàn thành lần này. Thanh tiến độ đã được cập nhật.</p>`;
+  if (!isFinal) {
+    saveCompletedTestSet(quiz.setNumber);
+    const sets = getQuizSets();
+    if (termState.quizSetIndex < sets.length - 1) termState.quizSetIndex += 1;
+  }
   renderQuizOverview();
 
   if (!termState.profile?.id) return;
   try {
     await supabase.from('terminology_quiz_results').insert({
       trainee_id: termState.profile.id,
-      set_id: `kinrei-test-2023-${String(quiz.setNumber).padStart(2, '0')}`,
+      set_id: isFinal ? FINAL_QUIZ_SET_ID : `kinrei-test-2023-${String(quiz.setNumber).padStart(2, '0')}`,
       total_questions: quiz.questions.length,
       correct_count: quiz.correct,
       score_rate: rate,
@@ -826,6 +912,7 @@ function setupEvents() {
       : 'さがす・一覧<br>Tìm kiếm';
   });
   document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
+  document.getElementById('startFinalQuizBtn').addEventListener('click', startFinalQuiz);
   document.getElementById('nextQuizBtn').addEventListener('click', () => {
     if (!termState.quiz) return;
     termState.quiz.index += 1;
@@ -844,6 +931,7 @@ function setupEvents() {
   termState.progress = loadLocalProgress();
   termState.imageProgress = loadImageProgress();
   await loadSupabaseProgress();
+  await loadSupabaseQuizHistory();
   (window.KINREI_VOCAB?.set?.categories || []).forEach(category => {
     const opt = document.createElement('option');
     opt.value = category;
