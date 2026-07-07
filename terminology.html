@@ -167,10 +167,6 @@
       <button type="button" id="archiveModeBtn">覚えたカード<br>Thẻ đã nhớ</button>
       <button type="button" id="testModeBtn">テスト<br>Kiểm tra</button>
     </div>
-    <div class="learn-type-switch" id="learnTypeSwitch">
-      <button type="button" class="active" id="wordMemoryModeBtn">文字カード<br>Thẻ chữ</button>
-      <button type="button" id="imageMemoryModeBtn">写真カード<br>Thẻ hình</button>
-    </div>
   </section>
 
   <section id="cardPanel" class="term-panel">
@@ -186,6 +182,7 @@
           <div class="card-progress-track"><span id="cardProgressBar"></span></div>
         </div>
         <div class="card-side-label" id="cardSideLabel">表: 日本語 / Mặt trước: Tiếng Nhật</div>
+        <img class="image-card-img" id="cardImage" alt="専門用語の写真" style="display:none">
         <div class="term-main" id="cardTerm">読み込み中...</div>
         <div class="term-kana" id="cardKana"></div>
         <div class="term-meaning" id="cardMeaning" style="display:none"></div>
@@ -243,34 +240,6 @@
     </div>
   </section>
 
-  <section id="imagePanel" class="term-panel hidden">
-    <div class="card-box" id="imageCardBox">
-        <div class="flash-card" id="imageCard" tabindex="0">
-          <span class="chip" id="imageCardCount">-</span>
-          <span class="chip" id="imageCardStatus">未学習 / Chưa học</span>
-          <div class="card-progress">
-            <div class="card-progress-head">
-              <span id="imageCardProgressLabel">全体進捗</span>
-              <strong id="imageCardProgressPercent">0%</strong>
-            </div>
-            <div class="card-progress-track"><span id="imageCardProgressBar"></span></div>
-          </div>
-          <div class="card-side-label" id="imageCardSideLabel">写真 / Hình ảnh</div>
-          <img class="image-card-img" id="imageCardImg" alt="物の名前の暗記カード画像">
-          <div class="image-card-answer" id="imageCardAnswer" style="display:none">
-            <strong id="imageCardTerm"></strong>
-            <span id="imageCardReading"></span>
-          </div>
-          <p class="hint" id="imageCardHint">写真をタップしてください / Bấm vào hình</p>
-        </div>
-        <div class="card-actions">
-          <button type="button" class="btn-sub" id="prevImageCardBtn">前へ<br>Trước</button>
-          <button type="button" class="btn-review" id="reviewImageCardBtn">要復習<br>Cần ôn</button>
-          <button type="button" class="btn-ok" id="learnedImageCardBtn">覚えた<br>Đã nhớ</button>
-          <button type="button" class="btn-sub" id="nextImageCardBtn">次へ<br>Tiếp</button>
-        </div>
-    </div>
-  </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -278,6 +247,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=24"></script>
+<script src="terminology.js?v=25"></script>
 </body>
 </html>
