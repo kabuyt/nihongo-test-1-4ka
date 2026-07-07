@@ -1,7 +1,7 @@
 const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
 const TEST_STORAGE_KEY = 'kinreiTerminologyTestSets:v1';
 const IMAGE_STORAGE_KEY = 'kinreiImageMemoryProgress:v1';
-const QUIZ_SET_SIZE = 10;
+const QUIZ_SET_SIZE = 20;
 const FINAL_QUIZ_SIZE = 100;
 const FINAL_QUIZ_SET_ID = 'kinrei-final-2023';
 const TERM_OVERRIDES = {
@@ -680,7 +680,7 @@ function renderFinalQuizOverview() {
   button.disabled = !unlocked;
   status.textContent = unlocked
     ? '受験できます / Có thể làm bài'
-    : '全36回が終わると受けられます / Hoàn thành 36 lần để mở';
+    : `全${getQuizSets().length}回が終わると受けられます / Hoàn thành ${getQuizSets().length} lần để mở`;
 }
 
 function renderQuizOverview() {

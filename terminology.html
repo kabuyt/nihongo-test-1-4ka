@@ -137,10 +137,10 @@
 <main class="term-wrap">
   <section class="quick-start">
     <h2>2ステップで進めます</h2>
-    <p>専門用語を覚える → テストを受ける。覚える方法は「文字カード」と「写真カード」です。テストは全36回です。<br>Học từ chuyên ngành → làm kiểm tra. Có thể học bằng thẻ chữ hoặc thẻ hình. Bài kiểm tra có 36 lần.</p>
+    <p>専門用語を覚える → テストを受ける。覚える方法は「文字カード」と「写真カード」です。小テストは20問ずつです。<br>Học từ chuyên ngành → làm kiểm tra. Có thể học bằng thẻ chữ hoặc thẻ hình. Mỗi bài kiểm tra nhỏ có 20 câu.</p>
     <div class="quick-steps">
       <span>1. 覚える<br>Học từ</span>
-      <span>2. テスト 全36回<br>36 lần kiểm tra</span>
+      <span>2. テスト 20問ずつ<br>Mỗi lần 20 câu</span>
     </div>
   </section>
 
@@ -211,7 +211,7 @@
         <select id="quizSetSelect" aria-label="テストの回"></select>
         <span id="quizSetSummary">-</span>
         <div class="test-progress" aria-label="テスト進捗"><span id="testProgressBar"></span></div>
-        <span id="testProgressText">0 / 36</span>
+        <span id="testProgressText">0 / -</span>
       </div>
       <div class="quiz-head">
         <h2 id="quizPrompt">テストを始めてください<br>Bắt đầu kiểm tra</h2>
@@ -228,7 +228,7 @@
     <div id="quizResult" class="quiz-result hidden"></div>
     <div class="final-test-box locked" id="finalTestBox">
       <h3>総合修了テスト 100問<br>Kiểm tra hoàn thành 100 câu</h3>
-      <span class="final-test-status" id="finalTestStatus">全36回が終わると受けられます / Hoàn thành 36 lần để mở</span>
+      <span class="final-test-status" id="finalTestStatus">小テストが全部終わると受けられます / Hoàn thành tất cả bài nhỏ để mở</span>
       <p>出題内容は受ける人ごとに変わります。<br>Nội dung câu hỏi sẽ khác nhau theo từng người.</p>
       <button type="button" class="btn-ok" id="startFinalQuizBtn" disabled>総合修了テストを始める<br>Bắt đầu kiểm tra hoàn thành</button>
     </div>
@@ -262,6 +262,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=20"></script>
+<script src="terminology.js?v=21"></script>
 </body>
 </html>
