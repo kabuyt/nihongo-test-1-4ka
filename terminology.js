@@ -602,7 +602,7 @@ function renderCard() {
     saveLocalProgress();
   }
   document.getElementById('cardCategory').textContent = term.category;
-  document.getElementById('cardNumber').textContent = `文字 No. ${termState.currentIndex + 1} / ${termState.filtered.length}`;
+  document.getElementById('cardNumber').textContent = `ことば ${termState.currentIndex + 1} / ${termState.terms.length}`;
   document.getElementById('cardTerm').textContent = displayTermWithReading(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
@@ -646,8 +646,8 @@ function renderArchive() {
   const learnedWords = termState.terms
     .filter(term => getProgress(term.id).status === 'learned')
     .map(term => ({
-      type: '文字',
-      typeVi: 'Thẻ chữ',
+      type: 'ことば',
+      typeVi: 'Từ',
       title: displayTermWithReading(term),
       sub: term.meaningVi,
       reading: readingForTerm(term),
@@ -780,7 +780,7 @@ function renderImageCard() {
   const item = items[termState.imageCardIndex];
   const progress = getImageProgress(item.id);
   document.getElementById('imageCard').classList.toggle('flipped', termState.imageCardFlipped);
-  document.getElementById('imageCardCount').textContent = `写真 No. ${termState.imageCardIndex + 1} / ${items.length}`;
+  document.getElementById('imageCardCount').textContent = `写真 ${termState.imageCardIndex + 1} / ${getImageItems().length}`;
   document.getElementById('imageCardStatus').textContent = statusLabel(progress.status);
   document.getElementById('imageCardImg').src = item.image;
   document.getElementById('imageCardTerm').textContent = item.term;
