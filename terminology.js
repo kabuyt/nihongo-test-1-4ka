@@ -300,6 +300,19 @@ async function loadSupabaseQuizHistory() {
   }
 }
 
+async function logStudySession() {
+  if (!termState.profile?.id) return;
+  try {
+    await supabase.from('terminology_study_sessions').insert({
+      trainee_id: termState.profile.id,
+      session_type: 'open',
+      user_agent: navigator.userAgent || '',
+    });
+  } catch (err) {
+    console.warn('study session log skipped', err);
+  }
+}
+
 async function saveProgress(termId, status) {
   const current = getProgress(termId);
   termState.progress[termId] = {
@@ -1006,6 +1019,7 @@ function setupEvents() {
   termState.terms = window.KINREI_VOCAB?.terms || [];
   termState.progress = loadLocalProgress();
   termState.imageProgress = loadImageProgress();
+  await logStudySession();
   await loadSupabaseProgress();
   await loadSupabaseImageProgress();
   await loadSupabaseQuizHistory();
