@@ -539,12 +539,16 @@ function seededShuffle(items, seedText) {
 
 function renderStats() {
   const values = Object.values(termState.progress);
+  const imageValues = Object.values(termState.imageProgress);
+  const totalItems = termState.terms.length + getImageItems().length;
   const learned = values.filter(item => item.status === 'learned').length;
   const review = values.filter(item => item.status === 'review').length;
+  const imageLearned = imageValues.filter(item => item.status === 'learned').length;
+  const imageReview = imageValues.filter(item => item.status === 'review').length;
   const attempts = values.reduce((sum, item) => sum + (item.attempts || 0), 0);
   const correct = values.reduce((sum, item) => sum + (item.correct || 0), 0);
-  document.getElementById('statLearned').textContent = learned;
-  document.getElementById('statReview').textContent = review;
+  document.getElementById('statLearned').textContent = `${learned + imageLearned} / ${totalItems}`;
+  document.getElementById('statReview').textContent = review + imageReview;
   document.getElementById('statRate').textContent = attempts ? `${Math.round((correct / attempts) * 100)}%` : '0%';
 }
 
@@ -597,7 +601,7 @@ function renderCard() {
     saveLocalProgress();
   }
   document.getElementById('cardCategory').textContent = term.category;
-  document.getElementById('cardNumber').textContent = `No. ${termState.currentIndex + 1} / ${termState.filtered.length}`;
+  document.getElementById('cardNumber').textContent = `文字 No. ${termState.currentIndex + 1} / ${termState.filtered.length}`;
   document.getElementById('cardTerm').textContent = displayTermWithReading(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
@@ -719,7 +723,7 @@ function renderImageCard() {
   const item = items[termState.imageCardIndex];
   const progress = getImageProgress(item.id);
   document.getElementById('imageCard').classList.toggle('flipped', termState.imageCardFlipped);
-  document.getElementById('imageCardCount').textContent = `No. ${termState.imageCardIndex + 1} / ${items.length}`;
+  document.getElementById('imageCardCount').textContent = `写真 No. ${termState.imageCardIndex + 1} / ${items.length}`;
   document.getElementById('imageCardStatus').textContent = statusLabel(progress.status);
   document.getElementById('imageCardImg').src = item.image;
   document.getElementById('imageCardTerm').textContent = item.term;
