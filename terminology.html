@@ -36,6 +36,9 @@
 .mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;flex:1;min-width:240px}
 .mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:13px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
 .mode-tabs button.active{background:#1a5276;color:#fff}
+.learn-type-switch{display:flex;gap:6px;background:#eef3f7;border-radius:14px;padding:5px}
+.learn-type-switch button{border:0;background:transparent;color:#516173;border-radius:11px;padding:10px 13px;font-weight:700;cursor:pointer;font-size:14px}
+.learn-type-switch button.active{background:#fff;color:#1a5276;box-shadow:0 4px 12px rgba(20,55,80,.12)}
 .btn-tools{padding:13px 14px;border:1px solid #ccd7df;border-radius:12px;background:#fff;color:#1a5276;font-weight:bold;cursor:pointer}
 .term-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
 .show-tools .term-panel{grid-template-columns:minmax(0,1fr) 340px}
@@ -133,12 +136,11 @@
 
 <main class="term-wrap">
   <section class="quick-start">
-    <h2>3つだけ進めます</h2>
-    <p>ことばを覚える → 写真で覚える → テストを受ける。テストは全36回です。<br>Học từ → học bằng hình → làm kiểm tra. Bài kiểm tra có 36 lần.</p>
+    <h2>2ステップで進めます</h2>
+    <p>専門用語を覚える → テストを受ける。覚える方法は「文字カード」と「写真カード」です。テストは全36回です。<br>Học từ chuyên ngành → làm kiểm tra. Có thể học bằng thẻ chữ hoặc thẻ hình. Bài kiểm tra có 36 lần.</p>
     <div class="quick-steps">
-      <span>1. ことば暗記<br>Học từ</span>
-      <span>2. 画像暗記<br>Học bằng hình</span>
-      <span>3. テスト 全36回<br>36 lần kiểm tra</span>
+      <span>1. 覚える<br>Học từ</span>
+      <span>2. テスト 全36回<br>36 lần kiểm tra</span>
     </div>
   </section>
 
@@ -165,9 +167,12 @@
     </select>
     <input type="search" id="termSearch" placeholder="日本語・カタカナ・ベトナム語で検索 / Tìm kiếm">
     <div class="mode-tabs">
-      <button type="button" class="active" id="wordMemoryModeBtn">ことば暗記<br>Từ vựng</button>
-      <button type="button" id="imageMemoryModeBtn">画像暗記<br>Hình ảnh</button>
+      <button type="button" class="active" id="learnModeBtn">覚える<br>Học từ</button>
       <button type="button" id="testModeBtn">テスト<br>Kiểm tra</button>
+    </div>
+    <div class="learn-type-switch" id="learnTypeSwitch">
+      <button type="button" class="active" id="wordMemoryModeBtn">文字カード<br>Thẻ chữ</button>
+      <button type="button" id="imageMemoryModeBtn">写真カード<br>Thẻ hình</button>
     </div>
     <button type="button" class="btn-tools" id="toolsToggleBtn">さがす・一覧<br>Tìm kiếm</button>
   </section>
@@ -176,6 +181,7 @@
     <div class="card-box">
       <div class="flash-card" id="termCard" tabindex="0">
         <span class="chip" id="cardCategory">-</span>
+        <span class="chip" id="cardNumber">No. -</span>
         <div class="card-side-label" id="cardSideLabel">表: 日本語 / Mặt trước: Tiếng Nhật</div>
         <div class="term-main" id="cardTerm">読み込み中...</div>
         <div class="term-kana" id="cardKana"></div>
@@ -256,6 +262,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=18"></script>
+<script src="terminology.js?v=20"></script>
 </body>
 </html>

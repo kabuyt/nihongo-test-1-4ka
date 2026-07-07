@@ -189,11 +189,23 @@ function getImageProgress(imageId) {
   return termState.imageProgress[imageId] || { status: 'new', updatedAt: null };
 }
 
-function saveImageCardProgress(status) {
+async function saveImageCardProgress(status) {
   const item = getImageItems()[termState.imageCardIndex];
   if (!item) return;
   termState.imageProgress[item.id] = { ...getImageProgress(item.id), status, updatedAt: new Date().toISOString() };
   saveImageProgress();
+  if (termState.profile?.id) {
+    try {
+      await supabase.from('terminology_image_progress').upsert({
+        trainee_id: termState.profile.id,
+        image_id: item.id,
+        status,
+        last_studied_at: new Date().toISOString(),
+      }, { onConflict: 'trainee_id,image_id' });
+    } catch (err) {
+      console.warn('image progress save skipped', err);
+    }
+  }
   moveImageCard(1);
 }
 
@@ -247,6 +259,28 @@ async function loadSupabaseProgress() {
     saveLocalProgress();
   } catch (err) {
     console.warn('progress load skipped', err);
+  }
+}
+
+async function loadSupabaseImageProgress() {
+  if (!termState.profile?.id) return;
+  try {
+    const { data, error } = await supabase
+      .from('terminology_image_progress')
+      .select('image_id,status,last_studied_at')
+      .eq('trainee_id', termState.profile.id);
+    if (error || !data) return;
+    data.forEach(item => {
+      const local = getImageProgress(item.image_id);
+      termState.imageProgress[item.image_id] = {
+        ...local,
+        status: item.status || local.status,
+        updatedAt: item.last_studied_at || local.updatedAt,
+      };
+    });
+    saveImageProgress();
+  } catch (err) {
+    console.warn('image progress load skipped', err);
   }
 }
 
@@ -549,6 +583,7 @@ function renderCard() {
 
   if (!termState.filtered.length) {
     document.getElementById('cardCategory').textContent = '-';
+    document.getElementById('cardNumber').textContent = 'No. -';
     document.getElementById('cardTerm').textContent = '該当する用語がありません';
     document.getElementById('cardKana').textContent = '';
     document.getElementById('cardMeaning').textContent = '-';
@@ -562,6 +597,7 @@ function renderCard() {
     saveLocalProgress();
   }
   document.getElementById('cardCategory').textContent = term.category;
+  document.getElementById('cardNumber').textContent = `No. ${termState.currentIndex + 1} / ${termState.filtered.length}`;
   document.getElementById('cardTerm').textContent = displayTermWithReading(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
@@ -683,7 +719,7 @@ function renderImageCard() {
   const item = items[termState.imageCardIndex];
   const progress = getImageProgress(item.id);
   document.getElementById('imageCard').classList.toggle('flipped', termState.imageCardFlipped);
-  document.getElementById('imageCardCount').textContent = `${termState.imageCardIndex + 1} / ${items.length}`;
+  document.getElementById('imageCardCount').textContent = `No. ${termState.imageCardIndex + 1} / ${items.length}`;
   document.getElementById('imageCardStatus').textContent = statusLabel(progress.status);
   document.getElementById('imageCardImg').src = item.image;
   document.getElementById('imageCardTerm').textContent = item.term;
@@ -713,16 +749,25 @@ function moveCard(delta) {
   renderList();
 }
 
+function showLearnType(type) {
+  const image = type === 'image';
+  document.getElementById('cardPanel').classList.toggle('hidden', image);
+  document.getElementById('imagePanel').classList.toggle('hidden', !image);
+  document.getElementById('wordMemoryModeBtn').classList.toggle('active', !image);
+  document.getElementById('imageMemoryModeBtn').classList.toggle('active', image);
+  if (image) renderImageCard();
+}
+
 function showMode(mode) {
   const test = mode === 'test';
-  const image = mode === 'image';
-  document.getElementById('cardPanel').classList.toggle('hidden', test || image);
+  const imageSelected = document.getElementById('imageMemoryModeBtn').classList.contains('active');
+  document.getElementById('learnTypeSwitch').classList.toggle('hidden', test);
+  document.getElementById('cardPanel').classList.toggle('hidden', test || imageSelected);
   document.getElementById('testPanel').classList.toggle('hidden', !test);
-  document.getElementById('imagePanel').classList.toggle('hidden', !image);
-  document.getElementById('wordMemoryModeBtn').classList.toggle('active', !test && !image);
-  document.getElementById('imageMemoryModeBtn').classList.toggle('active', image);
+  document.getElementById('imagePanel').classList.toggle('hidden', test || !imageSelected);
+  document.getElementById('learnModeBtn').classList.toggle('active', !test);
   document.getElementById('testModeBtn').classList.toggle('active', test);
-  if (image) renderImageCard();
+  if (!test && imageSelected) renderImageCard();
   if (test) renderQuizOverview();
 }
 
@@ -875,8 +920,9 @@ function setupEvents() {
     applyFilters();
     renderStats();
   });
-  document.getElementById('wordMemoryModeBtn').addEventListener('click', () => showMode('card'));
-  document.getElementById('imageMemoryModeBtn').addEventListener('click', () => showMode('image'));
+  document.getElementById('learnModeBtn').addEventListener('click', () => showMode('learn'));
+  document.getElementById('wordMemoryModeBtn').addEventListener('click', () => showLearnType('word'));
+  document.getElementById('imageMemoryModeBtn').addEventListener('click', () => showLearnType('image'));
   document.getElementById('testModeBtn').addEventListener('click', () => showMode('test'));
   document.getElementById('imageCard').addEventListener('click', () => {
     termState.imageCardFlipped = !termState.imageCardFlipped;
@@ -931,6 +977,7 @@ function setupEvents() {
   termState.progress = loadLocalProgress();
   termState.imageProgress = loadImageProgress();
   await loadSupabaseProgress();
+  await loadSupabaseImageProgress();
   await loadSupabaseQuizHistory();
   (window.KINREI_VOCAB?.set?.categories || []).forEach(category => {
     const opt = document.createElement('option');
