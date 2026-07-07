@@ -565,7 +565,7 @@ function setCardProgress(prefix, globalNumber) {
   const learned = learnedItemCount();
   const learnedRate = total ? Math.round((learned / total) * 100) : 0;
   const positionRate = total ? Math.round((globalNumber / total) * 100) : 0;
-  document.getElementById(`${prefix}ProgressLabel`).textContent = `Thẻ ${globalNumber} / ${total}・Đã nhớ ${learned} / ${total}`;
+  document.getElementById(`${prefix}ProgressLabel`).textContent = `${globalNumber}/${total} · Đã nhớ ${learned}`;
   document.getElementById(`${prefix}ProgressPercent`).textContent = `${learnedRate}%`;
   document.getElementById(`${prefix}ProgressBar`).style.width = `${positionRate}%`;
 }
@@ -612,7 +612,6 @@ function renderCard() {
 
   if (!termState.filtered.length) {
     document.getElementById('cardCategory').textContent = '-';
-    document.getElementById('cardNumber').textContent = `Thẻ ${totalLearningItems()} / ${totalLearningItems()}`;
     setCardProgress('card', learnedItemCount());
     document.getElementById('cardImage').style.display = 'none';
     document.getElementById('cardTerm').style.display = '';
@@ -626,7 +625,6 @@ function renderCard() {
   const cardItem = termState.filtered[termState.currentIndex];
   const term = cardItem.source;
   document.getElementById('cardCategory').textContent = cardItem.type === 'word' ? 'ことば' : '写真';
-  document.getElementById('cardNumber').textContent = `Thẻ ${cardItem.globalNumber} / ${totalLearningItems()}`;
   setCardProgress('card', cardItem.globalNumber);
 
   if (cardItem.type === 'image') {

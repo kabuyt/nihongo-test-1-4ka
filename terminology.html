@@ -41,12 +41,13 @@
 .term-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
 .term-panel.hidden{display:none}
 .card-box,.term-list-box,.quiz-box,.quiz-result{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.flash-card{min-height:390px;border:2px solid #dbe7ef;border-radius:18px;padding:28px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;background:linear-gradient(180deg,#f6fbff,#fff)}
+.flash-card{min-height:390px;border:2px solid #dbe7ef;border-radius:18px;padding:18px 24px 26px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;background:linear-gradient(180deg,#f6fbff,#fff)}
 .flash-card.flipped{background:linear-gradient(180deg,#f3fff0,#fff)}
-.chip{display:inline-block;align-self:flex-start;background:#e8f5e9;color:#287b36;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:bold;margin-bottom:18px}
-.card-progress{width:100%;background:#eef4f8;border:1px solid #d9e6ef;border-radius:12px;padding:10px;margin:0 0 16px}
-.card-progress-head{display:flex;justify-content:space-between;gap:8px;color:#516271;font-size:13px;font-weight:bold;margin-bottom:7px}
-.card-progress-track{height:10px;background:#dce8f0;border-radius:999px;overflow:hidden}
+.card-meta{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{display:inline-block;background:#e8f5e9;color:#287b36;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:bold}
+.card-progress{flex:1;min-width:180px}
+.card-progress-head{display:flex;justify-content:space-between;gap:8px;color:#516271;font-size:12px;font-weight:bold;margin-bottom:5px}
+.card-progress-track{height:6px;background:#dce8f0;border-radius:999px;overflow:hidden}
 .card-progress-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,#27ae60,#1a5276);transition:width .2s}
 .term-main{font-size:46px;line-height:1.25;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere;text-align:center}
 .term-kana{font-size:20px;color:#666;margin-top:12px;text-align:center}
@@ -175,14 +176,15 @@
   <section id="cardPanel" class="term-panel">
     <div class="card-box">
       <div class="flash-card" id="termCard" tabindex="0">
-        <span class="chip" id="cardCategory">-</span>
-        <span class="chip" id="cardNumber">No. -</span>
-        <div class="card-progress">
-          <div class="card-progress-head">
-            <span id="cardProgressLabel">Tiến độ</span>
-            <strong id="cardProgressPercent">0%</strong>
+        <div class="card-meta">
+          <span class="chip" id="cardCategory">-</span>
+          <div class="card-progress">
+            <div class="card-progress-head">
+              <span id="cardProgressLabel">Tiến độ</span>
+              <strong id="cardProgressPercent">0%</strong>
+            </div>
+            <div class="card-progress-track"><span id="cardProgressBar"></span></div>
           </div>
-          <div class="card-progress-track"><span id="cardProgressBar"></span></div>
         </div>
         <div class="card-side-label" id="cardSideLabel">表: 日本語 / Mặt trước: Tiếng Nhật</div>
         <img class="image-card-img" id="cardImage" alt="専門用語の写真" style="display:none">
