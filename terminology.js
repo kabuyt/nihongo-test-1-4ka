@@ -5,10 +5,12 @@ const QUIZ_SET_SIZE = 20;
 const FINAL_QUIZ_SIZE = 100;
 const FINAL_QUIZ_SET_ID = 'kinrei-final-2023';
 const TERM_OVERRIDES = {
+  'kinrei-mono-002': { display: '棚、ラック', reading: 'たな', inline: '棚(たな)、ラック' },
   'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
   'kinrei-mono-011': { display: '手袋（薄手・厚手）', reading: 'てぶくろ', inline: '手袋(てぶくろ)（薄手・厚手）' },
   'kinrei-mono-015': { display: '水切り', reading: 'みずきり', inline: '水切り(みずきり)' },
   'kinrei-mono-043': { display: '前日仕込み', reading: 'ぜんじつしこみ', inline: '前日仕込み(ぜんじつしこみ)' },
+  'kinrei-mono-044': { display: 'ホワイトボードマーカー、マジック', reading: 'ほわいとぼーどまーかー' },
   'kinrei-mono-051': { display: '鉄の爪', reading: 'てつのつめ', inline: '鉄の爪(てつのつめ)' },
   'kinrei-mono-063': { display: '先出し', reading: 'さきだし', inline: '先出し(さきだし)' },
   'kinrei-mono-077': { display: '歩留り', reading: 'ぶどまり', inline: '歩留り(ぶどまり)' },
@@ -26,7 +28,7 @@ const TERM_OVERRIDES = {
   'kinrei-ingredients-017': { display: '焦がし玉ねぎ', reading: 'こがしたまねぎ', inline: '焦がし玉ねぎ(こがしたまねぎ)' },
   'kinrei-ingredients-018': { display: 'ちんげん菜', reading: 'ちんげんさい', inline: 'ちんげん菜(ちんげんさい)' },
   'kinrei-ingredients-022': { display: 'パン粉', reading: 'ぱんこ', inline: 'パン粉(ぱんこ)' },
-  'kinrei-ingredients-034': { display: '海老（シュリンプ）', reading: 'えび', inline: '海老(えび)（シュリンプ）' },
+  'kinrei-ingredients-034': { display: '海老、シュリンプ', reading: 'えび', inline: '海老(えび)、シュリンプ' },
   'kinrei-ingredients-038': { display: '竹の子', reading: 'たけのこ', inline: '竹の子(たけのこ)' },
   'kinrei-ingredients-041': { display: 'さば粉', reading: 'さばこ' },
   'kinrei-ingredients-042': { display: '蒲鉾、棒蒲鉾', reading: 'かまぼこ、ぼうかまぼこ', inline: '蒲鉾(かまぼこ)、棒蒲鉾(ぼうかまぼこ)' },
@@ -37,7 +39,7 @@ const TERM_OVERRIDES = {
   'kinrei-ingredients-057': { display: 'のり、焼き海苔', reading: 'のり、やきのり', inline: 'のり、焼き海苔(やきのり)' },
   'kinrei-ingredients-059': { display: '千切り生姜2ミリ', reading: 'せんぎりしょうが2みり', inline: '千切り生姜2ミリ(せんぎりしょうが2みり)' },
   'kinrei-verbs-004': { display: '濡れます・濡らします', reading: 'ぬれます・ぬらします', inline: '濡れます(ぬれます)・濡らします(ぬらします)' },
-  'kinrei-verbs-014': { display: '茹でます（ボイル）', reading: 'ゆでます', inline: '茹でます(ゆでます)（ボイル）' },
+  'kinrei-verbs-014': { display: '茹でます、ボイル', reading: 'ゆでます', inline: '茹でます(ゆでます)、ボイル' },
   'kinrei-verbs-019': { display: '盛り付けます', reading: 'もりつけます', inline: '盛り付けます(もりつけます)' },
   'kinrei-verbs-024': { display: '持ち込みます', reading: 'もちこみます', inline: '持ち込みます(もちこみます)' },
   'kinrei-verbs-031': { display: '混入します', reading: 'こんにゅうします' },
@@ -879,8 +881,8 @@ function renderQuiz() {
   document.getElementById('quizTotal').textContent = quiz.questions.length;
   const wordTitle = esc(question.prompt);
   document.getElementById('quizPrompt').innerHTML = question.type === 'image'
-    ? '写真を見てください<br><small>正しい名前を選んでください / Chọn tên đúng</small>'
-    : `${wordTitle}<br><small>正しい意味を選んでください（ベトナム語） / Chọn nghĩa đúng</small>`;
+    ? '<span class="quiz-word-prompt">Hãy xem hình</span><span class="quiz-help">Chọn tên đúng</span>'
+    : `<span class="quiz-word-prompt">${wordTitle}</span><span class="quiz-help">Chọn nghĩa đúng bằng tiếng Việt</span>`;
   const img = document.getElementById('quizQuestionImg');
   img.style.display = question.type === 'image' ? '' : 'none';
   if (question.type === 'image') img.src = question.image;
