@@ -706,7 +706,7 @@ function renderArchive() {
     .filter(item => getImageProgress(item.id).status === 'learned')
     .map(item => ({
       type: '写真',
-      typeVi: 'Thẻ hình',
+      typeVi: 'Ảnh',
       title: item.term,
       sub: item.reading ? `Cách đọc: ${item.reading}` : '',
       reading: '',
