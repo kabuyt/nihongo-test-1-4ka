@@ -1,5 +1,5 @@
 const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
-const TEST_STORAGE_KEY = 'kinreiTerminologyTestSets:v1';
+const TEST_STORAGE_KEY = 'kinreiTerminologyPerfectTestSets:v2';
 const IMAGE_STORAGE_KEY = 'kinreiImageMemoryProgress:v1';
 const QUIZ_SET_SIZE = 20;
 const FINAL_QUIZ_SIZE = 100;
@@ -226,6 +226,15 @@ function saveCompletedTestSet(setNumber) {
   localStorage.setItem(testSetKey(), JSON.stringify([...completed].sort((a, b) => a - b)));
 }
 
+function isQuizSetUnlocked(setNumber) {
+  if (setNumber <= 1) return true;
+  const completed = loadCompletedTestSets();
+  for (let n = 1; n < setNumber; n += 1) {
+    if (!completed.has(n)) return false;
+  }
+  return true;
+}
+
 function isAllQuizSetsCompleted() {
   const total = getQuizSets().length;
   const completed = loadCompletedTestSets();
@@ -287,13 +296,13 @@ async function loadSupabaseQuizHistory() {
   try {
     const { data, error } = await supabase
       .from('terminology_quiz_results')
-      .select('set_id')
+      .select('set_id,score_rate')
       .eq('trainee_id', termState.profile.id)
       .like('set_id', 'kinrei-test-2023-%');
     if (error || !data) return;
     data.forEach(item => {
       const match = String(item.set_id || '').match(/^kinrei-test-2023-(\d+)$/);
-      if (match) saveCompletedTestSet(Number(match[1]));
+      if (match && Number(item.score_rate || 0) >= 100) saveCompletedTestSet(Number(match[1]));
     });
   } catch (err) {
     console.warn('quiz history load skipped', err);
@@ -801,12 +810,19 @@ function renderQuizOverview() {
   select.innerHTML = sets.map((set, index) => {
     const start = index * QUIZ_SET_SIZE + 1;
     const end = start + set.length - 1;
-    const done = completedSetNumbers.has(index + 1) ? ' ✓' : '';
-    return `<option value="${index}">第${index + 1}回（${start}-${end}問）${done}</option>`;
+    const setNumber = index + 1;
+    const done = completedSetNumbers.has(setNumber) ? ' ✓' : '';
+    const locked = isQuizSetUnlocked(setNumber) ? '' : ' disabled';
+    const lockText = locked ? ' 🔒' : '';
+    return `<option value="${index}"${locked}>第${setNumber}回（${start}-${end}問）${done}${lockText}</option>`;
   }).join('');
+  if (!isQuizSetUnlocked(termState.quizSetIndex + 1)) {
+    const firstLockedIndex = sets.findIndex((_, index) => !completedSetNumbers.has(index + 1));
+    termState.quizSetIndex = Math.max(0, firstLockedIndex);
+  }
   select.value = String(termState.quizSetIndex);
   summary.textContent = sets.length
-    ? `全${sets.length}回・完了${completed}回 / ${sets.length} lần, xong ${completed}`
+    ? `Đúng 100% để mở bài tiếp theo：${completed} / ${sets.length} lần`
     : 'テストできる単語がありません';
   const progressRate = sets.length ? Math.round((completed / sets.length) * 100) : 0;
   document.getElementById('testProgressBar').style.width = `${progressRate}%`;
@@ -846,6 +862,10 @@ function showMode(mode) {
 function startQuiz() {
   const sets = getQuizSets();
   if (!sets.length) return;
+  if (!isQuizSetUnlocked(termState.quizSetIndex + 1)) {
+    document.getElementById('quizFeedback').textContent = '前の回を全問正解すると開きます / Cần đúng 100% bài trước';
+    return;
+  }
   const questions = sets[termState.quizSetIndex] || sets[0];
   termState.quiz = {
     kind: 'standard',
@@ -938,8 +958,10 @@ async function finishQuiz() {
   document.getElementById('quizResult').classList.remove('hidden');
   document.getElementById('quizResult').innerHTML = isFinal
     ? `<strong>総合修了テスト 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>修了テストの結果を保存しました。<br>Đã lưu kết quả kiểm tra hoàn thành.</p>`
-    : `<strong>第${quiz.setNumber}回 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>この回が完了しました。進捗バーに反映されます。<br>Đã hoàn thành lần này. Thanh tiến độ đã được cập nhật.</p>`;
-  if (!isFinal) {
+    : rate === 100
+      ? `<strong>第${quiz.setNumber}回 100%：${quiz.correct} / ${quiz.questions.length}問 正解</strong><p>次の回が開きました。<br>Đã mở bài tiếp theo.</p>`
+      : `<strong>第${quiz.setNumber}回：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>全問正解すると次の回が開きます。もう一度この回を受けてください。<br>Cần đúng 100% để mở bài tiếp theo.</p>`;
+  if (!isFinal && rate === 100) {
     saveCompletedTestSet(quiz.setNumber);
     const sets = getQuizSets();
     if (termState.quizSetIndex < sets.length - 1) termState.quizSetIndex += 1;
