@@ -364,7 +364,7 @@ function statusLabel(status) {
     new: 'Chưa học / 未学習',
     learning: 'Đang học / 学習中',
     learned: 'Đã nhớ / 覚えた',
-    review: 'Cần ôn / 要復習',
+    review: 'Chưa nhớ / おぼえてない',
   }[status || 'new'] || status;
 }
 
