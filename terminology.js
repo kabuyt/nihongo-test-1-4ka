@@ -92,6 +92,7 @@ let termState = {
   flipped: false,
   quiz: null,
   profile: null,
+  finalTestUnlocked: false,
 };
 
 function esc(value) {
@@ -241,6 +242,10 @@ function isAllQuizSetsCompleted() {
   return total > 0 && [...completed].filter(n => n >= 1 && n <= total).length >= total;
 }
 
+function isFinalQuizUnlocked() {
+  return isAllQuizSetsCompleted() && termState.finalTestUnlocked;
+}
+
 function getProgress(termId) {
   return termState.progress[termId] || { status: 'new', attempts: 0, correct: 0 };
 }
@@ -306,6 +311,23 @@ async function loadSupabaseQuizHistory() {
     });
   } catch (err) {
     console.warn('quiz history load skipped', err);
+  }
+}
+
+async function loadFinalTestUnlock() {
+  termState.finalTestUnlocked = false;
+  if (!termState.profile?.id) return;
+  try {
+    const { data, error } = await supabase
+      .from('terminology_final_unlocks')
+      .select('is_unlocked')
+      .eq('trainee_id', termState.profile.id)
+      .eq('test_set_id', FINAL_QUIZ_SET_ID)
+      .maybeSingle();
+    if (error) return;
+    termState.finalTestUnlocked = Boolean(data?.is_unlocked);
+  } catch (err) {
+    console.warn('final test unlock load skipped', err);
   }
 }
 
@@ -789,12 +811,15 @@ function renderFinalQuizOverview() {
   const status = document.getElementById('finalTestStatus');
   const button = document.getElementById('startFinalQuizBtn');
   if (!box || !status || !button) return;
-  const unlocked = isAllQuizSetsCompleted();
+  const allSmallTestsDone = isAllQuizSetsCompleted();
+  const unlocked = isFinalQuizUnlocked();
   box.classList.toggle('locked', !unlocked);
   button.disabled = !unlocked;
   status.textContent = unlocked
-    ? '受験できます / Có thể làm bài'
-    : `全${getQuizSets().length}回が終わると受けられます / Hoàn thành ${getQuizSets().length} lần để mở`;
+    ? '先生の前で受けられます / Có thể làm bài trước giáo viên'
+    : allSmallTestsDone
+      ? '先生が開けるまで待ってください / Chờ giáo viên mở bài'
+      : `全${getQuizSets().length}回が終わると先生が開けます / Hoàn thành ${getQuizSets().length} lần, giáo viên sẽ mở`;
 }
 
 function renderQuizOverview() {
@@ -881,7 +906,10 @@ function startQuiz() {
 }
 
 function startFinalQuiz() {
-  if (!isAllQuizSetsCompleted()) return;
+  if (!isFinalQuizUnlocked()) {
+    renderFinalQuizOverview();
+    return;
+  }
   const questions = getFinalQuizQuestions();
   if (!questions.length) return;
   termState.quiz = {
@@ -1045,6 +1073,7 @@ function setupEvents() {
   await loadSupabaseProgress();
   await loadSupabaseImageProgress();
   await loadSupabaseQuizHistory();
+  await loadFinalTestUnlock();
   setupEvents();
   applyFilters();
   renderImageCard();
