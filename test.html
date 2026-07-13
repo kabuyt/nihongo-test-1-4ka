@@ -40,6 +40,11 @@
 <!-- タブ -->
 <div class="tab-bar" id="tab-bar" style="display:none"></div>
 
+<!-- 制限時間 -->
+<div id="timer-bar" style="display:none;background:#fff3cd;color:#7a4b00;text-align:center;padding:10px 12px;font-size:14px;font-weight:bold;position:sticky;top:42px;z-index:98;border-bottom:1px solid #f1d58a">
+  制限時間: <span id="timer-remaining">50:00</span>
+</div>
+
 <!-- カンニング防止バナー -->
 <div id="cheat-banner" style="display:none;background:#c0392b;color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:bold;position:sticky;top:42px;z-index:99">
   ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
@@ -91,14 +96,87 @@ window.ONE_SHOT_AUDIO = true;
 
 const params = new URLSearchParams(location.search);
 const TEST_ID = params.get('id');
+const TEST_TIME_LIMIT_SECONDS = 50 * 60;
 let _sections = [];
 let _testDef = null;
 let _sectionGradingData = {}; // {section: {answer_key, scoring_rules}}
 let _isSubmitting = false;
+let _timerInterval = null;
+let _timerDeadline = 0;
+let _timerWarned = false;
+let _timeExpired = false;
 
 function updateFinishButtonVisibility(activeSection) {
   document.getElementById('finish-btn-wrap').style.display =
     activeSection === 'chokkai' ? 'block' : 'none';
+}
+
+function formatRemainingTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function renderTimer(remainingSeconds) {
+  const timerBar = document.getElementById('timer-bar');
+  const timerText = document.getElementById('timer-remaining');
+  if (!timerBar || !timerText) return;
+
+  timerBar.style.display = 'block';
+  timerText.textContent = formatRemainingTime(remainingSeconds);
+
+  if (remainingSeconds <= 300) {
+    timerBar.style.background = '#f8d7da';
+    timerBar.style.color = '#842029';
+    timerBar.style.borderBottomColor = '#f1aeb5';
+  } else {
+    timerBar.style.background = '#fff3cd';
+    timerBar.style.color = '#7a4b00';
+    timerBar.style.borderBottomColor = '#f1d58a';
+  }
+}
+
+function stopTestTimer() {
+  if (_timerInterval) {
+    clearInterval(_timerInterval);
+    _timerInterval = null;
+  }
+}
+
+function handleTimeExpired() {
+  if (_timeExpired || _isSubmitting) return;
+  _timeExpired = true;
+  alert('50分の制限時間になりました。現在の解答を自動提出します。');
+  doSubmit({ skipWarnings: true, triggeredByTimeout: true });
+}
+
+function tickTestTimer() {
+  const remainingSeconds = Math.max(0, Math.ceil((_timerDeadline - Date.now()) / 1000));
+  renderTimer(remainingSeconds);
+
+  if (remainingSeconds <= 300 && !_timerWarned) {
+    _timerWarned = true;
+  }
+  if (remainingSeconds <= 0) {
+    stopTestTimer();
+    handleTimeExpired();
+  }
+}
+
+function startTestTimer() {
+  stopTestTimer();
+  _timerWarned = false;
+  _timeExpired = false;
+  _timerDeadline = Date.now() + (TEST_TIME_LIMIT_SECONDS * 1000);
+  tickTestTimer();
+  _timerInterval = setInterval(tickTestTimer, 1000);
+}
+
+function resumeTestTimer() {
+  if (!_timerDeadline || _timeExpired || _isSubmitting) return;
+  stopTestTimer();
+  tickTestTimer();
+  _timerInterval = setInterval(tickTestTimer, 1000);
 }
 
 function showError(title, detail) {
@@ -234,6 +312,7 @@ function showError(title, detail) {
   // ローディング非表示、終了ボタン表示
   document.getElementById('loading').style.display = 'none';
   updateFinishButtonVisibility(_sections[0]);
+  startTestTimer();
 
   // カンニング防止を有効化
   setupAntiCheat();
@@ -290,13 +369,15 @@ function doFinish() {
   if (_isSubmitting) return;
   const ok = confirm('Hoan thanh bai kiem tra?\n\n押すと解答が管理ページへ送信されます。採点結果は表示されません。');
   if (!ok) return;
-  doSubmit();
+  doSubmit({ skipWarnings: false, triggeredByTimeout: false });
 }
 
 // ===== 結果送信 =====
-async function doSubmit() {
+async function doSubmit(options = {}) {
+  const { skipWarnings = false, triggeredByTimeout = false } = options;
   if (_isSubmitting) return;
   _isSubmitting = true;
+  stopTestTimer();
   const btn = document.getElementById('send-btn');
   const status = document.getElementById('send-status');
   const resultBox = document.getElementById('result-box');
@@ -337,11 +418,12 @@ async function doSubmit() {
       }
     }
   });
-  if (warnings.length > 0) {
+  if (!skipWarnings && warnings.length > 0) {
     const msg = '⚠ Còn nhiều câu chưa trả lời / 未回答が多いセクションがあります:\n\n' + warnings.join('\n') +
                 '\n\nGửi (提出) しますか？\nキャンセル: もう一度見直す';
     if (!confirm(msg)) {
       _isSubmitting = false;
+      if (!triggeredByTimeout && !_timeExpired) resumeTestTimer();
       return;
     }
   }
@@ -349,7 +431,7 @@ async function doSubmit() {
   resultBox.style.display = 'block';
   resultBox.scrollIntoView({ behavior: 'smooth' });
   btn.disabled = true;
-  status.textContent = '送信中...';
+  status.textContent = triggeredByTimeout ? '時間切れのため送信中...' : '送信中...';
   status.style.color = '#555';
 
   const profile = getStudentProfile();
@@ -394,14 +476,21 @@ async function doSubmit() {
       status.style.color = '#c0392b';
       btn.disabled = false;
       _isSubmitting = false;
+      if (!triggeredByTimeout) resumeTestTimer();
     }
     return;
   }
 
-  document.getElementById('result-detail').innerHTML = '<p style="margin:0;color:#1a5276;font-weight:bold">送信が完了しました。</p>';
+  document.getElementById('result-detail').innerHTML = triggeredByTimeout
+    ? '<p style="margin:0;color:#1a5276;font-weight:bold">50分の制限時間に達したため、自動提出しました。</p>'
+    : '<p style="margin:0;color:#1a5276;font-weight:bold">送信が完了しました。</p>';
   status.textContent = autoScored
-    ? '✅ 送信完了。採点結果は管理ページにのみ表示されます。'
-    : '✅ 送信完了。採点結果は管理ページで確認できます。';
+    ? (triggeredByTimeout
+      ? '✅ 時間切れで送信完了。採点結果は管理ページにのみ表示されます。'
+      : '✅ 送信完了。採点結果は管理ページにのみ表示されます。')
+    : (triggeredByTimeout
+      ? '✅ 時間切れで送信完了。採点結果は管理ページで確認できます。'
+      : '✅ 送信完了。採点結果は管理ページで確認できます。');
   status.style.color = '#27ae60';
   btn.textContent = '送信済み';
 
