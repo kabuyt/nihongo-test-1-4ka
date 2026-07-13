@@ -56,8 +56,7 @@
 <!-- 結果表示 -->
 <div class="result-box" id="result-box" role="status" aria-live="polite">
   <h2 style="color:#1a5276;margin-bottom:12px">✅ Đã hoàn thành bài kiểm tra</h2>
-  <p style="color:#555;margin-bottom:12px;font-size:14px">結果を先生に送信してください。</p>
-  <div class="score-summary" id="score-summary-area" style="display:none"></div>
+  <p style="color:#555;margin-bottom:12px;font-size:14px">聴解ページから送信すると、結果は管理ページにのみ保存されます。</p>
   <div id="result-detail"></div>
   <div style="margin-top:20px;text-align:center;border-top:1px solid #ddd;padding-top:16px">
   <button type="button" class="btn btn-send" onclick="doSubmit()" id="send-btn">
@@ -95,6 +94,12 @@ const TEST_ID = params.get('id');
 let _sections = [];
 let _testDef = null;
 let _sectionGradingData = {}; // {section: {answer_key, scoring_rules}}
+let _isSubmitting = false;
+
+function updateFinishButtonVisibility(activeSection) {
+  document.getElementById('finish-btn-wrap').style.display =
+    activeSection === 'chokkai' ? 'block' : 'none';
+}
 
 function showError(title, detail) {
   document.getElementById('loading').style.display = 'none';
@@ -228,7 +233,7 @@ function showError(title, detail) {
 
   // ローディング非表示、終了ボタン表示
   document.getElementById('loading').style.display = 'none';
-  document.getElementById('finish-btn-wrap').style.display = 'block';
+  updateFinishButtonVisibility(_sections[0]);
 
   // カンニング防止を有効化
   setupAntiCheat();
@@ -252,8 +257,7 @@ function showTab(name) {
     btn.setAttribute('aria-selected', _sections[i] === name ? 'true' : 'false');
   });
   // 最後のタブなら終了ボタン表示
-  document.getElementById('finish-btn-wrap').style.display =
-    name === _sections[_sections.length - 1] ? 'block' : 'none';
+  updateFinishButtonVisibility(name);
   window.scrollTo(0, 0);
 }
 
@@ -283,15 +287,19 @@ function setupAntiCheat() {
 
 // ===== テスト完了 =====
 function doFinish() {
-  const rb = document.getElementById('result-box');
-  rb.style.display = 'block';
-  rb.scrollIntoView({ behavior: 'smooth' });
+  if (_isSubmitting) return;
+  const ok = confirm('Hoan thanh bai kiem tra?\n\n押すと解答が管理ページへ送信されます。採点結果は表示されません。');
+  if (!ok) return;
+  doSubmit();
 }
 
 // ===== 結果送信 =====
 async function doSubmit() {
+  if (_isSubmitting) return;
+  _isSubmitting = true;
   const btn = document.getElementById('send-btn');
   const status = document.getElementById('send-status');
+  const resultBox = document.getElementById('result-box');
 
   // 全回答を収集
   const answers = {};
@@ -333,12 +341,16 @@ async function doSubmit() {
     const msg = '⚠ Còn nhiều câu chưa trả lời / 未回答が多いセクションがあります:\n\n' + warnings.join('\n') +
                 '\n\nGửi (提出) しますか？\nキャンセル: もう一度見直す';
     if (!confirm(msg)) {
+      _isSubmitting = false;
       return;
     }
   }
 
+  resultBox.style.display = 'block';
+  resultBox.scrollIntoView({ behavior: 'smooth' });
   btn.disabled = true;
-  status.textContent = '採点中...';
+  status.textContent = '送信中...';
+  status.style.color = '#555';
 
   const profile = getStudentProfile();
   const testDate = document.getElementById('test_date').value;
@@ -381,22 +393,15 @@ async function doSubmit() {
       status.textContent = '❌ 送信に失敗しました: ' + error.message;
       status.style.color = '#c0392b';
       btn.disabled = false;
+      _isSubmitting = false;
     }
     return;
   }
 
-  // 採点結果表示
-  if (autoScored) {
-    const parts = [];
-    if (scores.score_vocab !== null) parts.push(`語彙: ${scores.score_vocab}/100`);
-    if (scores.score_grammar !== null) parts.push(`文法: ${scores.score_grammar}/100`);
-    if (scores.score_listening !== null) parts.push(`聴解: ${scores.score_listening}/100`);
-    const total = (scores.score_vocab || 0) + (scores.score_grammar || 0) + (scores.score_listening || 0);
-    const maxTotal = (scores.score_vocab !== null ? 100 : 0) + (scores.score_grammar !== null ? 100 : 0) + (scores.score_listening !== null ? 100 : 0);
-    status.innerHTML = `✅ 送信完了！<br><b>${parts.join(' / ')}</b><br>合計: ${total}/${maxTotal}点`;
-  } else {
-    status.textContent = '✅ 送信完了！結果は先生が採点します。';
-  }
+  document.getElementById('result-detail').innerHTML = '<p style="margin:0;color:#1a5276;font-weight:bold">送信が完了しました。</p>';
+  status.textContent = autoScored
+    ? '✅ 送信完了。採点結果は管理ページにのみ表示されます。'
+    : '✅ 送信完了。採点結果は管理ページで確認できます。';
   status.style.color = '#27ae60';
   btn.textContent = '送信済み';
 
