@@ -66,6 +66,16 @@ function shouldPreserveOptionOrder(options) {
   return false;
 }
 
+function shuffleChoicesForDisplay(choices) {
+  const shuffled = (choices || []).slice();
+  if (shouldPreserveOptionOrder(shuffled)) return shuffled;
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 function stripHtml(value) {
   const div = document.createElement('div');
   div.innerHTML = String(value || '');
@@ -1215,7 +1225,7 @@ R.render_radio_choice = function(q, container) {
     qDiv.appendChild(p);
     const choicesDiv = document.createElement('div');
     choicesDiv.style.cssText = 'display:flex;flex-direction:column;gap:6px;font-size:13px';
-    (item.choices || []).forEach(c => {
+    shuffleChoicesForDisplay(item.choices).forEach(c => {
       const label = document.createElement('label');
       label.innerHTML = `<input type="radio" name="${item.field_id}" value="${c.value}"> ${c.label}`;
       choicesDiv.appendChild(label);
