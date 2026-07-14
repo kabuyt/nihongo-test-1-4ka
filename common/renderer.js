@@ -1240,6 +1240,12 @@ R.render_radio_choice = function(q, container) {
 // audio_image_radio: 音声+画像選択
 R.render_audio_image_radio = function(q, container) {
   const block = createQBlock(q.title_html);
+  if (q.instruction) {
+    const inst = document.createElement('div');
+    inst.className = 'q-instruction';
+    inst.innerHTML = q.instruction;
+    block.appendChild(inst);
+  }
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
