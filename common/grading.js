@@ -382,7 +382,7 @@ const METHOD_MAP = {
 
 /**
  * セクション単位で採点
- * @param {object} answerKey - {blockId: {fid: ans}} or {blockId: [ans,...]}
+ * @param {object} answerKey - {blockId: {fid: ans}}, {blockId: [ans,...]}, or flat {fid: ans}
  * @param {object} scoringRules - {blockId: {method, ...}}
  * @param {object} userAnswers - {fid: value}
  * @returns {number} セクション合計点
@@ -392,7 +392,9 @@ G.gradeSection = function(answerKey, scoringRules, userAnswers) {
   for (const blockId in scoringRules) {
     const rule = scoringRules[blockId];
     if (!rule || !rule.method) continue;
-    const ak = answerKey[blockId] || {};
+    // Some Supabase sections store one flat answer map for the whole section,
+    // while the original fixtures nest answers by block. Support both shapes.
+    const ak = answerKey[blockId] || answerKey || {};
     const fn = METHOD_MAP[rule.method];
     if (!fn) {
       console.warn('Unknown scoring method:', rule.method, 'block:', blockId);

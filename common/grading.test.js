@@ -44,6 +44,50 @@ function deepEq(name, actual, expected) {
   failures.push({ name, actual: a, expected: e });
 }
 
+// Supabase-backed tests may store a section-wide flat answer map.
+eq(
+  'flat answer_key radio_exact',
+  TG.gradeSection(
+    { flat_1: 'a', flat_2: 'b' },
+    { flat: { method: 'radio_exact', points_each: 2, field_ids: ['flat_1', 'flat_2'] } },
+    { flat_1: 'a', flat_2: 'b' },
+  ),
+  4,
+);
+
+function makeFlatEqualWeightFixture(prefix, blockSizes) {
+  const questionCount = blockSizes.reduce((sum, size) => sum + size, 0);
+  const answer_key = {};
+  const scoring_rules = {};
+  const perfect = {};
+  let questionNumber = 1;
+
+  blockSizes.forEach((size, blockIndex) => {
+    const field_ids = [];
+    for (let i = 0; i < size; i++) {
+      const fieldId = `${prefix}${blockIndex + 1}_${questionNumber++}`;
+      field_ids.push(fieldId);
+      answer_key[fieldId] = '0';
+      perfect[fieldId] = '0';
+    }
+    scoring_rules[`${prefix}${blockIndex + 1}`] = {
+      method: 'radio_exact',
+      points_each: 100 / questionCount,
+      field_ids,
+    };
+  });
+
+  return { answer_key, scoring_rules, perfect };
+}
+
+const marugotoGrammar34 = makeFlatEqualWeightFixture('gb', [10, 8, 7, 4, 3, 2]);
+eq('marugoto grammar 34問 全問正解 = 100', TG.gradeSection(marugotoGrammar34.answer_key, marugotoGrammar34.scoring_rules, marugotoGrammar34.perfect), 100);
+eq('marugoto grammar 34問 全空 = 0', TG.gradeSection(marugotoGrammar34.answer_key, marugotoGrammar34.scoring_rules, {}), 0);
+
+const marugotoListening36 = makeFlatEqualWeightFixture('cl', [6, 6, 6, 7, 1, 2, 3, 3, 2]);
+eq('marugoto listening 36問 全問正解 = 100', TG.gradeSection(marugotoListening36.answer_key, marugotoListening36.scoring_rules, marugotoListening36.perfect), 100);
+eq('marugoto listening 36問 全空 = 0', TG.gradeSection(marugotoListening36.answer_key, marugotoListening36.scoring_rules, {}), 0);
+
 // ============================================================
 //  Fixture: test1 答えキー / 採点ルールのコア部分
 //  test_data/test1_answer_keys.json から「multi_field_group が
