@@ -21,6 +21,8 @@
 .quick-start{background:linear-gradient(135deg,#eaf7ff,#fff7e8);border:1px solid #d5ecf8;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(26,82,118,.08);margin-bottom:12px}
 .quick-start h2{font-size:22px;color:#1a5276;margin:0 0 8px}
 .quick-start p{font-size:15px;color:#475967;line-height:1.6;margin:0 0 12px}
+.study-alert{border:2px solid #e74c3c;background:#fff5f3;border-radius:12px;padding:12px;margin:10px 0;color:#c0392b;font-weight:700;line-height:1.65}
+.study-alert .study-time-red{display:block;margin-top:8px;font-size:18px;color:#c0392b}
 .quick-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .quick-steps span{background:#fff;border:1px solid #dcebf4;border-radius:12px;padding:10px;font-size:13px;font-weight:bold;color:#1a5276;text-align:center}
 .term-hero{display:none}
@@ -147,6 +149,13 @@
   <section class="quick-start">
     <h2>Học theo 2 bước</h2>
     <p>Học lần lượt các thẻ từ chuyên ngành → làm kiểm tra. Mỗi bài kiểm tra nhỏ có 20 câu.<br>専門用語カードを順番に覚える → テストを受ける。小テストは20問ずつです。</p>
+    <div class="study-alert">
+      Hãy làm 18 bài kiểm tra nhỏ, sau đó làm bài kiểm tra tổng hợp 100 câu.<br>
+      Tiến độ học tập sẽ được báo cáo cho công ty. Hệ thống cũng ghi lại mỗi ngày bạn đã học bao nhiêu phút.<br>
+      Cố gắng nhé.<br>
+      小テスト18回を受けて最後に総合テスト100問を受けましょう。学習の進捗は企業に報告します。一日何分学習したかも記録しています。頑張ってください。
+      <span class="study-time-red" id="studyTimeNotice">Tổng thời gian học / 総学習時間: --</span>
+    </div>
     <div class="quick-steps">
       <span>1. Học từ<br>覚える</span>
       <span>2. Mỗi lần 20 câu<br>テスト 20問ずつ</span>
@@ -252,6 +261,6 @@
 <script src="common/auth.js"></script>
 <script src="data/kinrei-vocab.js?v=5"></script>
 <script src="data/kinrei-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=29"></script>
+<script src="terminology.js?v=30"></script>
 </body>
 </html>

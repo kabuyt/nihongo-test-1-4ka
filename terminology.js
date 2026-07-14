@@ -93,6 +93,11 @@ let termState = {
   quiz: null,
   profile: null,
   finalTestUnlocked: false,
+  studySessionId: null,
+  studyStartedAt: null,
+  studyDurationSeconds: 0,
+  totalStudySeconds: 0,
+  studyTimer: null,
 };
 
 function esc(value) {
@@ -246,6 +251,14 @@ function isFinalQuizUnlocked() {
   return isAllQuizSetsCompleted() && termState.finalTestUnlocked;
 }
 
+function formatStudySeconds(seconds) {
+  const totalMinutes = Math.max(0, Math.round(Number(seconds || 0) / 60));
+  if (totalMinutes < 60) return `${totalMinutes} phút / ${totalMinutes}分`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours} giờ ${minutes} phút / ${hours}時間${minutes}分`;
+}
+
 function getProgress(termId) {
   return termState.progress[termId] || { status: 'new', attempts: 0, correct: 0 };
 }
@@ -334,14 +347,75 @@ async function loadFinalTestUnlock() {
 async function logStudySession() {
   if (!termState.profile?.id) return;
   try {
-    await supabase.from('terminology_study_sessions').insert({
+    const { data, error } = await supabase.from('terminology_study_sessions').insert({
       trainee_id: termState.profile.id,
       session_type: 'open',
       user_agent: navigator.userAgent || '',
-    });
+      duration_seconds: 0,
+      last_seen_at: new Date().toISOString(),
+    }).select('id').single();
+    if (!error && data?.id) {
+      termState.studySessionId = data.id;
+      termState.studyStartedAt = Date.now();
+      termState.studyDurationSeconds = 0;
+    }
   } catch (err) {
     console.warn('study session log skipped', err);
   }
+}
+
+async function loadStudyTime() {
+  if (!termState.profile?.id) return;
+  try {
+    const { data, error } = await supabase
+      .from('terminology_study_sessions')
+      .select('duration_seconds')
+      .eq('trainee_id', termState.profile.id);
+    if (error || !data) return;
+    termState.totalStudySeconds = data.reduce((sum, item) => sum + Number(item.duration_seconds || 0), 0);
+    renderStudyTime();
+  } catch (err) {
+    console.warn('study time load skipped', err);
+  }
+}
+
+function renderStudyTime() {
+  const el = document.getElementById('studyTimeNotice');
+  if (!el) return;
+  el.textContent = `Tổng thời gian học / 総学習時間: ${formatStudySeconds(termState.totalStudySeconds)}`;
+}
+
+async function updateStudySessionDuration() {
+  if (!termState.studySessionId || !termState.studyStartedAt) return;
+  const duration = Math.max(0, Math.round((Date.now() - termState.studyStartedAt) / 1000));
+  if (duration <= termState.studyDurationSeconds) return;
+  const delta = duration - termState.studyDurationSeconds;
+  termState.studyDurationSeconds = duration;
+  termState.totalStudySeconds += delta;
+  renderStudyTime();
+  try {
+    await supabase
+      .from('terminology_study_sessions')
+      .update({
+        duration_seconds: duration,
+        last_seen_at: new Date().toISOString(),
+      })
+      .eq('id', termState.studySessionId);
+  } catch (err) {
+    console.warn('study duration update skipped', err);
+  }
+}
+
+function setupStudyTimeTracking() {
+  renderStudyTime();
+  if (!termState.studySessionId) return;
+  termState.studyTimer = setInterval(updateStudySessionDuration, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') updateStudySessionDuration();
+  });
+  window.addEventListener('beforeunload', () => {
+    updateStudySessionDuration();
+  });
 }
 
 async function saveProgress(termId, status) {
@@ -1070,6 +1144,8 @@ function setupEvents() {
   termState.progress = loadLocalProgress();
   termState.imageProgress = loadImageProgress();
   await logStudySession();
+  await loadStudyTime();
+  setupStudyTimeTracking();
   await loadSupabaseProgress();
   await loadSupabaseImageProgress();
   await loadSupabaseQuizHistory();
