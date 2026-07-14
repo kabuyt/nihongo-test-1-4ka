@@ -1256,7 +1256,7 @@ R.render_audio_image_radio = function(q, container) {
   if (q.image_src) {
     const imgDiv = document.createElement('div');
     imgDiv.style.cssText = 'text-align:center;margin:8px 0';
-    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="max-width:100%;max-height:240px;border:1px solid #ddd;border-radius:6px">`;
+    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="width:100%;max-width:860px;max-height:420px;object-fit:contain;border:1px solid #ddd;border-radius:6px">`;
     block.appendChild(imgDiv);
   }
   // 共有音声
