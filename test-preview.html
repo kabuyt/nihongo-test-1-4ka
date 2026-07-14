@@ -286,9 +286,7 @@ function doGrade() {
       const rule = d.scoring_rules[blockId];
       const tmp = {};
       tmp[blockId] = rule;
-      const tmpAk = {};
-      tmpAk[blockId] = (d.answer_key || {})[blockId];
-      const sc = TestGrading.gradeSection(tmpAk, tmp, answers);
+      const sc = TestGrading.gradeSection(d.answer_key || {}, tmp, answers);
       detail += `  ${blockId} (${rule.method}): ${sc}点\n`;
     }
   }
