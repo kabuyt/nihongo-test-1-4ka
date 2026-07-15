@@ -2136,7 +2136,7 @@ R.renderSection = function(questions, container) {
       container.appendChild(div);
     }
   });
-  // 学生モード（window.ONE_SHOT_AUDIO=true）のみ音声1回再生制限を適用
+  // 学生モードのみ、指定された回数までの再生制限を適用
   postProcessAccessibility(container);
   if (window.ONE_SHOT_AUDIO === true) {
     container.querySelectorAll('audio').forEach(R.sealAudio);
@@ -2144,9 +2144,9 @@ R.renderSection = function(questions, container) {
 };
 
 /**
- * 音声要素を「1回のみ再生・巻き戻し不可」に制限。
+ * 音声要素を「指定回数のみ再生・巻き戻し不可」に制限。
  * ネイティブコントロールを削除し、再生ボタン + 一時停止ボタンのみ提供。
- * 終了後は「再生済み」ラベルに置換。
+ * 上限回数の終了後は「再生済み」ラベルに置換。
  */
 R.sealAudio = function(audio) {
   if (audio.dataset.sealed === '1') return;
@@ -2154,6 +2154,15 @@ R.sealAudio = function(audio) {
   audio.controls = false;
   audio.style.display = 'none';
   audio.preload = 'auto';
+  const playLimit = Math.max(1, Number(window.AUDIO_PLAY_LIMIT) || 1);
+  const audioSource = audio.getAttribute('src') || audio.currentSrc || '';
+  const storageKey = `audio-play-count:${window.CURRENT_TEST_ID || 'test'}:${audioSource}`;
+  let completedPlays = 0;
+  try {
+    completedPlays = Math.min(playLimit, Math.max(0, Number(sessionStorage.getItem(storageKey)) || 0));
+  } catch (_) {
+    // Storage may be unavailable in strict/private browser modes.
+  }
 
   const wrap = document.createElement('span');
   wrap.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:4px 0';
@@ -2166,8 +2175,15 @@ R.sealAudio = function(audio) {
   const status = document.createElement('span');
   status.style.cssText = 'font-size:12px;color:#666';
 
+  const showLocked = () => {
+    const done = document.createElement('span');
+    done.textContent = `🔇 ${completedPlays}/${playLimit}回 再生済み`;
+    done.style.cssText = 'display:inline-block;color:#888;font-size:13px;padding:6px 10px;background:#eee;border-radius:6px;border:1px solid #ccc';
+    if (wrap.parentNode) wrap.parentNode.replaceChild(done, wrap);
+  };
+
   btn.onclick = () => {
-    if (audio.ended) return;
+    if (completedPlays >= playLimit) return;
     if (audio.paused) {
       audio.play();
     } else {
@@ -2178,7 +2194,7 @@ R.sealAudio = function(audio) {
   audio.addEventListener('play', () => {
     btn.textContent = '⏸ 一時停止 (Pause)';
     btn.style.background = '#d35400';
-    status.textContent = '再生中...';
+    status.textContent = `再生中... (${completedPlays + 1}/${playLimit})`;
   });
   audio.addEventListener('pause', () => {
     if (!audio.ended) {
@@ -2188,10 +2204,17 @@ R.sealAudio = function(audio) {
     }
   });
   audio.addEventListener('ended', () => {
-    const done = document.createElement('span');
-    done.textContent = '🔇 再生済み';
-    done.style.cssText = 'display:inline-block;color:#888;font-size:13px;padding:6px 10px;background:#eee;border-radius:6px;border:1px solid #ccc';
-    if (wrap.parentNode) wrap.parentNode.replaceChild(done, wrap);
+    completedPlays = Math.min(playLimit, completedPlays + 1);
+    try { sessionStorage.setItem(storageKey, String(completedPlays)); } catch (_) {}
+    if (completedPlays < playLimit) {
+      lastTime = 0;
+      audio.currentTime = 0;
+      btn.textContent = '▶ もう一度再生 (Play again)';
+      btn.style.background = '#1a5276';
+      status.textContent = `${completedPlays}/${playLimit}回 再生済み`;
+      return;
+    }
+    showLocked();
   });
   // 巻き戻し禁止（万一seekingが発火した場合の保険）
   let lastTime = 0;
@@ -2203,6 +2226,12 @@ R.sealAudio = function(audio) {
   wrap.appendChild(btn);
   wrap.appendChild(status);
   if (audio.parentNode) audio.parentNode.insertBefore(wrap, audio);
+  if (completedPlays >= playLimit) {
+    showLocked();
+  } else if (completedPlays > 0) {
+    btn.textContent = '▶ もう一度再生 (Play again)';
+    status.textContent = `${completedPlays}/${playLimit}回 再生済み`;
+  }
 };
 
 })();

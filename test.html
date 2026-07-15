@@ -110,15 +110,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="common/config.js"></script>
 <script src="common/auth.js"></script>
-<script src="common/renderer.js?v=20260715-visual-panels"></script>
+<script src="common/renderer.js?v=20260715-audio-limit"></script>
 <script src="common/grading.js"></script>
 <script>
 // ===== テストページ メイン =====
-// リスニング音声は1回のみ再生可（学生受験モード）
-window.ONE_SHOT_AUDIO = true;
-
 const params = new URLSearchParams(location.search);
 const TEST_ID = params.get('id');
+window.CURRENT_TEST_ID = TEST_ID;
+// 学生受験モードでは巻き戻しを禁止する。まるごと第1・2回は2回、ほかは従来どおり1回まで。
+window.ONE_SHOT_AUDIO = true;
+window.AUDIO_PLAY_LIMIT = /^marugoto_[12]$/.test(TEST_ID) ? 2 : 1;
 const TEST_TIME_LIMIT_SECONDS = 50 * 60;
 let _sections = [];
 let _testDef = null;
@@ -324,11 +325,13 @@ function showError(title, detail) {
     sTitle.textContent = titleMap[sec] || sec;
     secDiv.appendChild(sTitle);
 
-    // 聴解の場合は「1回のみ再生」の注意書き＋速度コントロールを追加
+    // 聴解の再生回数に関する注意書き＋速度コントロールを追加
     if (sec === 'chokkai') {
       const oneShotNotice = document.createElement('div');
       oneShotNotice.style.cssText = 'background:#fdecea;border:1px solid #e74c3c;border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#c0392b;font-weight:bold;font-size:14px';
-      oneShotNotice.textContent = '⚠ CHÚ Ý: Mỗi đoạn âm thanh CHỈ ĐƯỢC PHÁT MỘT LẦN. Hãy nghe thật kỹ trước khi chuyển sang câu tiếp theo.';
+      oneShotNotice.textContent = window.AUDIO_PLAY_LIMIT === 2
+        ? '⚠ 聴解音声は1つにつき2回まで聞けます。2回目が終わると再生できません。 / Mỗi đoạn âm thanh được nghe tối đa HAI LẦN. Sau lần thứ hai sẽ không thể phát lại.'
+        : '⚠ CHÚ Ý: Mỗi đoạn âm thanh CHỈ ĐƯỢC PHÁT MỘT LẦN. Hãy nghe thật kỹ trước khi chuyển sang câu tiếp theo.';
       secDiv.appendChild(oneShotNotice);
 
       const speedBar = document.createElement('div');
