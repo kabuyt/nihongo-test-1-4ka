@@ -782,6 +782,12 @@ R.render_word_puzzle = function(q, container) {
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
   }
+  if (q.image_src) {
+    const imgDiv = document.createElement('div');
+    imgDiv.style.cssText = 'text-align:center;margin:10px 0';
+    imgDiv.innerHTML = `<img src="${asset(q.image_src)}" style="width:100%;max-width:860px;max-height:360px;object-fit:contain;border:1px solid #ddd;border-radius:6px">`;
+    block.appendChild(imgDiv);
+  }
   q.puzzles.forEach((p, idx) => {
     const puzzleDiv = document.createElement('div');
     puzzleDiv.style.cssText = 'margin:16px 0;padding:12px;background:#f8f9fa;border-radius:8px';
@@ -1295,6 +1301,9 @@ R.render_audio_image_radio = function(q, container) {
   });
   container.appendChild(block);
 };
+
+// visual_choice: audio_image_radioと同じ画像選択UIを、音声なしで使用する。
+R.render_visual_choice = R.render_audio_image_radio;
 
 // audio_select: 音声+ドロップダウン
 R.render_audio_select = function(q, container) {
