@@ -1278,7 +1278,17 @@ R.render_audio_image_radio = function(q, container) {
     aq.style.marginTop = '12px';
     aq.innerHTML = `<div class="qlabel">${item.label || ''}</div>`;
     if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
-    if (item.choices) {
+    if (item.panel_image_src) {
+      const panel = document.createElement('div');
+      panel.style.cssText = 'position:relative;max-width:860px;margin:10px auto';
+      panel.innerHTML = `<img src="${asset(item.panel_image_src)}" style="display:block;width:100%;border:1px solid #ddd;border-radius:6px">` +
+        ['A','B','C','D'].map((label, index) => {
+          const positions = ['left:10px;top:10px','right:10px;top:10px','left:10px;bottom:10px','right:10px;bottom:10px'];
+          return `<span style="position:absolute;${positions[index]};display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#fff;color:#1a5276;border:2px solid #1a5276;font-weight:bold;box-shadow:0 1px 4px rgba(0,0,0,.25)">${label}</span>`;
+        }).join('');
+      aq.appendChild(panel);
+    }
+    if (item.choices && item.choices.every(choice => choice.image_src)) {
       // 画像選択
       const row = document.createElement('div');
       row.className = 'img-choice-row';
@@ -1287,6 +1297,16 @@ R.render_audio_image_radio = function(q, container) {
         div.className = 'img-choice';
         div.innerHTML = `<img src="${asset(c.image_src)}"><p><label><input type="radio" name="${item.field_id}" value="${c.value}"> ${c.label}</label></p>`;
         row.appendChild(div);
+      });
+      aq.appendChild(row);
+    } else if (item.choices) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-wrap:wrap;gap:16px;margin:10px 0';
+      item.choices.forEach(choice => {
+        const label = document.createElement('label');
+        label.style.cssText = 'display:flex;align-items:center;gap:5px;font-weight:bold;cursor:pointer';
+        label.innerHTML = `<input type="radio" name="${item.field_id}" value="${choice.value}"> ${choice.label}`;
+        row.appendChild(label);
       });
       aq.appendChild(row);
     } else if (item.options) {
