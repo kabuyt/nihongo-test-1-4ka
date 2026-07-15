@@ -7,6 +7,17 @@
 <meta name="theme-color" content="#1a5276">
 <title>みんなの日本語 月間テスト</title>
 <link rel="stylesheet" href="common/style.css?v=20260624-a11y">
+<style>
+.confirm-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay[hidden]{display:none}
+.confirm-panel{width:min(100%,460px);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:8px;padding:22px;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+.confirm-panel h2{margin:0 0 12px;color:#1a5276;font-size:19px}
+.confirm-message{margin:0;color:#333;font-size:14px;line-height:1.7;white-space:pre-line}
+.confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.confirm-actions button{min-height:44px;padding:10px 18px;border-radius:6px;border:1px solid #aaa;background:#fff;font-size:14px;font-weight:bold;cursor:pointer}
+.confirm-actions .confirm-submit{border-color:#1a5276;background:#1a5276;color:#fff}
+@media(max-width:480px){.confirm-panel{padding:18px}.confirm-actions{flex-direction:column-reverse}.confirm-actions button{width:100%}}
+</style>
 </head>
 <body>
 
@@ -84,6 +95,18 @@
   <a href="index.html" style="display:inline-block;margin-top:20px;padding:10px 24px;background:#1a5276;color:#fff;border-radius:8px;text-decoration:none">テスト一覧に戻る</a>
 </div>
 
+<!-- 送信確認（ブラウザ標準ダイアログを使わない） -->
+<div class="confirm-overlay" id="confirm-overlay" hidden>
+  <div class="confirm-panel" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <h2 id="confirm-title">提出確認</h2>
+    <p class="confirm-message" id="confirm-message"></p>
+    <div class="confirm-actions">
+      <button type="button" id="confirm-cancel" onclick="resolveConfirmModal(false)">見直す / Xem lại</button>
+      <button type="button" class="confirm-submit" id="confirm-submit" onclick="resolveConfirmModal(true)">提出する / Gửi bài</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="common/config.js"></script>
 <script src="common/auth.js"></script>
@@ -105,6 +128,36 @@ let _timerInterval = null;
 let _timerDeadline = 0;
 let _timerWarned = false;
 let _timeExpired = false;
+let _confirmResolver = null;
+
+function showConfirmModal({ title, message, confirmLabel, cancelLabel }) {
+  if (_confirmResolver) _confirmResolver(false);
+
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-submit').textContent = confirmLabel || '提出する / Gửi bài';
+  document.getElementById('confirm-cancel').textContent = cancelLabel || '見直す / Xem lại';
+  document.getElementById('confirm-overlay').hidden = false;
+  document.body.style.overflow = 'hidden';
+
+  return new Promise(resolve => {
+    _confirmResolver = resolve;
+    requestAnimationFrame(() => document.getElementById('confirm-submit').focus());
+  });
+}
+
+function resolveConfirmModal(result) {
+  if (!_confirmResolver) return;
+  const resolve = _confirmResolver;
+  _confirmResolver = null;
+  document.getElementById('confirm-overlay').hidden = true;
+  document.body.style.overflow = '';
+  resolve(result);
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && _confirmResolver) resolveConfirmModal(false);
+});
 
 function updateFinishButtonVisibility(activeSection) {
   document.getElementById('finish-btn-wrap').style.display =
@@ -146,7 +199,8 @@ function stopTestTimer() {
 function handleTimeExpired() {
   if (_timeExpired || _isSubmitting) return;
   _timeExpired = true;
-  alert('50分の制限時間になりました。現在の解答を自動提出します。');
+  const timerBar = document.getElementById('timer-bar');
+  timerBar.textContent = '50分の制限時間になりました。現在の解答を自動提出します。';
   doSubmit({ skipWarnings: true, triggeredByTimeout: true });
 }
 
@@ -365,9 +419,14 @@ function setupAntiCheat() {
 }
 
 // ===== テスト完了 =====
-function doFinish() {
+async function doFinish() {
   if (_isSubmitting) return;
-  const ok = confirm('Hoan thanh bai kiem tra?\n\n押すと解答が管理ページへ送信されます。採点結果は表示されません。');
+  const ok = await showConfirmModal({
+    title: 'Hoàn thành bài kiểm tra? / テストを提出しますか',
+    message: '押すと解答が管理ページへ送信されます。\n採点結果は受験画面には表示されません。',
+    confirmLabel: '提出する / Gửi bài',
+    cancelLabel: '見直す / Xem lại'
+  });
   if (!ok) return;
   doSubmit({ skipWarnings: false, triggeredByTimeout: false });
 }
@@ -421,7 +480,13 @@ async function doSubmit(options = {}) {
   if (!skipWarnings && warnings.length > 0) {
     const msg = '⚠ Còn nhiều câu chưa trả lời / 未回答が多いセクションがあります:\n\n' + warnings.join('\n') +
                 '\n\nGửi (提出) しますか？\nキャンセル: もう一度見直す';
-    if (!confirm(msg)) {
+    const proceed = await showConfirmModal({
+      title: '未回答が多くあります / Còn nhiều câu chưa trả lời',
+      message: msg,
+      confirmLabel: 'このまま提出 / Vẫn gửi bài',
+      cancelLabel: '見直す / Xem lại'
+    });
+    if (!proceed) {
       _isSubmitting = false;
       if (!triggeredByTimeout && !_timeExpired) resumeTestTimer();
       return;
