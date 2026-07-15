@@ -437,20 +437,23 @@ async function doSubmit(options = {}) {
   const profile = getStudentProfile();
   const testDate = document.getElementById('test_date').value;
 
-  // 自動採点: grading data を取得してクライアント側で採点
+  // marugoto_1 は正解データをブラウザへ渡さず、提出RPC内で採点する。
+  // 既存テストは従来どおりクライアント採点を使用する。
   let scores = { score_vocab: null, score_grammar: null, score_listening: null };
-  let autoScored = false;
-  try {
-    const { data: gradingData, error: gdErr } = await supabase.rpc('get_grading_data', { p_test_id: TEST_ID });
-    if (!gdErr && gradingData && typeof window.TestGrading !== 'undefined') {
-      scores = window.TestGrading.gradeTest(gradingData, answers);
-      autoScored = true;
-      console.log('自動採点結果:', scores);
-    } else {
-      console.warn('grading_data取得失敗 or TestGrading未ロード:', gdErr);
+  let autoScored = TEST_ID === 'marugoto_1';
+  if (!autoScored) {
+    try {
+      const { data: gradingData, error: gdErr } = await supabase.rpc('get_grading_data', { p_test_id: TEST_ID });
+      if (!gdErr && gradingData && typeof window.TestGrading !== 'undefined') {
+        scores = window.TestGrading.gradeTest(gradingData, answers);
+        autoScored = true;
+        console.log('自動採点結果:', scores);
+      } else {
+        console.warn('grading_data取得失敗 or TestGrading未ロード:', gdErr);
+      }
+    } catch (e) {
+      console.error('採点エラー:', e);
     }
-  } catch (e) {
-    console.error('採点エラー:', e);
   }
 
   status.textContent = '送信中...';
@@ -468,7 +471,7 @@ async function doSubmit(options = {}) {
 
   if (error) {
     console.error('送信エラー:', error);
-    if (error.message && error.message.includes('duplicate')) {
+    if (error.message && (error.message.includes('duplicate') || error.message.includes('Already submitted'))) {
       status.textContent = '⚠ このテストは既に提出済みです。';
       status.style.color = '#e67e22';
     } else {
