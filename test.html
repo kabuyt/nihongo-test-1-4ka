@@ -329,9 +329,11 @@ function showError(title, detail) {
     if (sec === 'chokkai') {
       const oneShotNotice = document.createElement('div');
       oneShotNotice.style.cssText = 'background:#fdecea;border:1px solid #e74c3c;border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#c0392b;font-weight:bold;font-size:14px';
-      oneShotNotice.textContent = window.AUDIO_PLAY_LIMIT === 2
-        ? '⚠ 聴解音声は1つにつき2回まで聞けます。2回目が終わると再生できません。 / Mỗi đoạn âm thanh được nghe tối đa HAI LẦN. Sau lần thứ hai sẽ không thể phát lại.'
-        : '⚠ CHÚ Ý: Mỗi đoạn âm thanh CHỈ ĐƯỢC PHÁT MỘT LẦN. Hãy nghe thật kỹ trước khi chuyển sang câu tiếp theo.';
+      if (window.AUDIO_PLAY_LIMIT === 2) {
+        oneShotNotice.innerHTML = '<span style="display:block">⚠ 音声は2回だけ聞くことができます。</span><span style="display:block;margin-top:4px">Bạn chỉ có thể nghe mỗi đoạn âm thanh hai lần.</span>';
+      } else {
+        oneShotNotice.textContent = '⚠ CHÚ Ý: Mỗi đoạn âm thanh CHỈ ĐƯỢC PHÁT MỘT LẦN. Hãy nghe thật kỹ trước khi chuyển sang câu tiếp theo.';
+      }
       secDiv.appendChild(oneShotNotice);
 
       const speedBar = document.createElement('div');
