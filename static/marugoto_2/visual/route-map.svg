@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+  <rect width="1000" height="560" fill="#f7faf9"/>
+  <text x="500" y="65" text-anchor="middle" font-family="sans-serif" font-size="34" font-weight="700" fill="#173f39">くうこうまでの いきかた</text>
+  <path d="M175 300 H825" stroke="#73938c" stroke-width="8"/>
+  <polygon points="825,300 790,278 790,322" fill="#73938c"/>
+  <g font-family="sans-serif" text-anchor="middle" fill="#173f39" font-size="25" font-weight="700">
+    <g><rect x="70" y="220" width="210" height="160" rx="10" fill="#f2d6bd" stroke="#965d34" stroke-width="4"/><path d="M105 285 L175 235 L245 285 V350 H105Z" fill="#fff" stroke="#965d34" stroke-width="4"/><text x="175" y="420">うち</text></g>
+    <g><rect x="395" y="220" width="210" height="160" rx="10" fill="#d7e8ec" stroke="#3e6d77" stroke-width="4"/><rect x="430" y="260" width="140" height="75" fill="#fff" stroke="#3e6d77" stroke-width="4"/><text x="500" y="420">ふじえき</text></g>
+    <g><rect x="720" y="220" width="210" height="160" rx="10" fill="#d9e5f1" stroke="#466d96" stroke-width="4"/><path d="M770 315 L880 270 L845 330 L880 350 L845 358 L815 335 L775 350Z" fill="#fff" stroke="#466d96" stroke-width="4"/><text x="825" y="420">くうこう</text></g>
+    <text x="338" y="270" fill="#9a6b16">タクシー</text><text x="662" y="270" fill="#315d7b">ちかてつ</text>
+    <text x="338" y="335" font-size="21">15ぷん</text><text x="662" y="335" font-size="21">25ぷん</text>
+  </g>
+</svg>

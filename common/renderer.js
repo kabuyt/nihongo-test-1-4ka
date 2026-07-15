@@ -1278,7 +1278,12 @@ R.render_audio_image_radio = function(q, container) {
     aq.style.marginTop = '12px';
     aq.innerHTML = `<div class="qlabel">${item.label || ''}</div>`;
     if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
-    if (item.panel_image_src) {
+    if (item.scene_image_src) {
+      const scene = document.createElement('div');
+      scene.style.cssText = 'max-width:860px;margin:10px auto;text-align:center';
+      scene.innerHTML = `<img src="${asset(item.scene_image_src)}" alt="" style="display:block;width:100%;max-height:420px;object-fit:contain;border:1px solid #ddd;border-radius:6px">`;
+      aq.appendChild(scene);
+    } else if (item.panel_image_src) {
       const panel = document.createElement('div');
       panel.style.cssText = 'position:relative;max-width:860px;margin:10px auto';
       panel.innerHTML = `<img src="${asset(item.panel_image_src)}" style="display:block;width:100%;border:1px solid #ddd;border-radius:6px">` +

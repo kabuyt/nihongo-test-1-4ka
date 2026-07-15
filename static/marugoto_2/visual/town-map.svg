@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="650" viewBox="0 0 1000 650">
+  <rect width="1000" height="650" fill="#edf4ea"/>
+  <path d="M0 330 H1000 M500 0 V650" stroke="#d7c8ad" stroke-width="100"/>
+  <path d="M0 330 H1000 M500 0 V650" stroke="#fff" stroke-width="68"/>
+  <path d="M500 585 L500 350 L745 350" stroke="#d94e3f" stroke-width="10" fill="none" stroke-dasharray="18 12"/>
+  <polygon points="745,350 714,332 714,368" fill="#d94e3f"/>
+  <g font-family="sans-serif" text-anchor="middle" font-size="27" font-weight="700" fill="#173f39">
+    <g><rect x="385" y="515" width="230" height="105" rx="8" fill="#d5e7ec" stroke="#355f6b" stroke-width="4"/><text x="500" y="575">えき</text></g>
+    <g><rect x="365" y="70" width="270" height="125" rx="8" fill="#f3d674" stroke="#9d7720" stroke-width="4"/><text x="500" y="140">ぎんこう</text></g>
+    <g><rect x="675" y="190" width="245" height="120" rx="8" fill="#e3b37d" stroke="#925f28" stroke-width="4"/><text x="797" y="258">おてら</text></g>
+    <g><rect x="675" y="395" width="245" height="120" rx="8" fill="#e6c5b0" stroke="#8c654f" stroke-width="4"/><text x="797" y="463">きっさてん</text></g>
+    <g><rect x="75" y="190" width="245" height="325" rx="8" fill="#b9dcae" stroke="#4d8250" stroke-width="4"/><text x="198" y="360">こうえん</text></g>
+  </g>
+  <g font-family="sans-serif" fill="#a43d32" font-weight="700" font-size="21"><text x="525" y="475">まっすぐ</text><text x="640" y="325">みぎ</text></g>
+</svg>

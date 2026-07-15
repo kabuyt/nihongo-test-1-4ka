@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
+  <rect width="1000" height="620" fill="#f6faf9"/>
+  <g font-family="sans-serif" font-weight="700" font-size="34" fill="#163f39">
+    <text x="55" y="65">A</text><text x="525" y="65">B</text><text x="55" y="350">C</text><text x="525" y="350">D</text>
+  </g>
+  <g stroke="#577b75" stroke-width="3" fill="#fff">
+    <rect x="45" y="82" width="430" height="220" rx="8"/><rect x="515" y="82" width="430" height="220" rx="8"/><rect x="45" y="367" width="430" height="220" rx="8"/><rect x="515" y="367" width="430" height="220" rx="8"/>
+  </g>
+  <g stroke="#7b4f2d" stroke-width="8" fill="#d99549">
+    <path d="M190 140 C120 168 122 250 190 274 C245 293 287 254 275 210 C265 173 226 126 190 140Z"/>
+    <rect x="263" y="126" width="145" height="30" rx="12" transform="rotate(-14 263 126)"/>
+    <circle cx="203" cy="213" r="25" fill="#fff5d6"/>
+  </g>
+  <g fill="#eef4d6" stroke="#435c52" stroke-width="4">
+    <path d="M600 148 Q680 120 730 160 L730 270 Q670 235 600 262Z"/>
+    <path d="M730 160 Q800 120 870 148 L870 262 Q800 235 730 270Z"/>
+    <line x1="730" y1="160" x2="730" y2="270"/>
+  </g>
+  <g stroke="#303f46" stroke-width="5" fill="#a9d2d8">
+    <rect x="145" y="422" width="230" height="120" rx="16"/>
+    <circle cx="260" cy="482" r="47" fill="#edf7f8"/>
+    <circle cx="260" cy="482" r="24" fill="#547d87"/>
+    <rect x="184" y="397" width="72" height="32" rx="6"/>
+  </g>
+  <g stroke="#477a68" stroke-width="6" fill="none">
+    <ellipse cx="730" cy="482" rx="135" ry="60"/>
+    <line x1="615" y1="454" x2="845" y2="510"/>
+    <line x1="615" y1="510" x2="845" y2="454"/>
+  </g>
+</svg>

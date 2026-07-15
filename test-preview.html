@@ -129,6 +129,12 @@ async function loadTestList() {
   });
 }
 
+function countScoredQuestions(scoringRules, questions) {
+  const rules = Object.values(scoringRules || {});
+  const scoredFields = new Set(rules.flatMap(rule => rule.field_ids || []));
+  return scoredFields.size || (Array.isArray(questions) ? questions.length : 0);
+}
+
 async function loadTest(testId) {
   if (!testId) return;
 
@@ -174,7 +180,7 @@ async function loadTest(testId) {
       .single();
 
     const questions = secData ? secData.questions : [];
-    const qCount = Array.isArray(questions) ? questions.length : 0;
+    const qCount = countScoredQuestions(secData?.scoring_rules, questions);
     totalQuestions += qCount;
 
     // 採点用データを保存
@@ -236,7 +242,7 @@ async function loadTest(testId) {
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('nav-info').textContent =
-    `${testDef.display_name} — ${totalQuestions} question blocks — ${_currentSections.length} sections`;
+    `${testDef.display_name} — 全${totalQuestions}問 — ${_currentSections.length}分野`;
 }
 
 function showTab(name) {

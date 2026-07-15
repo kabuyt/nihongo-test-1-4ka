@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
+  <rect width="1000" height="620" fill="#f8faf9"/>
+  <g font-family="sans-serif" font-weight="700" font-size="34" fill="#163f39"><text x="55" y="65">A</text><text x="525" y="65">B</text><text x="55" y="350">C</text><text x="525" y="350">D</text></g>
+  <g stroke="#577b75" stroke-width="3" fill="#fff"><rect x="45" y="82" width="430" height="220" rx="8"/><rect x="515" y="82" width="430" height="220" rx="8"/><rect x="45" y="367" width="430" height="220" rx="8"/><rect x="515" y="367" width="430" height="220" rx="8"/></g>
+  <path d="M160 125 L220 100 H300 L360 125 L325 190 L300 175 V275 H220 V175 L195 190Z" fill="#d84b42" stroke="#7b2924" stroke-width="5"/>
+  <path d="M630 125 L690 100 H770 L830 125 L795 190 L770 175 V275 H690 V175 L665 190Z" fill="#3b7fc4" stroke="#245184" stroke-width="5"/>
+  <path d="M170 405 L245 385 H275 L350 405 L325 565 H195Z" fill="#637681" stroke="#35434a" stroke-width="5"/><line x1="260" y1="390" x2="260" y2="560" stroke="#e5eef0" stroke-width="4"/>
+  <g fill="#d7a44a" stroke="#79591f" stroke-width="5"><path d="M625 485 Q730 385 835 485Z"/><rect x="625" y="482" width="210" height="48" rx="22"/></g>
+</svg>

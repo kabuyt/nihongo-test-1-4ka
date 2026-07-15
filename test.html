@@ -512,10 +512,10 @@ async function doSubmit(options = {}) {
   const profile = getStudentProfile();
   const testDate = document.getElementById('test_date').value;
 
-  // marugoto_1 は正解データをブラウザへ渡さず、提出RPC内で採点する。
+  // まるごと総合テストは正解データをブラウザへ渡さず、提出RPC内で採点する。
   // 既存テストは従来どおりクライアント採点を使用する。
   let scores = { score_vocab: null, score_grammar: null, score_listening: null };
-  let autoScored = TEST_ID === 'marugoto_1';
+  let autoScored = /^marugoto_\d+$/.test(TEST_ID);
   if (!autoScored) {
     try {
       const { data: gradingData, error: gdErr } = await supabase.rpc('get_grading_data', { p_test_id: TEST_ID });

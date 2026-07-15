@@ -88,6 +88,18 @@ const marugotoListening36 = makeFlatEqualWeightFixture('cl', [6, 6, 6, 7, 1, 2, 
 eq('marugoto listening 36問 全問正解 = 100', TG.gradeSection(marugotoListening36.answer_key, marugotoListening36.scoring_rules, marugotoListening36.perfect), 100);
 eq('marugoto listening 36問 全空 = 0', TG.gradeSection(marugotoListening36.answer_key, marugotoListening36.scoring_rules, {}), 0);
 
+const marugoto2Vocabulary50 = makeFlatEqualWeightFixture('mv', [10, 8, 12, 10, 10]);
+eq('marugoto_2 vocabulary 50問 全問正解 = 100', TG.gradeSection(marugoto2Vocabulary50.answer_key, marugoto2Vocabulary50.scoring_rules, marugoto2Vocabulary50.perfect), 100);
+eq('marugoto_2 vocabulary 50問 全空 = 0', TG.gradeSection(marugoto2Vocabulary50.answer_key, marugoto2Vocabulary50.scoring_rules, {}), 0);
+
+const marugoto2Grammar34 = makeFlatEqualWeightFixture('mg', [8, 8, 6, 4, 4, 4]);
+eq('marugoto_2 grammar 34問 全問正解 = 100', TG.gradeSection(marugoto2Grammar34.answer_key, marugoto2Grammar34.scoring_rules, marugoto2Grammar34.perfect), 100);
+eq('marugoto_2 grammar 34問 全空 = 0', TG.gradeSection(marugoto2Grammar34.answer_key, marugoto2Grammar34.scoring_rules, {}), 0);
+
+const marugoto2Listening36 = makeFlatEqualWeightFixture('ml', [6, 6, 4, 4, 4, 4, 4, 4]);
+eq('marugoto_2 listening 36問 全問正解 = 100', TG.gradeSection(marugoto2Listening36.answer_key, marugoto2Listening36.scoring_rules, marugoto2Listening36.perfect), 100);
+eq('marugoto_2 listening 36問 全空 = 0', TG.gradeSection(marugoto2Listening36.answer_key, marugoto2Listening36.scoring_rules, {}), 0);
+
 // ============================================================
 //  Fixture: test1 答えキー / 採点ルールのコア部分
 //  test_data/test1_answer_keys.json から「multi_field_group が

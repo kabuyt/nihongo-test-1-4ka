@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
+  <rect width="1000" height="600" fill="#f7faf9"/>
+  <rect x="45" y="34" width="910" height="532" rx="8" fill="#fff" stroke="#254d47" stroke-width="3"/>
+  <text x="75" y="82" font-family="sans-serif" font-size="34" font-weight="700" fill="#173f39">らいしゅうの よてい</text>
+  <g font-family="sans-serif" font-size="23" text-anchor="middle">
+    <g fill="#e9f3f0" stroke="#75948e" stroke-width="2">
+      <rect x="70" y="115" width="122" height="68"/><rect x="192" y="115" width="122" height="68"/><rect x="314" y="115" width="122" height="68"/><rect x="436" y="115" width="122" height="68"/><rect x="558" y="115" width="122" height="68"/><rect x="680" y="115" width="122" height="68"/><rect x="802" y="115" width="122" height="68"/>
+    </g>
+    <g fill="#183d38" font-weight="700">
+      <text x="131" y="158">月</text><text x="253" y="158">火</text><text x="375" y="158">水</text><text x="497" y="158">木</text><text x="619" y="158">金</text><text x="741" y="158">土</text><text x="863" y="158">日</text>
+    </g>
+    <g fill="#fff" stroke="#a8b8b5" stroke-width="2">
+      <rect x="70" y="183" width="122" height="330"/><rect x="192" y="183" width="122" height="330"/><rect x="314" y="183" width="122" height="330"/><rect x="436" y="183" width="122" height="330"/><rect x="558" y="183" width="122" height="330"/><rect x="680" y="183" width="122" height="330"/><rect x="802" y="183" width="122" height="330"/>
+    </g>
+    <g font-size="21" fill="#173f39">
+      <rect x="82" y="216" width="98" height="106" rx="6" fill="#f6d86b" stroke="#c59d22"/>
+      <text x="131" y="252">びょういん</text><text x="131" y="286">10じ</text>
+      <rect x="692" y="216" width="98" height="130" rx="6" fill="#86c7b8" stroke="#367f70"/>
+      <text x="741" y="252">テニス</text><text x="741" y="286">9じから</text><text x="741" y="320">12じまで</text>
+      <rect x="814" y="216" width="98" height="106" rx="6" fill="#e89b81" stroke="#a85035"/>
+      <text x="863" y="252">コンサート</text><text x="863" y="286">7じから</text>
+    </g>
+  </g>
+</svg>

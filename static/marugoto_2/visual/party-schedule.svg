@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Weekend schedule</title>
+  <desc id="desc">Saturday has tennis from nine to twelve. Sunday has no written plan.</desc>
+  <rect width="960" height="540" fill="#f7f5ef"/>
+  <rect x="70" y="55" width="820" height="430" rx="8" fill="#fff" stroke="#25324a" stroke-width="5"/>
+  <rect x="70" y="55" width="820" height="84" fill="#e9eef5"/>
+  <text x="480" y="108" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="700" fill="#172033">しゅうまつの よてい</text>
+  <line x1="480" y1="139" x2="480" y2="485" stroke="#25324a" stroke-width="4"/>
+  <text x="275" y="195" text-anchor="middle" font-family="sans-serif" font-size="34" font-weight="700" fill="#12665b">どようび</text>
+  <text x="685" y="195" text-anchor="middle" font-family="sans-serif" font-size="34" font-weight="700" fill="#9a3b31">にちようび</text>
+  <circle cx="275" cy="300" r="62" fill="#d7eee8" stroke="#12665b" stroke-width="4"/>
+  <path d="M235 300c22-35 58-45 80-24s12 57-23 79c-35 22-71 12-79-18s0-24 22-37z" fill="none" stroke="#12665b" stroke-width="6"/>
+  <path d="M236 265l78 70M229 284l68 62M252 256l72 65M315 275l-73 70M324 295l-63 59" stroke="#12665b" stroke-width="3"/>
+  <text x="275" y="395" text-anchor="middle" font-family="sans-serif" font-size="31" fill="#172033">9:00〜12:00</text>
+  <text x="275" y="438" text-anchor="middle" font-family="sans-serif" font-size="31" font-weight="700" fill="#172033">テニス</text>
+  <rect x="570" y="250" width="230" height="150" rx="8" fill="#fffaf0" stroke="#d4b76d" stroke-width="4" stroke-dasharray="12 10"/>
+</svg>
