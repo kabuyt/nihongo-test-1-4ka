@@ -418,6 +418,12 @@ function setupAntiCheat() {
       document.getElementById('cheat-banner').style.display = 'block';
     }
   });
+  // 試験中の再読み込み・タブ閉じ・ページ移動をブラウザ標準警告で確認する。
+  window.addEventListener('beforeunload', event => {
+    if (_isSubmitting) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
   // 右クリック・コピー防止
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('copy', e => e.preventDefault());
