@@ -225,7 +225,10 @@ async function reload() {
 
   // 並列取得
   const [trRes, tdRes, taRes, trrRes] = await Promise.all([
-    supabase.from('trainees').select('id,student_id,name_katakana,class_group,company,auth_user_id').order('student_id'),
+    supabase.from('trainees')
+      .select('id,student_id,name_katakana,class_group,company,auth_user_id')
+      .eq('status', 'active')
+      .order('student_id'),
     supabase.from('test_definitions').select('id,display_name,sort_order,sections').order('sort_order'),
     supabase.from('test_access').select('id,trainee_id,test_id,is_retake'),
     supabase.from('test_results').select('id,trainee_id,test_name,score_vocab,score_grammar,score_listening,test_date,created_at').order('created_at', { ascending: false })
