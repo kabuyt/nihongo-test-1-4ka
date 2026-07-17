@@ -56,6 +56,9 @@
   制限時間: <span id="timer-remaining">50:00</span>
 </div>
 
+<!-- 制限時間案内 -->
+<div id="time-notice" role="status" aria-live="assertive" style="display:none;background:#fff;color:#c0392b;text-align:center;padding:10px 12px;font-size:14px;font-weight:bold;position:sticky;top:82px;z-index:97;border-bottom:1px solid #f5b7b1"></div>
+
 <!-- カンニング防止バナー -->
 <div id="cheat-banner" style="display:none;background:#c0392b;color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:bold;position:sticky;top:42px;z-index:99">
   ⚠ Nghiêm cấm gian lận！Nếu đóng ứng dụng hoặc chuyển tab sẽ bị coi là GIAN LẬN và bị ghi lại.
@@ -205,6 +208,13 @@ function stopTestTimer() {
   }
 }
 
+function showTimeNotice(message) {
+  const notice = document.getElementById('time-notice');
+  if (!notice) return;
+  notice.textContent = message;
+  notice.style.display = 'block';
+}
+
 function setSectionLocked(section, locked) {
   const secEl = document.getElementById('tab-' + section);
   const tabBtn = document.getElementById('tab-btn-' + section);
@@ -257,13 +267,13 @@ function closeSectionAndAdvance(reason) {
 
   const nextIndex = _activeSectionIndex + 1;
   if (nextIndex < _sections.length) {
-    alert(`${SECTION_LABELS[currentSection] || currentSection} の時間が終わりました。次のセクションに進みます。`);
+    showTimeNotice(`${SECTION_LABELS[currentSection] || currentSection} đã hết thời gian. Phần này đã bị khóa. Hãy làm phần tiếp theo.`);
     openTimedSection(nextIndex);
     return;
   }
 
   _allSectionsExpired = true;
-  alert('すべてのセクションの制限時間が終わりました。現在の解答を自動提出します。');
+  showTimeNotice('Tất cả các phần đã hết thời gian. Bài làm hiện tại sẽ được tự động gửi.');
   doSubmit({ skipWarnings: true, triggeredByTimeout: true });
 }
 
