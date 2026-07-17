@@ -120,7 +120,8 @@ window.CURRENT_TEST_ID = TEST_ID;
 // 学生受験モードでは巻き戻しを禁止する。まるごと第1・2回は2回、ほかは従来どおり1回まで。
 window.ONE_SHOT_AUDIO = true;
 window.AUDIO_PLAY_LIMIT = /^marugoto_[12]$/.test(TEST_ID) ? 2 : 1;
-const TEST_TIME_LIMIT_SECONDS = 50 * 60;
+const SECTION_TIME_LIMIT_SECONDS = 50 * 60;
+const SECTION_LABELS = { goii: 'Từ vựng', bunpo: 'Ngữ pháp', chokkai: 'Nghe hiểu' };
 let _sections = [];
 let _testDef = null;
 let _sectionGradingData = {}; // {section: {answer_key, scoring_rules}}
@@ -128,8 +129,10 @@ let _isSubmitting = false;
 let _timerInterval = null;
 let _timerDeadline = 0;
 let _timerWarned = false;
-let _timeExpired = false;
 let _confirmResolver = null;
+let _activeSectionIndex = 0;
+let _lockedSections = new Set();
+let _allSectionsExpired = false;
 
 function showConfirmModal({ title, message, confirmLabel, cancelLabel }) {
   if (_confirmResolver) _confirmResolver(false);
@@ -171,13 +174,18 @@ function formatRemainingTime(totalSeconds) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+function getActiveTimedSection() {
+  return _sections[_activeSectionIndex] || null;
+}
+
 function renderTimer(remainingSeconds) {
   const timerBar = document.getElementById('timer-bar');
   const timerText = document.getElementById('timer-remaining');
   if (!timerBar || !timerText) return;
 
+  const activeSection = getActiveTimedSection();
   timerBar.style.display = 'block';
-  timerText.textContent = formatRemainingTime(remainingSeconds);
+  timerText.textContent = `${SECTION_LABELS[activeSection] || activeSection || 'Test'}: ${formatRemainingTime(remainingSeconds)}`;
 
   if (remainingSeconds <= 300) {
     timerBar.style.background = '#f8d7da';
@@ -197,11 +205,65 @@ function stopTestTimer() {
   }
 }
 
-function handleTimeExpired() {
-  if (_timeExpired || _isSubmitting) return;
-  _timeExpired = true;
-  const timerBar = document.getElementById('timer-bar');
-  timerBar.textContent = '50分の制限時間になりました。現在の解答を自動提出します。';
+function setSectionLocked(section, locked) {
+  const secEl = document.getElementById('tab-' + section);
+  const tabBtn = document.getElementById('tab-btn-' + section);
+  if (!secEl || !tabBtn) return;
+
+  secEl.dataset.locked = locked ? '1' : '0';
+  secEl.querySelectorAll('input, select, textarea, button').forEach(el => {
+    if (el.closest('.section-nav')) return;
+    el.disabled = locked;
+  });
+  secEl.querySelectorAll('audio').forEach(audio => {
+    if (locked) audio.pause();
+    audio.style.pointerEvents = locked ? 'none' : '';
+    audio.setAttribute('aria-disabled', locked ? 'true' : 'false');
+  });
+  tabBtn.classList.toggle('locked', locked);
+  tabBtn.disabled = locked;
+  tabBtn.setAttribute('aria-disabled', locked ? 'true' : 'false');
+}
+
+function updateSectionAccess() {
+  _sections.forEach((sec, index) => {
+    const tabBtn = document.getElementById('tab-btn-' + sec);
+    if (!tabBtn) return;
+    const locked = _lockedSections.has(sec);
+    const isFuture = index > _activeSectionIndex;
+    tabBtn.disabled = locked || isFuture;
+    tabBtn.classList.toggle('locked', locked);
+    tabBtn.classList.toggle('not-yet-open', isFuture);
+    tabBtn.setAttribute('aria-disabled', locked || isFuture ? 'true' : 'false');
+  });
+}
+
+function openTimedSection(index) {
+  if (index < 0 || index >= _sections.length) return;
+  _activeSectionIndex = index;
+  updateSectionAccess();
+  showTab(_sections[index]);
+  startSectionTimer();
+}
+
+function closeSectionAndAdvance(reason) {
+  if (_isSubmitting || _allSectionsExpired) return;
+  const currentSection = getActiveTimedSection();
+  if (!currentSection) return;
+
+  stopTestTimer();
+  _lockedSections.add(currentSection);
+  setSectionLocked(currentSection, true);
+
+  const nextIndex = _activeSectionIndex + 1;
+  if (nextIndex < _sections.length) {
+    alert(`${SECTION_LABELS[currentSection] || currentSection} の時間が終わりました。次のセクションに進みます。`);
+    openTimedSection(nextIndex);
+    return;
+  }
+
+  _allSectionsExpired = true;
+  alert('すべてのセクションの制限時間が終わりました。現在の解答を自動提出します。');
   doSubmit({ skipWarnings: true, triggeredByTimeout: true });
 }
 
@@ -213,22 +275,20 @@ function tickTestTimer() {
     _timerWarned = true;
   }
   if (remainingSeconds <= 0) {
-    stopTestTimer();
-    handleTimeExpired();
+    closeSectionAndAdvance('timeout');
   }
 }
 
-function startTestTimer() {
+function startSectionTimer() {
   stopTestTimer();
   _timerWarned = false;
-  _timeExpired = false;
-  _timerDeadline = Date.now() + (TEST_TIME_LIMIT_SECONDS * 1000);
+  _timerDeadline = Date.now() + (SECTION_TIME_LIMIT_SECONDS * 1000);
   tickTestTimer();
   _timerInterval = setInterval(tickTestTimer, 1000);
 }
 
 function resumeTestTimer() {
-  if (!_timerDeadline || _timeExpired || _isSubmitting) return;
+  if (!_timerDeadline || _allSectionsExpired || _isSubmitting) return;
   stopTestTimer();
   tickTestTimer();
   _timerInterval = setInterval(tickTestTimer, 1000);
@@ -292,19 +352,20 @@ function showError(title, detail) {
   TestRenderer.setBasePath(TEST_ID);
 
   // タブ生成
-  const sectionNames = { goii: 'Từ vựng', bunpo: 'Ngữ pháp', chokkai: 'Nghe hiểu' };
   const tabBar = document.getElementById('tab-bar');
   tabBar.style.display = 'flex';
   tabBar.setAttribute('role', 'tablist');
   _sections.forEach((sec, i) => {
     const btn = document.createElement('button');
-    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : ' not-yet-open');
     btn.type = 'button';
     btn.id = 'tab-btn-' + sec;
     btn.setAttribute('role', 'tab');
     btn.setAttribute('aria-controls', 'tab-' + sec);
     btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-    btn.innerHTML = (sectionNames[sec] || sec) + '<br><small>/100点</small>';
+    btn.setAttribute('aria-disabled', i === 0 ? 'false' : 'true');
+    btn.disabled = i !== 0;
+    btn.innerHTML = (SECTION_LABELS[sec] || sec) + '<br><small>/100点</small>';
     btn.onclick = () => showTab(sec);
     tabBar.appendChild(btn);
   });
@@ -359,9 +420,10 @@ function showError(title, detail) {
     const secIdx = _sections.indexOf(sec);
     if (secIdx < _sections.length - 1) {
       const nextBtn = document.createElement('div');
+      nextBtn.className = 'section-nav';
       nextBtn.style.cssText = 'text-align:center;margin:28px 0 8px';
       const nextSec = _sections[secIdx + 1];
-      nextBtn.innerHTML = `<button type="button" class="btn btn-primary" onclick="showTab('${nextSec}')" style="font-size:15px;padding:14px 32px">Sang phần ${sectionNames[nextSec] || nextSec} →</button>`;
+      nextBtn.innerHTML = `<button type="button" class="btn btn-primary" onclick="closeSectionAndAdvance('manual')" style="font-size:15px;padding:14px 32px">Sang phần ${SECTION_LABELS[nextSec] || nextSec} →</button>`;
       secDiv.appendChild(nextBtn);
     }
 
@@ -371,7 +433,8 @@ function showError(title, detail) {
   // ローディング非表示、終了ボタン表示
   document.getElementById('loading').style.display = 'none';
   updateFinishButtonVisibility(_sections[0]);
-  startTestTimer();
+  updateSectionAccess();
+  startSectionTimer();
 
   // カンニング防止を有効化
   setupAntiCheat();
@@ -379,6 +442,9 @@ function showError(title, detail) {
 
 // ===== タブ切替 =====
 function showTab(name) {
+  const requestedIndex = _sections.indexOf(name);
+  if (requestedIndex < 0 || requestedIndex > _activeSectionIndex || _lockedSections.has(name)) return;
+
   document.querySelectorAll('.section').forEach(s => {
     s.classList.remove('active');
     s.hidden = true;
@@ -509,7 +575,7 @@ async function doSubmit(options = {}) {
     });
     if (!proceed) {
       _isSubmitting = false;
-      if (!triggeredByTimeout && !_timeExpired) resumeTestTimer();
+      if (!triggeredByTimeout && !_allSectionsExpired) resumeTestTimer();
       return;
     }
   }
