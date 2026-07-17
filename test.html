@@ -53,7 +53,7 @@
 
 <!-- 制限時間 -->
 <div id="timer-bar" style="display:none;background:#fff3cd;color:#7a4b00;text-align:center;padding:10px 12px;font-size:14px;font-weight:bold;position:sticky;top:42px;z-index:98;border-bottom:1px solid #f1d58a">
-  制限時間: <span id="timer-remaining">50:00</span>
+  制限時間: <span id="timer-remaining"></span>
 </div>
 
 <!-- 制限時間案内 -->
@@ -123,6 +123,7 @@ window.CURRENT_TEST_ID = TEST_ID;
 // 学生受験モードでは巻き戻しを禁止する。まるごと第1・2回は2回、ほかは従来どおり1回まで。
 window.ONE_SHOT_AUDIO = true;
 window.AUDIO_PLAY_LIMIT = /^marugoto_[12]$/.test(TEST_ID) ? 2 : 1;
+const TIME_LIMITS_ENABLED = false;
 const SECTION_TIME_LIMIT_SECONDS = 50 * 60;
 const SECTION_LABELS = { goii: 'Từ vựng', bunpo: 'Ngữ pháp', chokkai: 'Nghe hiểu' };
 let _sections = [];
@@ -185,6 +186,11 @@ function renderTimer(remainingSeconds) {
   const timerBar = document.getElementById('timer-bar');
   const timerText = document.getElementById('timer-remaining');
   if (!timerBar || !timerText) return;
+  if (!TIME_LIMITS_ENABLED) {
+    timerBar.style.display = 'none';
+    timerText.textContent = '';
+    return;
+  }
 
   const activeSection = getActiveTimedSection();
   timerBar.style.display = 'block';
@@ -209,6 +215,7 @@ function stopTestTimer() {
 }
 
 function showTimeNotice(message) {
+  if (!TIME_LIMITS_ENABLED) return;
   const notice = document.getElementById('time-notice');
   if (!notice) return;
   notice.textContent = message;
@@ -236,6 +243,16 @@ function setSectionLocked(section, locked) {
 }
 
 function updateSectionAccess() {
+  if (!TIME_LIMITS_ENABLED) {
+    _sections.forEach(sec => {
+      const tabBtn = document.getElementById('tab-btn-' + sec);
+      if (!tabBtn) return;
+      tabBtn.disabled = false;
+      tabBtn.classList.remove('locked', 'not-yet-open');
+      tabBtn.setAttribute('aria-disabled', 'false');
+    });
+    return;
+  }
   _sections.forEach((sec, index) => {
     const tabBtn = document.getElementById('tab-btn-' + sec);
     if (!tabBtn) return;
@@ -260,6 +277,12 @@ function closeSectionAndAdvance(reason) {
   if (_isSubmitting || _allSectionsExpired) return;
   const currentSection = getActiveTimedSection();
   if (!currentSection) return;
+
+  if (!TIME_LIMITS_ENABLED) {
+    const nextIndex = _activeSectionIndex + 1;
+    if (nextIndex < _sections.length) openTimedSection(nextIndex);
+    return;
+  }
 
   stopTestTimer();
   _lockedSections.add(currentSection);
@@ -291,6 +314,14 @@ function tickTestTimer() {
 
 function startSectionTimer() {
   stopTestTimer();
+  if (!TIME_LIMITS_ENABLED) {
+    _timerDeadline = 0;
+    const timerBar = document.getElementById('timer-bar');
+    const notice = document.getElementById('time-notice');
+    if (timerBar) timerBar.style.display = 'none';
+    if (notice) notice.style.display = 'none';
+    return;
+  }
   _timerWarned = false;
   _timerDeadline = Date.now() + (SECTION_TIME_LIMIT_SECONDS * 1000);
   tickTestTimer();
@@ -298,6 +329,7 @@ function startSectionTimer() {
 }
 
 function resumeTestTimer() {
+  if (!TIME_LIMITS_ENABLED) return;
   if (!_timerDeadline || _allSectionsExpired || _isSubmitting) return;
   stopTestTimer();
   tickTestTimer();
@@ -373,8 +405,8 @@ function showError(title, detail) {
     btn.setAttribute('role', 'tab');
     btn.setAttribute('aria-controls', 'tab-' + sec);
     btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-    btn.setAttribute('aria-disabled', i === 0 ? 'false' : 'true');
-    btn.disabled = i !== 0;
+    btn.setAttribute('aria-disabled', TIME_LIMITS_ENABLED && i !== 0 ? 'true' : 'false');
+    btn.disabled = TIME_LIMITS_ENABLED && i !== 0;
     btn.innerHTML = (SECTION_LABELS[sec] || sec) + '<br><small>/100点</small>';
     btn.onclick = () => showTab(sec);
     tabBar.appendChild(btn);
@@ -453,7 +485,9 @@ function showError(title, detail) {
 // ===== タブ切替 =====
 function showTab(name) {
   const requestedIndex = _sections.indexOf(name);
-  if (requestedIndex < 0 || requestedIndex > _activeSectionIndex || _lockedSections.has(name)) return;
+  if (requestedIndex < 0) return;
+  if (TIME_LIMITS_ENABLED && (requestedIndex > _activeSectionIndex || _lockedSections.has(name))) return;
+  if (!TIME_LIMITS_ENABLED) _activeSectionIndex = requestedIndex;
 
   document.querySelectorAll('.section').forEach(s => {
     s.classList.remove('active');
