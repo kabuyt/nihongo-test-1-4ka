@@ -21,6 +21,7 @@ const App = (() => {
   let timeLeft = ROW_TIME;
   let userName = '';
   let candidateNo = '';
+  let interviewSessionId = '';
   let testStartedAt = null;
   const isInterviewMode = document.body && document.body.dataset.mode === 'interview';
 
@@ -225,6 +226,7 @@ const App = (() => {
       const meta = {
         name: userName,
         candidateNo: candidateNo,
+        interviewSessionId: interviewSessionId,
         startedAt: testStartedAt,
         source: isInterviewMode ? 'interview' : 'general',
       };
@@ -325,6 +327,17 @@ const App = (() => {
 
   // ============ イベント設定 ============
   function init() {
+    if (isInterviewMode) {
+      const params = new URLSearchParams(window.location.search);
+      interviewSessionId = (params.get('session') || '').trim();
+      const noFromUrl = (params.get('no') || '').trim();
+      const nameInput = document.getElementById('input-name');
+      if (nameInput && noFromUrl) {
+        nameInput.value = noFromUrl.replace(/^No\.?\s*/i, '');
+        nameInput.readOnly = true;
+      }
+    }
+
     // テンキーボタン
     document.querySelectorAll('.numpad-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {

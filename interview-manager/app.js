@@ -52,12 +52,27 @@ function candidateLabel(candidate) {
   return `No.${candidate.no}`;
 }
 
+function kraepelinSessionName(interview, candidate) {
+  return `session:${interview.id} / No.${candidate.no}`;
+}
+
+function kraepelinUrl(interview, candidate) {
+  const url = new URL('../kraepelin/interview.html', window.location.href);
+  url.searchParams.set('session', interview.id);
+  url.searchParams.set('no', candidate.no);
+  return url.href;
+}
+
 function parseKraepelinName(name) {
   const raw = String(name || '').trim();
+  const sessionMatch = raw.match(/^session:([^/]+)\s*\/\s*No\.?\s*(.+)$/i);
+  if (sessionMatch) {
+    return { sessionId: sessionMatch[1].trim(), interviewName: '', candidateNo: sessionMatch[2].trim() };
+  }
   const match = raw.match(/^(.*?)\s*\/\s*No\.?\s*(.+)$/i);
-  if (match) return { interviewName: match[1].trim(), candidateNo: match[2].trim() };
+  if (match) return { sessionId: '', interviewName: match[1].trim(), candidateNo: match[2].trim() };
   const noOnly = raw.match(/^No\.?\s*(.+)$/i);
-  return noOnly ? { interviewName: '', candidateNo: noOnly[1].trim() } : { interviewName: '', candidateNo: '' };
+  return noOnly ? { sessionId: '', interviewName: '', candidateNo: noOnly[1].trim() } : { sessionId: '', interviewName: '', candidateNo: '' };
 }
 
 function rowStats(row) {
@@ -74,6 +89,12 @@ function summarizeKraepelin(record) {
 
 function getKraepelinFor(candidate, interview) {
   const expected = formatInterviewName(interview);
+  const sessionExact = state.kraepelinRecords.find(record => {
+    const parsed = parseKraepelinName(record.name);
+    return parsed.sessionId === interview.id && parsed.candidateNo === String(candidate.no);
+  });
+  if (sessionExact) return sessionExact;
+
   const exact = state.kraepelinRecords.find(record => {
     const parsed = parseKraepelinName(record.name);
     return parsed.interviewName === expected && parsed.candidateNo === String(candidate.no);
@@ -197,6 +218,7 @@ function renderTable(interview) {
         <td>${candidateLabel(row)}</td>
         <td><input class="candidate-name" data-no="${row.no}" value="${(row.name || '').replace(/"/g, '&quot;')}"></td>
         <td>${row.kraepelinTotal == null ? '<span class="status-pill missing">未取得</span>' : `<span class="status-pill ok">${row.kraepelinTotal}</span><div class="mini">順位 ${row.ranks.k}</div>`}</td>
+        <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
         <td>${scoreInput(row, 'math')}</td>
         <td>${scoreInput(row, 'vietnamese')}</td>
         <td>${scoreInput(row, 'japanese')}</td>
@@ -341,14 +363,13 @@ async function fetchKraepelin() {
 async function attachUnassignedKraepelin() {
   const interview = activeInterview();
   if (!interview || typeof supabase === 'undefined') return;
-  const interviewName = formatInterviewName(interview);
   const updates = [];
   interview.candidates.forEach(candidate => {
     const current = getKraepelinFor(candidate, interview);
     if (!current) return;
     const parsed = parseKraepelinName(current.name);
-    if (!parsed.interviewName) {
-      updates.push({ record: current, name: `${interviewName} / No.${candidate.no}` });
+    if (!parsed.sessionId) {
+      updates.push({ record: current, name: kraepelinSessionName(interview, candidate) });
     }
   });
   for (const item of updates) {

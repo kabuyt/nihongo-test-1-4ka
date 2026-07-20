@@ -696,7 +696,9 @@ const Results = (() => {
     const errorRate = all.length > 0 ? all.filter(a => !a.isCorrect).length / all.length : 0;
     const avgCorrect = allCounts.length > 0 ? allCounts.reduce((a, b) => a + b, 0) / allCounts.length : 0;
 
-    const displayName = meta && meta.candidateNo ? `No.${meta.candidateNo}` : meta.name;
+    const displayName = meta && meta.interviewSessionId && meta.candidateNo
+      ? `session:${meta.interviewSessionId} / No.${meta.candidateNo}`
+      : (meta && meta.candidateNo ? `No.${meta.candidateNo}` : meta.name);
 
     return supabase.from('kraepelin_results').insert({
       name: displayName,

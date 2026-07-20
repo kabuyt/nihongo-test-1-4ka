@@ -318,6 +318,20 @@ td input {
   font-weight: 800;
 }
 
+.link-btn {
+  min-height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .ok {
   background: var(--green-soft);
   color: var(--green);
