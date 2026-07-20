@@ -68,6 +68,17 @@ button, input, select {
   font-weight: 800;
 }
 
+.sender-display {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.sender-display span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .sidebar {
   background: #202938;
   color: #fff;

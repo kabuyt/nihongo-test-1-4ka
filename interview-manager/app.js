@@ -29,7 +29,7 @@ function isAdminUser() {
 function showAuthScreen() {
   $('#auth-screen').classList.remove('hidden');
   $('#admin-app').classList.add('hidden');
-  $('#auth-password').focus();
+  $('#auth-account').focus();
 }
 
 function showAdminApp() {
@@ -39,11 +39,19 @@ function showAdminApp() {
 
 async function handleAuth(event) {
   event.preventDefault();
-  const account = $('#auth-account').value;
+  const loginId = $('#auth-account').value.trim().toLowerCase();
+  const account = loginId === 'grop' ? 'grop-admin' : loginId;
   const input = $('#auth-password');
   const button = event.submitter || event.target.querySelector('button[type="submit"]');
   button.disabled = true;
   $('#auth-error').classList.add('hidden');
+
+  if (!/^[a-z0-9-]+$/.test(account)) {
+    $('#auth-error').textContent = 'ログインIDまたはパスワードが違います。';
+    $('#auth-error').classList.remove('hidden');
+    button.disabled = false;
+    return;
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email: `${account}@${AUTH_EMAIL_DOMAIN}`,
@@ -53,7 +61,7 @@ async function handleAuth(event) {
     await supabase.auth.signOut();
     state.user = null;
     $('#auth-error').textContent = error?.message === 'Invalid login credentials'
-      ? 'アカウントまたはパスワードが違います。'
+      ? 'ログインIDまたはパスワードが違います。'
       : 'このアカウントには管理画面の権限がありません。';
     $('#auth-error').classList.remove('hidden');
     input.select();
@@ -61,6 +69,7 @@ async function handleAuth(event) {
     return;
   }
   $('#auth-error').classList.add('hidden');
+  $('#auth-account').value = '';
   input.value = '';
   button.disabled = false;
   showAdminApp();
@@ -84,6 +93,8 @@ async function loadCurrentUser() {
 async function logout() {
   await supabase.auth.signOut();
   state.user = null;
+  $('#auth-account').value = '';
+  $('#auth-password').value = '';
   state.interviews = [];
   state.activeId = '';
   state.kraepelinRecords = [];
@@ -711,6 +722,9 @@ function render() {
   $('#current-account').textContent = user ? `${user.label}でログイン中` : '';
   $('#interview-sender').value = user?.role === 'sender' ? user.sender : ($('#interview-sender').value || 'BARAEN');
   $('#interview-sender').disabled = user?.role === 'sender';
+  $('#active-sender-control').classList.toggle('hidden', !isAdmin);
+  $('#active-sender-display').classList.toggle('hidden', isAdmin || !hasInterview);
+  $('#active-sender-name').textContent = !isAdmin && hasInterview ? user?.sender || '' : '';
   if (hasInterview) {
     $('#active-sender').value = interview.senderOrg || 'BARAEN';
     $('#active-sender').disabled = user?.role !== 'admin';

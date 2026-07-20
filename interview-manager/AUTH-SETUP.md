@@ -14,6 +14,17 @@ Supabase Dashboard の `Authentication` → `Users` → `Add user` で、次の4
 
 これらのEmailはログインIDとしてだけ使い、メール送信には使わない。
 
+公開管理画面ではEmailを直接入力せず、次のログインIDを使う。
+
+| 画面表示 | ログインID |
+|---|---|
+| GROP管理者 | `grop` |
+| BARAEN | `baraen` |
+| AKANE | `akane` |
+| VJC | `vjc` |
+
+ログイン画面には送り出し一覧を表示しない。各送り出しには自社のログインIDだけを伝える。
+
 ## 2. SQLを実行する
 
 既存DBでは、Supabase SQL Editorで次の順に実行する。

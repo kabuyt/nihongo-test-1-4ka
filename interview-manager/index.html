@@ -12,13 +12,8 @@
       <p class="eyebrow">管理者入口</p>
       <h1>面接事前テスト管理</h1>
       <label>
-        アカウント
-        <select id="auth-account" autocomplete="username">
-          <option value="grop-admin">GROP管理者</option>
-          <option value="baraen">BARAEN</option>
-          <option value="akane">AKANE</option>
-          <option value="vjc">VJC</option>
-        </select>
+        ログインID
+        <input id="auth-account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       </label>
       <label>
         ログインパスワード
@@ -72,7 +67,7 @@
           <div class="eyebrow">選択中の面接</div>
           <h2 id="active-title">面接を作成してください</h2>
           <div id="active-meta" class="active-meta hidden">
-            <label>
+            <label id="active-sender-control">
               送り出し
               <select id="active-sender">
                 <option value="BARAEN">BARAEN</option>
@@ -80,6 +75,10 @@
                 <option value="VJC">VJC</option>
               </select>
             </label>
+            <div id="active-sender-display" class="sender-display hidden">
+              <span>送り出し</span>
+              <strong id="active-sender-name"></strong>
+            </div>
             <span id="current-account" class="account-pill"></span>
           </div>
         </div>
@@ -177,6 +176,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=18"></script>
+  <script src="app.js?v=19"></script>
 </body>
 </html>
