@@ -5,6 +5,7 @@ create table if not exists public.interview_sessions (
   id uuid primary key default gen_random_uuid(),
   interview_date date not null,
   company text not null,
+  sender_org text not null default 'BARAEN' check (sender_org in ('BARAEN', 'AKANE', 'VJC')),
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -30,6 +31,9 @@ create table if not exists public.interview_candidates (
 
 create index if not exists interview_candidates_interview_id_idx
   on public.interview_candidates(interview_id);
+
+create index if not exists interview_sessions_sender_org_idx
+  on public.interview_sessions(sender_org);
 
 alter table public.interview_sessions enable row level security;
 alter table public.interview_candidates enable row level security;

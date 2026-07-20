@@ -1,6 +1,12 @@
 const ACTIVE_KEY = 'interviewManager.activeId.v2';
 const AUTH_KEY = 'interviewManager.auth.v1';
-const PASSWORD_HASH = '8ef3454133ea0e1e516fbc66bfa0d342856a847f69f4cd9a09ee73027c4d41b4';
+const AUTH_USERS = [
+  { label: 'GROP管理者', role: 'admin', sender: '', hash: '8ef3454133ea0e1e516fbc66bfa0d342856a847f69f4cd9a09ee73027c4d41b4' },
+  { label: 'BARAEN', role: 'sender', sender: 'BARAEN', hash: '7f48737ab0d08f5b9c524baa7e59f667425cb68e7e92540d09af5b07caa398f1' },
+  { label: 'AKANE', role: 'sender', sender: 'AKANE', hash: 'f7b24bb40a6b6deb1416df1b416f925ed538072795cfa71953a1c4eb0f546929' },
+  { label: 'VJC', role: 'sender', sender: 'VJC', hash: '18f4fe1b00ad5ffc97dd20a8f874adc8095904fc0a69eb59bd55292387ea6a39' },
+];
+const SENDERS = ['BARAEN', 'AKANE', 'VJC'];
 
 const state = {
   interviews: [],
@@ -20,7 +26,16 @@ async function sha256(text) {
 }
 
 function isAuthed() {
-  return sessionStorage.getItem(AUTH_KEY) === 'ok';
+  return !!currentUser();
+}
+
+function currentUser() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(AUTH_KEY) || 'null');
+    return saved && saved.role ? saved : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function showAuthScreen() {
@@ -38,12 +53,13 @@ async function handleAuth(event) {
   event.preventDefault();
   const input = $('#auth-password');
   const hash = await sha256(input.value);
-  if (hash !== PASSWORD_HASH) {
+  const user = AUTH_USERS.find(item => item.hash === hash);
+  if (!user) {
     $('#auth-error').classList.remove('hidden');
     input.select();
     return;
   }
-  sessionStorage.setItem(AUTH_KEY, 'ok');
+  sessionStorage.setItem(AUTH_KEY, JSON.stringify({ label: user.label, role: user.role, sender: user.sender }));
   $('#auth-error').classList.add('hidden');
   input.value = '';
   showAdminApp();
@@ -78,6 +94,10 @@ function activeInterview() {
 function formatInterviewName(interview) {
   if (!interview) return '';
   return `${interview.date} ${interview.company}面接`;
+}
+
+function formatSender(value) {
+  return SENDERS.includes(value) ? value : '未設定';
 }
 
 function normalizeNo(value) {
@@ -268,6 +288,7 @@ function interviewFromDb(row, candidatesByInterview) {
     id: row.id,
     date: row.interview_date,
     company: row.company,
+    senderOrg: row.sender_org || 'BARAEN',
     notes: row.notes || '',
     createdAt: row.created_at,
     candidates: (candidatesByInterview.get(row.id) || []).map(candidateFromDb),
@@ -287,10 +308,24 @@ async function loadData() {
     return;
   }
 
-  const [sessionsResp, candidatesResp] = await Promise.all([
-    supabase.from('interview_sessions').select('*').order('interview_date', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('interview_candidates').select('*').order('candidate_no', { ascending: true }),
-  ]);
+  const user = currentUser();
+  let sessionsQuery = supabase
+    .from('interview_sessions')
+    .select('*')
+    .order('interview_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (user?.role === 'sender') sessionsQuery = sessionsQuery.eq('sender_org', user.sender);
+
+  const sessionsResp = await sessionsQuery;
+  let candidatesResp = { data: [], error: null };
+  const interviewIds = (sessionsResp.data || []).map(row => row.id);
+  if (interviewIds.length) {
+    candidatesResp = await supabase
+      .from('interview_candidates')
+      .select('*')
+      .in('interview_id', interviewIds)
+      .order('candidate_no', { ascending: true });
+  }
 
   if (sessionsResp.error || candidatesResp.error) {
     state.loading = false;
@@ -434,7 +469,7 @@ function renderInterviews() {
   list.innerHTML = state.interviews.map(interview => `
     <button class="interview-item ${interview.id === state.activeId ? 'active' : ''}" data-id="${interview.id}">
       <strong>${formatInterviewName(interview)}</strong>
-      <span>${interview.candidates.length}人</span>
+      <span>${formatSender(interview.senderOrg)} / ${interview.candidates.length}人</span>
     </button>
   `).join('');
 
@@ -631,9 +666,18 @@ function render() {
   renderInterviews();
   const interview = activeInterview();
   const hasInterview = !!interview;
+  const user = currentUser();
   $('#empty-state').classList.toggle('hidden', hasInterview);
   $('#workspace').classList.toggle('hidden', !hasInterview);
+  $('#active-meta').classList.toggle('hidden', !hasInterview);
   $('#active-title').textContent = hasInterview ? formatInterviewName(interview) : '面接を作成してください';
+  $('#current-account').textContent = user ? `${user.label}でログイン中` : '';
+  $('#interview-sender').value = user?.role === 'sender' ? user.sender : ($('#interview-sender').value || 'BARAEN');
+  $('#interview-sender').disabled = user?.role === 'sender';
+  if (hasInterview) {
+    $('#active-sender').value = interview.senderOrg || 'BARAEN';
+    $('#active-sender').disabled = user?.role !== 'admin';
+  }
   $('#delete-interview').disabled = !hasInterview || !state.dbReady;
   $('#open-kraepelin').disabled = !hasInterview;
   $('#refresh-kraepelin').disabled = !hasInterview;
@@ -652,10 +696,12 @@ async function createInterview(event) {
   const date = $('#interview-date').value;
   const company = $('#interview-company').value.trim();
   const count = Math.max(1, Number($('#candidate-count').value || 1));
+  const user = currentUser();
+  const senderOrg = user?.role === 'sender' ? user.sender : $('#interview-sender').value;
 
   const { data, error } = await supabase
     .from('interview_sessions')
-    .insert({ interview_date: date, company })
+    .insert({ interview_date: date, company, sender_org: senderOrg })
     .select('*')
     .single();
   if (error) {
@@ -673,6 +719,7 @@ async function createInterview(event) {
   saveActiveId();
   event.target.reset();
   $('#candidate-count').value = 8;
+  $('#interview-sender').value = user?.role === 'sender' ? user.sender : 'BARAEN';
   render();
 }
 
@@ -747,6 +794,20 @@ async function updateCandidateName(id, value) {
     return;
   }
   candidate.name = name;
+}
+
+async function updateInterviewSender(value) {
+  const interview = activeInterview();
+  const user = currentUser();
+  if (!interview || user?.role !== 'admin' || !SENDERS.includes(value)) return;
+  const { error } = await supabase.from('interview_sessions').update({ sender_org: value }).eq('id', interview.id);
+  if (error) {
+    alert('送り出しの保存に失敗しました: ' + error.message);
+    $('#active-sender').value = interview.senderOrg || 'BARAEN';
+    return;
+  }
+  interview.senderOrg = value;
+  render();
 }
 
 async function updateCandidatePhoto(id, file) {
@@ -949,6 +1010,7 @@ function bindEvents() {
   $('#auth-form').addEventListener('submit', handleAuth);
   $('#interview-form').addEventListener('submit', createInterview);
   $('#candidate-form').addEventListener('submit', addCandidate);
+  $('#active-sender').addEventListener('change', event => updateInterviewSender(event.target.value));
   $('#renumber-candidates').addEventListener('click', renumberCandidates);
   $('#delete-interview').addEventListener('click', deleteInterview);
   $('#refresh-kraepelin').addEventListener('click', fetchKraepelin);

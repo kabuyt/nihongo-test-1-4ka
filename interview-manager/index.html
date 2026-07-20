@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -12,7 +12,7 @@
       <p class="eyebrow">管理者入口</p>
       <h1>面接事前テスト管理</h1>
       <label>
-        パスワード
+        ログインパスワード
         <input id="auth-password" type="password" autocomplete="current-password" required>
       </label>
       <button type="submit" class="btn primary">入る</button>
@@ -36,6 +36,14 @@
           <input id="interview-company" type="text" placeholder="〇〇商事" required>
         </label>
         <label>
+          送り出し
+          <select id="interview-sender" required>
+            <option value="BARAEN">BARAEN</option>
+            <option value="AKANE">AKANE</option>
+            <option value="VJC">VJC</option>
+          </select>
+        </label>
+        <label>
           候補者数
           <input id="candidate-count" type="number" min="1" max="80" value="8" required>
         </label>
@@ -54,6 +62,17 @@
         <div>
           <div class="eyebrow">選択中の面接</div>
           <h2 id="active-title">面接を作成してください</h2>
+          <div id="active-meta" class="active-meta hidden">
+            <label>
+              送り出し
+              <select id="active-sender">
+                <option value="BARAEN">BARAEN</option>
+                <option value="AKANE">AKANE</option>
+                <option value="VJC">VJC</option>
+              </select>
+            </label>
+            <span id="current-account" class="account-pill"></span>
+          </div>
         </div>
         <div class="actions">
           <button id="open-kraepelin" class="btn"><i data-lucide="external-link"></i>クレペリンURL</button>
@@ -149,6 +168,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>
