@@ -667,12 +667,11 @@ function renderPrintReport(interview, rows) {
         <col class="print-col-score">
         <col class="print-col-pin">
         <col class="print-col-subject-rank">
-        <col class="print-col-total">
         <col class="print-col-note">
       </colgroup>
       <thead>
         <tr>
-          <th>総合順位</th>
+          <th>総合結果</th>
           <th>候補者</th>
           <th>クレペリン</th>
           <th>数学</th>
@@ -680,7 +679,6 @@ function renderPrintReport(interview, rows) {
           <th>日本語単語</th>
           <th>ピンボード</th>
           <th>科目順位</th>
-          <th>順位合計</th>
           <th>総合所見</th>
         </tr>
       </thead>
@@ -689,7 +687,7 @@ function renderPrintReport(interview, rows) {
           const pin = pinSummary(row.score);
           return `
             <tr>
-              <td class="print-rank"><strong>${row.finalRank}</strong><span>位</span></td>
+              <td class="print-rank"><strong>第${row.finalRank}位</strong></td>
               <td class="print-candidate">
                 <div class="print-candidate-inner">
                   ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
@@ -708,7 +706,6 @@ function renderPrintReport(interview, rows) {
                 <span>2回目　${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}</span>
               </td>
               <td class="print-subject-rank">${escapeHtml(rankSummary(row))}</td>
-              <td class="print-total"><strong>${row.rankSum}</strong></td>
               <td class="print-note">${escapeHtml(kraepelinComment(row.kSummary, row.kraepelinEval))}</td>
             </tr>
           `;
@@ -798,7 +795,6 @@ function renderTable(interview) {
           </div>
         </td>
         <td><span class="rank-list">${rankSummary(row)}</span></td>
-        <td><strong>${row.rankSum}</strong></td>
         <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button>` : ''}</td>
       </tr>
     `;
@@ -1175,11 +1171,11 @@ function printLinkSheet() {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', '数学順位', 'ベトナム国語', 'ベトナム国語順位', '日本語単語正答数', '日本語単語100点換算', '日本語単語順位', 'ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位', '科目順位', '順位合計'];
+  const headers = ['総合結果', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', '数学順位', 'ベトナム国語', 'ベトナム国語順位', '日本語単語正答数', '日本語単語100点換算', '日本語単語順位', 'ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位', '科目順位'];
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
     return [
-      row.finalRank,
+      `第${row.finalRank}位`,
       row.no,
       row.name || '',
       row.kraepelinEval?.total ?? '',
@@ -1200,7 +1196,6 @@ function exportCsv() {
       pin.grades[1] >= 2 && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
       row.ranks.pin,
       rankSummary(row),
-      row.rankSum,
     ];
   });
   const csv = [headers, ...rows].map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n');
