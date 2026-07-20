@@ -42,6 +42,8 @@
   .col-question { min-width:260px; max-width:360px; line-height:1.55; }
   .question-title { color:#1a5276; font-size:11px; font-weight:bold; margin-bottom:4px; }
   .question-text { background:#f8fbff; border:1px solid #d7e8f7; border-radius:4px; padding:6px 8px; }
+  .question-reference { margin-top:6px; background:#fffaf0; border:1px solid #f1d39a; border-radius:4px; padding:6px 8px; font-size:12px; }
+  .question-reference b { color:#8a5a00; }
   .question-passage { max-height:130px; overflow:auto; background:#fff; border:1px solid #e5edf6; border-radius:4px; padding:6px; margin-bottom:6px; font-size:12px; }
   .question-img { display:block; max-width:120px; max-height:100px; object-fit:contain; margin:6px 0; border:1px solid #ddd; border-radius:4px; background:#fff; }
   .review-blank { display:inline-block; background:#fff; border:1px solid #7fb3d5; border-radius:3px; padding:0 8px; color:#1a5276; font-weight:bold; }
@@ -234,6 +236,27 @@ const SELECT_BLOCK_TYPES = new Set([
   'reading_comprehension', 'dialogue_fill', 'pair_match', 'bucket_sort'
 ]);
 
+const TEST4_G4_REFERENCE = {
+  g4_1:  { jp: 'うそ', vi: 'sự giả dối / lời nói dối' },
+  g4_2:  { jp: 'ぶっか', vi: 'vật giá / giá cả' },
+  g4_3:  { jp: '修理します（しゅうりします）', vi: 'sửa chữa' },
+  g4_4:  { jp: 'ニュース', vi: 'tin tức / bản tin' },
+  g4_5:  { jp: '掃除します（そうじします）', vi: 'dọn dẹp / quét dọn' },
+  g4_6:  { jp: 'めがね', vi: 'kính / kính mắt' },
+  g4_7:  { jp: '止めます（とめます）', vi: 'dừng' },
+  g4_8:  { jp: '駐車場（ちゅうしゃじょう）', vi: 'bãi đỗ xe / bãi đậu xe' },
+  g4_9:  { jp: '気をつけます（きをつけます）', vi: 'cẩn thận / chú ý' },
+  g4_10: { jp: 'やめます / 辞めます', vi: 'Từ bỏ, nghỉ việc' },
+  g4_11: { jp: 'しんごう / 信号', vi: 'Đèn hiệu, đèn giao thông' },
+  g4_12: { jp: 'さいきん / 最近', vi: 'Gần đây' },
+  g4_13: { jp: 'やちん / 家賃', vi: 'Tiền thuê nhà' },
+  g4_14: { jp: 'せつめいします / 説明します', vi: 'Thuyết minh, giải thích' },
+  g4_15: { jp: 'こうつう / 交通', vi: 'Giao thông' },
+  g4_16: { jp: 'いみ / 意味', vi: 'Ý nghĩa' },
+  g4_17: { jp: 'まわします / 回します', vi: 'Xoay, quay' },
+  g4_18: { jp: 'けど', vi: '~ nhưng mà' },
+};
+
 function buildFieldTypeIndex(questions) {
   const fieldKinds = {};  // field_id → 'free' | 'select' | 'word_puzzle'
 
@@ -376,9 +399,17 @@ function makeQuestionContext(testId, parentBlock, block, source) {
   return {
     title: stripHtml(parentBlock.title_html || block.sub_title || parentBlock.id || ''),
     questionHtml: questionHtml || '',
+    reference: getQuestionReference(testId, parentBlock, source),
     passageHtml: parentBlock.passage_html || block.passage_html || '',
     imageSrc: imageSrc ? resolveQuestionImage(testId, imageSrc) : '',
   };
+}
+
+function getQuestionReference(testId, parentBlock, source) {
+  if (testId === 'test4' && parentBlock && parentBlock.id === 'g4' && source && source.field_id) {
+    return TEST4_G4_REFERENCE[source.field_id] || null;
+  }
+  return null;
 }
 
 function resolveQuestionImage(testId, src) {
@@ -533,7 +564,8 @@ function renderTable() {
     if (a.count < fMin) return false;
     if (fSearch) {
       const q = a.question_context || {};
-      const hay = [a.block_id, a.field_id, a.raw_answer, q.title, stripHtml(q.questionHtml || ''), stripHtml(q.passageHtml || '')].join(' ').toLowerCase();
+      const ref = q.reference || {};
+      const hay = [a.block_id, a.field_id, a.raw_answer, q.title, stripHtml(q.questionHtml || ''), stripHtml(q.passageHtml || ''), ref.jp, ref.vi].join(' ').toLowerCase();
       if (!hay.includes(fSearch)) return false;
     }
     return true;
@@ -581,7 +613,10 @@ function renderQuestionContext(ctx) {
   const passage = ctx.passageHtml ? `<div class="question-passage">${ctx.passageHtml}</div>` : '';
   const image = ctx.imageSrc ? `<img class="question-img" src="${escapeHtml(ctx.imageSrc)}" alt="">` : '';
   const question = ctx.questionHtml ? `<div class="question-text">${ctx.questionHtml}</div>` : '';
-  return `${title}${passage}${image}${question}` || '<span style="color:#999">-</span>';
+  const ref = ctx.reference
+    ? `<div class="question-reference"><b>対応:</b> 日本語 ${escapeHtml(ctx.reference.jp)}<br><b>VN:</b> ${escapeHtml(ctx.reference.vi)}</div>`
+    : '';
+  return `${title}${passage}${image}${question}${ref}` || '<span style="color:#999">-</span>';
 }
 
 // ===== 「これも正解にする」 =====
