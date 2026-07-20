@@ -38,6 +38,10 @@ function currentUser() {
   }
 }
 
+function isAdminUser() {
+  return currentUser()?.role === 'admin';
+}
+
 function showAuthScreen() {
   $('#auth-screen').classList.remove('hidden');
   $('#admin-app').classList.add('hidden');
@@ -466,6 +470,8 @@ function renderStatus() {
 
 function renderInterviews() {
   const list = $('#interview-list');
+  const user = currentUser();
+  $('#interview-list-title').textContent = user?.role === 'admin' ? '面接一覧' : '担当面接';
   list.innerHTML = state.interviews.map(interview => `
     <button class="interview-item ${interview.id === state.activeId ? 'active' : ''}" data-id="${interview.id}">
       <strong>${formatInterviewName(interview)}</strong>
@@ -667,10 +673,12 @@ function render() {
   const interview = activeInterview();
   const hasInterview = !!interview;
   const user = currentUser();
+  const isAdmin = user?.role === 'admin';
   $('#empty-state').classList.toggle('hidden', hasInterview);
   $('#workspace').classList.toggle('hidden', !hasInterview);
   $('#active-meta').classList.toggle('hidden', !hasInterview);
-  $('#active-title').textContent = hasInterview ? formatInterviewName(interview) : '面接を作成してください';
+  $('#interview-form').classList.toggle('hidden', !isAdmin);
+  $('#active-title').textContent = hasInterview ? formatInterviewName(interview) : (isAdmin ? '面接を作成してください' : '担当面接がありません');
   $('#current-account').textContent = user ? `${user.label}でログイン中` : '';
   $('#interview-sender').value = user?.role === 'sender' ? user.sender : ($('#interview-sender').value || 'BARAEN');
   $('#interview-sender').disabled = user?.role === 'sender';
@@ -678,13 +686,14 @@ function render() {
     $('#active-sender').value = interview.senderOrg || 'BARAEN';
     $('#active-sender').disabled = user?.role !== 'admin';
   }
-  $('#delete-interview').disabled = !hasInterview || !state.dbReady;
+  $('#delete-interview').classList.toggle('hidden', !isAdmin);
+  $('#delete-interview').disabled = !hasInterview || !state.dbReady || !isAdmin;
   $('#open-kraepelin').disabled = !hasInterview;
   $('#refresh-kraepelin').disabled = !hasInterview;
   $('#open-link-sheet').disabled = !hasInterview;
   $('#print-pdf').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
-  $('#interview-form button[type="submit"]').disabled = !state.dbReady;
+  $('#interview-form button[type="submit"]').disabled = !state.dbReady || !isAdmin;
   if (hasInterview) renderTable(interview);
   else if ($('#print-report')) $('#print-report').innerHTML = '';
   if (window.lucide) lucide.createIcons();
@@ -692,7 +701,10 @@ function render() {
 
 async function createInterview(event) {
   event.preventDefault();
-  if (!state.dbReady) return;
+  if (!state.dbReady || !isAdminUser()) {
+    alert('面接を作成できるのはGROP管理者だけです。');
+    return;
+  }
   const date = $('#interview-date').value;
   const company = $('#interview-company').value.trim();
   const count = Math.max(1, Number($('#candidate-count').value || 1));
@@ -857,6 +869,10 @@ async function renumberCandidates() {
 
 async function deleteInterview() {
   const interview = activeInterview();
+  if (!isAdminUser()) {
+    alert('面接を削除できるのはGROP管理者だけです。');
+    return;
+  }
   if (!interview) return;
   if (!confirm(`${formatInterviewName(interview)}を削除しますか。`)) return;
   const { error } = await supabase.from('interview_sessions').delete().eq('id', interview.id);
