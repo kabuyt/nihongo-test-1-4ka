@@ -634,29 +634,51 @@ function renderPrintReport(interview, rows) {
   const report = $('#print-report');
   if (!report || !interview) return;
   const today = new Date().toLocaleDateString('ja-JP');
+  const interviewDate = interview.date
+    ? new Date(`${interview.date}T00:00:00`).toLocaleDateString('ja-JP')
+    : '-';
   report.innerHTML = `
-    <div class="print-header">
-      <div>
-        <div class="print-label">事前テスト集計</div>
-        <h1>${escapeHtml(formatInterviewName(interview))}</h1>
+    <header class="print-header">
+      <div class="print-title-block">
+        <div class="print-label">PRE-INTERVIEW ASSESSMENT</div>
+        <h1>面接事前テスト 評価報告書</h1>
       </div>
-      <div class="print-date">出力日 ${today}</div>
-    </div>
+      <div class="print-document-meta">
+        <span>社内資料</span>
+        <strong>作成日 ${today}</strong>
+      </div>
+    </header>
+    <section class="print-overview" aria-label="面接情報">
+      <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
+      <div><span>受入企業</span><strong>${escapeHtml(interview.company || '-')}</strong></div>
+      <div><span>送り出し</span><strong>${escapeHtml(formatSender(interview.senderOrg) || '-')}</strong></div>
+      <div><span>候補者数</span><strong>${rows.length}名</strong></div>
+    </section>
     <table class="print-table">
+      <colgroup>
+        <col class="print-col-rank">
+        <col class="print-col-candidate">
+        <col class="print-col-kraepelin">
+        <col class="print-col-score">
+        <col class="print-col-score">
+        <col class="print-col-score">
+        <col class="print-col-pin">
+        <col class="print-col-subject-rank">
+        <col class="print-col-total">
+        <col class="print-col-note">
+      </colgroup>
       <thead>
         <tr>
-          <th>総合</th>
-          <th>No.</th>
-          <th>写真</th>
-          <th>氏名・メモ</th>
+          <th>総合順位</th>
+          <th>候補者</th>
           <th>クレペリン</th>
           <th>数学</th>
           <th>ベトナム国語</th>
           <th>日本語単語</th>
-          <th>ピン</th>
+          <th>ピンボード</th>
           <th>科目順位</th>
           <th>順位合計</th>
-          <th>備考</th>
+          <th>総合所見</th>
         </tr>
       </thead>
       <tbody>
@@ -664,26 +686,34 @@ function renderPrintReport(interview, rows) {
           const pin = pinSummary(row.score);
           return `
             <tr>
-              <td>${row.finalRank}</td>
-              <td>${escapeHtml(candidateLabel(row))}</td>
-              <td>${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : ''}</td>
-              <td>${escapeHtml(row.name || '')}</td>
-              <td>${row.kraepelinEval ? `${formatScore(row.kraepelinEval.total)}点<br>正答 ${row.kraepelinTotal}<br>誤答 ${formatPercent(row.kSummary.errorRate)}` : '未取得'}</td>
-              <td>${row.math == null ? '-' : `${formatScore(row.math)}点`}</td>
-              <td>${row.vietnamese == null ? '-' : `${formatScore(row.vietnamese)}点`}</td>
-              <td>${row.japanese == null ? '-' : `${row.japaneseRaw}/30<br>${formatScore(row.japanese)}点`}</td>
-              <td>
-                1回目 ${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}<br>
-                2回目 ${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}
+              <td class="print-rank"><strong>${row.finalRank}</strong><span>位</span></td>
+              <td class="print-candidate">
+                ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
+                <div>
+                  <span class="print-candidate-no">${escapeHtml(candidateLabel(row))}</span>
+                  <strong>${escapeHtml(row.name || '氏名未入力')}</strong>
+                </div>
               </td>
-              <td>${escapeHtml(rankSummary(row))}</td>
-              <td>${row.rankSum}</td>
-              <td>${escapeHtml(kraepelinComment(row.kSummary, row.kraepelinEval))}</td>
+              <td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong><span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>
+              <td class="print-score">${row.math == null ? '<span>-</span>' : `<strong>${formatScore(row.math)}</strong><span>点</span>`}</td>
+              <td class="print-score">${row.vietnamese == null ? '<span>-</span>' : `<strong>${formatScore(row.vietnamese)}</strong><span>点</span>`}</td>
+              <td class="print-score">${row.japanese == null ? '<span>-</span>' : `<strong>${formatScore(row.japanese)}</strong><span>点（${row.japaneseRaw}/30）</span>`}</td>
+              <td class="print-pin">
+                <span>1回目　${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}</span>
+                <span>2回目　${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}</span>
+              </td>
+              <td class="print-subject-rank">${escapeHtml(rankSummary(row))}</td>
+              <td class="print-total"><strong>${row.rankSum}</strong></td>
+              <td class="print-note">${escapeHtml(kraepelinComment(row.kSummary, row.kraepelinEval))}</td>
             </tr>
           `;
         }).join('')}
       </tbody>
     </table>
+    <footer class="print-footer">
+      <span>評価基準：各科目およびピンボードの順位をもとに総合順位を算出</span>
+      <span>${escapeHtml(formatInterviewName(interview))}</span>
+    </footer>
   `;
 }
 

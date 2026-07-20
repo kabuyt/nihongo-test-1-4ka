@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -27,7 +27,11 @@
   <div id="admin-app" class="app hidden">
     <aside class="sidebar">
       <header class="brand">
-        <h1>面接事前テスト管理</h1>
+        <div class="brand-mark" aria-hidden="true">G</div>
+        <div>
+          <p>GROP ASSESSMENT</p>
+          <h1>面接事前テスト管理</h1>
+        </div>
       </header>
 
       <form id="interview-form" class="create-form">
@@ -133,14 +137,18 @@
           </p>
         </section>
 
-        <div class="candidate-tools">
+        <section class="candidate-tools" aria-labelledby="candidate-tools-title">
+          <div class="candidate-tools-copy">
+            <h3 id="candidate-tools-title">候補者の追加</h3>
+            <p>番号と氏名を入力して一覧に追加します。</p>
+          </div>
           <form id="candidate-form" class="inline-form">
-            <input id="candidate-no" type="text" placeholder="候補者番号">
-            <input id="candidate-name" type="text" placeholder="氏名・メモ">
+            <input id="candidate-no" type="text" placeholder="候補者番号" aria-label="候補者番号">
+            <input id="candidate-name" type="text" placeholder="氏名・メモ" aria-label="氏名・メモ">
             <button type="submit" class="btn"><i data-lucide="user-plus"></i>追加</button>
           </form>
-          <button id="renumber-candidates" class="btn"><i data-lucide="list-ordered"></i>番号を整える</button>
-        </div>
+          <button id="renumber-candidates" class="btn secondary-action"><i data-lucide="list-ordered"></i>番号を整える</button>
+        </section>
 
         <div class="table-shell">
           <table id="score-table">
@@ -193,6 +201,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>
