@@ -1064,6 +1064,25 @@ R.render_select_choice = function(q, container) {
 // reading_comprehension: 読解問題
 R.render_reading_comprehension = function(q, container) {
   const block = createQBlock(q.title_html);
+  if (q.instruction) {
+    const inst = document.createElement('div');
+    inst.className = 'q-instruction';
+    inst.innerHTML = q.instruction;
+    block.appendChild(inst);
+  }
+  if (q.choice_bank_html || q.option_pool_html) {
+    const pool = document.createElement('div');
+    pool.style.cssText = 'background:#f0f8ff;padding:10px 14px;border-radius:6px;border:1px dashed #1a5276;margin:8px 0;font-size:14px;line-height:2';
+    pool.innerHTML = q.choice_bank_html || q.option_pool_html;
+    block.appendChild(pool);
+  }
+  if (q.example_html) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+    ex.innerHTML = '例）　' + q.example_html;
+    block.appendChild(ex);
+  }
   // passage_image: 画像で文章を提示
   if (q.passage_image) {
     const imgDiv = document.createElement('div');
@@ -1174,6 +1193,19 @@ R.render_dialogue_fill = function(q, container) {
     inst.className = 'q-instruction';
     inst.innerHTML = q.instruction;
     block.appendChild(inst);
+  }
+  if (q.choice_bank_html || q.option_pool_html) {
+    const pool = document.createElement('div');
+    pool.style.cssText = 'background:#f0f8ff;padding:10px 14px;border-radius:6px;border:1px dashed #1a5276;margin:8px 0;font-size:14px;line-height:2';
+    pool.innerHTML = q.choice_bank_html || q.option_pool_html;
+    block.appendChild(pool);
+  }
+  if (q.example_html) {
+    const ex = document.createElement('div');
+    ex.className = 'sentence';
+    ex.style.cssText = 'background:#eaf0fb;padding:8px 12px;border-radius:4px;border-left:4px solid #1a5276;margin:6px 0 10px;font-size:13px';
+    ex.innerHTML = '例）　' + q.example_html;
+    block.appendChild(ex);
   }
   q.items.forEach(item => {
     const div = document.createElement('div');
