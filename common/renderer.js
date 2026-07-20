@@ -89,6 +89,36 @@ function stripHtml(value) {
   return div.textContent || div.innerText || '';
 }
 
+function highlightTargetInElement(root, target) {
+  const needle = String(target || '').trim();
+  if (!needle) return false;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.nodeValue || !node.nodeValue.includes(needle)) return NodeFilter.FILTER_SKIP;
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_SKIP;
+      if (parent.closest('rt,script,style,.kanji-target')) return NodeFilter.FILTER_SKIP;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const textNode = walker.nextNode();
+  if (!textNode) return false;
+
+  const start = textNode.nodeValue.indexOf(needle);
+  const matched = textNode.splitText(start);
+  matched.splitText(needle.length);
+  const span = document.createElement('span');
+  span.className = 'kanji-target';
+  span.textContent = needle;
+  matched.parentNode.replaceChild(span, matched);
+  return true;
+}
+
+function setHighlightedHtml(el, html, target) {
+  el.innerHTML = html || '';
+  highlightTargetInElement(el, target);
+}
+
 // ===== 問題タイプ別レンダラー =====
 
 // image_select: 画像グリッド + ドロップダウン
@@ -604,7 +634,7 @@ R.render_table_fill = function(q, container) {
       tbl.items.forEach(item => {
         const tr = document.createElement('tr');
         const tdLabel = document.createElement('td');
-        tdLabel.innerHTML = item.label || '';
+        setHighlightedHtml(tdLabel, item.label || '', item.target);
         if (item.image_src) {
           const img = document.createElement('div');
           img.style.cssText = 'text-align:center;margin:6px 0 2px';
