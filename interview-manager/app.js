@@ -1,6 +1,6 @@
 const ACTIVE_KEY = 'interviewManager.activeId.v2';
 const AUTH_KEY = 'interviewManager.auth.v1';
-const PASSWORD_HASH = '9461cc351eba7158d56c48eb18bd2b1c42feaf94d2f23216860f527e545b21f3';
+const PASSWORD_HASH = '8ef3454133ea0e1e516fbc66bfa0d342856a847f69f4cd9a09ee73027c4d41b4';
 
 const state = {
   interviews: [],
