@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -149,7 +149,7 @@
           </div>
           <form id="candidate-form" class="inline-form">
             <input id="candidate-no" type="text" placeholder="候補者番号" aria-label="候補者番号">
-            <input id="candidate-name" type="text" placeholder="氏名・メモ" aria-label="氏名・メモ">
+            <input id="candidate-name" type="text" placeholder="カタカナ / LATIN NAME" aria-label="氏名・メモ">
             <button type="submit" class="btn"><i data-lucide="user-plus"></i>追加</button>
           </form>
           <button id="renumber-candidates" class="btn secondary-action"><i data-lucide="list-ordered"></i>番号を整える</button>
@@ -162,7 +162,7 @@
                 <th class="sticky-col">総合順位</th>
                 <th>No.</th>
                 <th>写真</th>
-                <th>氏名・メモ</th>
+                <th>氏名<br><span class="th-sub">カタカナ / LATIN</span></th>
                 <th>クレペリン評価</th>
                 <th>受験URL</th>
                 <th>数学</th>
@@ -205,6 +205,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=27"></script>
+  <script src="app.js?v=28"></script>
 </body>
 </html>

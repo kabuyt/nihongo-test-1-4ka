@@ -163,6 +163,21 @@ function candidateLabel(candidate) {
   return `No.${candidate.no}`;
 }
 
+function normalizeCandidateName(value) {
+  const raw = String(value || '').trim();
+  if (!raw.includes('/')) return raw;
+  const [katakana, ...latinParts] = raw.split('/');
+  const latin = latinParts
+    .join('/')
+    .trim()
+    .replace(/[Đđ]/g, char => char === 'Đ' ? 'D' : 'd')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ');
+  return `${katakana.trim()} / ${latin}`.trim();
+}
+
 function kraepelinSessionName(interview, candidate) {
   return `session:${interview.id} / No.${candidate.no}`;
 }
@@ -314,6 +329,23 @@ function kraepelinComment(summary, evaluation) {
   }
 
   return [...new Set(comments)].slice(0, 2).join('。') + (comments.length ? '。' : '');
+}
+
+function vietnameseComment(score) {
+  const value = numeric(score);
+  if (value == null) return '未受験のため、ベトナム国語能力は未評価です。';
+  if (value >= 85) return '得点から、文法・語彙・文構造をバランスよく理解していると考えられます。';
+  if (value >= 70) return '基礎的な文法と語彙は概ね理解しています。複雑な文構造では確認が必要です。';
+  if (value >= 50) return '基本的な語彙は理解していますが、文法と文構造の正確さに課題があります。';
+  return '基礎語彙・文法の理解に課題があり、文章理解を含めた継続的な学習が必要です。';
+}
+
+function overallComment(row) {
+  const comments = [];
+  const kraepelin = kraepelinComment(row.kSummary, row.kraepelinEval);
+  if (kraepelin) comments.push(`【クレペリン】${kraepelin}`);
+  comments.push(`【ベトナム国語】${vietnameseComment(row.vietnamese)}`);
+  return comments.join(' ');
 }
 
 function candidateFromDb(row) {
@@ -626,8 +658,24 @@ function pinTimeInput(row, round) {
   `;
 }
 
+function rankSummaryItems(row) {
+  return [
+    ['クレペリン', row.ranks.k],
+    ['数学', row.ranks.math],
+    ['ベトナム国語', row.ranks.vietnamese],
+    ['日本語単語', row.ranks.japanese],
+    ['ピンボード', row.ranks.pin],
+  ];
+}
+
 function rankSummary(row) {
-  return `ク${row.ranks.k} 数${row.ranks.math} 国${row.ranks.vietnamese} 日${row.ranks.japanese} ピ${row.ranks.pin}`;
+  return rankSummaryItems(row).map(([label, rank]) => `${label}：${rank}位`).join(' / ');
+}
+
+function rankSummaryHtml(row) {
+  return rankSummaryItems(row)
+    .map(([label, rank]) => `<span><b>${escapeHtml(label)}</b>${rank}位</span>`)
+    .join('');
 }
 
 function renderPrintReport(interview, rows) {
@@ -705,8 +753,8 @@ function renderPrintReport(interview, rows) {
                 <span>1回目　${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}</span>
                 <span>2回目　${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}</span>
               </td>
-              <td class="print-subject-rank">${escapeHtml(rankSummary(row))}</td>
-              <td class="print-note">${escapeHtml(kraepelinComment(row.kSummary, row.kraepelinEval))}</td>
+              <td class="print-subject-rank">${rankSummaryHtml(row)}</td>
+              <td class="print-note">${escapeHtml(overallComment(row))}</td>
             </tr>
           `;
         }).join('')}
@@ -794,7 +842,7 @@ function renderTable(interview) {
             ${pin.complete && pin.time > 0 ? ` / ${pin.time.toFixed(2)}秒` : ''}
           </div>
         </td>
-        <td><span class="rank-list">${rankSummary(row)}</span></td>
+        <td><span class="rank-list">${rankSummaryHtml(row)}</span></td>
         <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button>` : ''}</td>
       </tr>
     `;
@@ -904,7 +952,7 @@ async function addCandidate(event) {
     return;
   }
   try {
-    const candidate = await createCandidate(interview.id, no, $('#candidate-name').value.trim());
+    const candidate = await createCandidate(interview.id, no, normalizeCandidateName($('#candidate-name').value));
     interview.candidates.push(candidate);
     $('#candidate-no').value = '';
     $('#candidate-name').value = '';
@@ -980,13 +1028,14 @@ async function updatePinGrade(id, round, grade) {
 async function updateCandidateName(id, value) {
   const candidate = findCandidateById(id);
   if (!candidate) return;
-  const name = value.trim();
+  const name = normalizeCandidateName(value);
   const { error } = await supabase.from('interview_candidates').update({ name }).eq('id', id);
   if (error) {
     alert('保存に失敗しました: ' + error.message);
     return;
   }
   candidate.name = name;
+  render();
 }
 
 async function updateInterviewSender(value) {
@@ -1182,7 +1231,7 @@ function exportCsv() {
       row.kraepelinTotal ?? '',
       row.kSummary?.errorRate == null ? '' : formatPercent(row.kSummary.errorRate),
       judgmentLabel(row.kSummary?.judgment),
-      kraepelinComment(row.kSummary, row.kraepelinEval),
+      overallComment(row),
       row.math ?? '',
       row.ranks.math,
       row.vietnamese ?? '',

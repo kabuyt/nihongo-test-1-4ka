@@ -596,7 +596,16 @@ tbody tr:hover td:first-child { background: #f9fbfd; }
 .pin-time-input { width: 75px; }
 .pin-time-input:disabled { color: var(--muted); background: #eef1f5; }
 
-.rank-list { display: inline-block; min-width: 112px; font-size: 11px; font-weight: 800; line-height: 1.65; }
+.rank-list {
+  min-width: 118px;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.rank-list span { display: flex; justify-content: space-between; gap: 7px; white-space: nowrap; }
+.rank-list b { font-weight: 700; }
 .mini-link { display: inline-flex; margin-top: 4px; color: var(--blue); font-size: 10px; font-weight: 800; text-decoration: none; }
 td input { min-height: 34px; padding: 5px 7px; }
 .cell-number { width: 100%; }
@@ -883,7 +892,16 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-pin { text-align: left !important; }
   .print-pin span { display: block; white-space: nowrap; }
   .print-pin span + span { margin-top: 3px; }
-  .print-subject-rank { font-size: 7px !important; white-space: nowrap; }
+  .print-subject-rank { text-align: left !important; }
+  .print-subject-rank span {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    font-size: 6.2px;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  .print-subject-rank b { font-weight: 400; }
   .print-note { text-align: left !important; overflow-wrap: anywhere; }
 
   .print-footer {
