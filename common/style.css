@@ -88,6 +88,8 @@ audio{width:100%;margin:6px 0;border-radius:6px}
   color:#7a3e00;
   font-weight:700;
 }
+.duration-picker{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.duration-select{min-width:92px;padding:6px 10px;border:1px solid #aaa;border-radius:6px;background:#fff;font-size:14px}
 textarea.free{width:100%;border:1px solid #ccc;border-radius:8px;padding:10px;font-size:16px;min-height:70px;resize:vertical;-webkit-appearance:none}
 select{font-size:16px;padding:8px 10px;border-radius:6px;border:1px solid #aaa;-webkit-appearance:auto;background:#fff}
 /* 結果 */
