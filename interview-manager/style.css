@@ -196,6 +196,22 @@ h2 {
   background: var(--panel);
 }
 
+.status-banner {
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  padding: 11px 13px;
+  font-weight: 800;
+}
+
+.status-banner.error {
+  background: var(--red-soft);
+  border-color: #ffb4ae;
+  color: var(--red);
+}
+
 .hidden { display: none !important; }
 
 .workspace {

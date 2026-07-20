@@ -1,34 +1,15 @@
-const STORAGE_KEY = 'interviewManager.v1';
+const ACTIVE_KEY = 'interviewManager.activeId.v2';
 
 const state = {
   interviews: [],
   activeId: '',
   kraepelinRecords: [],
+  dbReady: false,
+  loading: false,
+  error: '',
 };
 
 const $ = (selector) => document.querySelector(selector);
-
-function emptyData() {
-  return { interviews: [], activeId: '' };
-}
-
-function loadData() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || emptyData();
-    state.interviews = Array.isArray(parsed.interviews) ? parsed.interviews : [];
-    state.activeId = parsed.activeId || state.interviews[0]?.id || '';
-  } catch {
-    state.interviews = [];
-    state.activeId = '';
-  }
-}
-
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    interviews: state.interviews,
-    activeId: state.activeId,
-  }));
-}
 
 function activeInterview() {
   return state.interviews.find(item => item.id === state.activeId) || null;
@@ -75,6 +56,17 @@ function parseKraepelinName(name) {
   return noOnly ? { sessionId: '', interviewName: '', candidateNo: noOnly[1].trim() } : { sessionId: '', interviewName: '', candidateNo: '' };
 }
 
+function toDbNumber(value) {
+  if (value === '' || value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function numeric(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 function rowStats(row) {
   const answers = Array.isArray(row?.answers) ? row.answers : [];
   return answers.filter(answer => answer && answer.isCorrect).length;
@@ -85,6 +77,89 @@ function summarizeKraepelin(record) {
   const first = results.filter(row => row.phase === 'first').reduce((sum, row) => sum + rowStats(row), 0);
   const second = results.filter(row => row.phase === 'second').reduce((sum, row) => sum + rowStats(row), 0);
   return { first, second, total: first + second };
+}
+
+function candidateFromDb(row) {
+  return {
+    id: row.id,
+    no: row.candidate_no,
+    name: row.name || '',
+    score: {
+      math: row.math_score ?? '',
+      vietnamese: row.vietnamese_score ?? '',
+      japanese: row.japanese_score ?? '',
+      pin1Ok: row.pin1_ok ?? '',
+      pin1Time: row.pin1_time ?? '',
+      pin2Ok: row.pin2_ok ?? '',
+      pin2Time: row.pin2_time ?? '',
+    },
+  };
+}
+
+function interviewFromDb(row, candidatesByInterview) {
+  return {
+    id: row.id,
+    date: row.interview_date,
+    company: row.company,
+    notes: row.notes || '',
+    createdAt: row.created_at,
+    candidates: (candidatesByInterview.get(row.id) || []).map(candidateFromDb),
+  };
+}
+
+async function loadData() {
+  state.loading = true;
+  state.error = '';
+  render();
+
+  if (typeof supabase === 'undefined') {
+    state.loading = false;
+    state.dbReady = false;
+    state.error = 'Supabase設定を読み込めません。';
+    render();
+    return;
+  }
+
+  const [sessionsResp, candidatesResp] = await Promise.all([
+    supabase.from('interview_sessions').select('*').order('interview_date', { ascending: false }).order('created_at', { ascending: false }),
+    supabase.from('interview_candidates').select('*').order('candidate_no', { ascending: true }),
+  ]);
+
+  if (sessionsResp.error || candidatesResp.error) {
+    state.loading = false;
+    state.dbReady = false;
+    const message = sessionsResp.error?.message || candidatesResp.error?.message || 'Supabase読み込みエラー';
+    state.error = `面接管理テーブルが未作成の可能性があります。interview-manager/supabase-schema.sql をSupabase SQL Editorで実行してください。詳細: ${message}`;
+    render();
+    return;
+  }
+
+  const candidatesByInterview = new Map();
+  (candidatesResp.data || []).forEach(candidate => {
+    if (!candidatesByInterview.has(candidate.interview_id)) candidatesByInterview.set(candidate.interview_id, []);
+    candidatesByInterview.get(candidate.interview_id).push(candidate);
+  });
+
+  state.interviews = (sessionsResp.data || []).map(row => interviewFromDb(row, candidatesByInterview));
+  state.activeId = localStorage.getItem(ACTIVE_KEY) || state.interviews[0]?.id || '';
+  if (!state.interviews.some(item => item.id === state.activeId)) state.activeId = state.interviews[0]?.id || '';
+  state.dbReady = true;
+  state.loading = false;
+  render();
+}
+
+function saveActiveId() {
+  if (state.activeId) localStorage.setItem(ACTIVE_KEY, state.activeId);
+}
+
+async function createCandidate(interviewId, no, name = '') {
+  const { data, error } = await supabase
+    .from('interview_candidates')
+    .insert({ interview_id: interviewId, candidate_no: no, name })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return candidateFromDb(data);
 }
 
 function getKraepelinFor(candidate, interview) {
@@ -103,13 +178,8 @@ function getKraepelinFor(candidate, interview) {
 
   return state.kraepelinRecords.find(record => {
     const parsed = parseKraepelinName(record.name);
-    return !parsed.interviewName && parsed.candidateNo === String(candidate.no);
+    return !parsed.sessionId && !parsed.interviewName && parsed.candidateNo === String(candidate.no);
   }) || null;
-}
-
-function numeric(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
 }
 
 function pinSummary(score) {
@@ -176,6 +246,16 @@ function buildRows(interview) {
   return ranked.map(row => ({ ...row, finalRank: finalRank.get(row.no) })).sort((a, b) => a.finalRank - b.finalRank || Number(a.no) - Number(b.no));
 }
 
+function renderStatus() {
+  const existing = document.querySelector('.status-banner');
+  if (existing) existing.remove();
+  if (!state.error && !state.loading) return;
+  const banner = document.createElement('div');
+  banner.className = `status-banner ${state.error ? 'error' : ''}`;
+  banner.textContent = state.error || '読み込み中...';
+  document.querySelector('.main').prepend(banner);
+}
+
 function renderInterviews() {
   const list = $('#interview-list');
   list.innerHTML = state.interviews.map(interview => `
@@ -188,7 +268,7 @@ function renderInterviews() {
   list.querySelectorAll('.interview-item').forEach(button => {
     button.addEventListener('click', () => {
       state.activeId = button.dataset.id;
-      saveData();
+      saveActiveId();
       render();
     });
   });
@@ -203,7 +283,7 @@ function renderMetrics(interview, rows) {
 
 function scoreInput(row, field, type = 'number') {
   const value = row.score[field] ?? '';
-  return `<input class="score-input" data-no="${row.no}" data-field="${field}" type="${type}" value="${String(value).replace(/"/g, '&quot;')}">`;
+  return `<input class="score-input" data-id="${row.id}" data-field="${field}" type="${type}" value="${String(value).replace(/"/g, '&quot;')}">`;
 }
 
 function renderTable(interview) {
@@ -216,7 +296,7 @@ function renderTable(interview) {
       <tr>
         <td><span class="${rankClass}">${row.finalRank}</span></td>
         <td>${candidateLabel(row)}</td>
-        <td><input class="candidate-name" data-no="${row.no}" value="${(row.name || '').replace(/"/g, '&quot;')}"></td>
+        <td><input class="candidate-name" data-id="${row.id}" value="${(row.name || '').replace(/"/g, '&quot;')}"></td>
         <td>${row.kraepelinTotal == null ? '<span class="status-pill missing">未取得</span>' : `<span class="status-pill ok">${row.kraepelinTotal}</span><div class="mini">順位 ${row.ranks.k}</div>`}</td>
         <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
         <td>${scoreInput(row, 'math')}</td>
@@ -228,117 +308,172 @@ function renderTable(interview) {
         <td>${scoreInput(row, 'pin2Time')}</td>
         <td>${row.ranks.pin}<div class="mini">${pin.ok}/2 ${pin.complete ? pin.time.toFixed(2) + '秒' : ''}</div></td>
         <td><strong>${row.rankSum}</strong></td>
-        <td><button class="icon-btn danger remove-candidate" data-no="${row.no}" title="削除"><i data-lucide="x"></i></button></td>
+        <td><button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button></td>
       </tr>
     `;
   }).join('');
 
   body.querySelectorAll('.score-input').forEach(input => {
-    input.addEventListener('change', () => updateScore(input.dataset.no, input.dataset.field, input.value));
+    input.addEventListener('change', () => updateScore(input.dataset.id, input.dataset.field, input.value));
   });
   body.querySelectorAll('.candidate-name').forEach(input => {
-    input.addEventListener('change', () => updateCandidateName(input.dataset.no, input.value));
+    input.addEventListener('change', () => updateCandidateName(input.dataset.id, input.value));
   });
   body.querySelectorAll('.remove-candidate').forEach(button => {
-    button.addEventListener('click', () => removeCandidate(button.dataset.no));
+    button.addEventListener('click', () => removeCandidate(button.dataset.id));
   });
 
   renderMetrics(interview, rows);
 }
 
 function render() {
+  renderStatus();
   renderInterviews();
   const interview = activeInterview();
   const hasInterview = !!interview;
   $('#empty-state').classList.toggle('hidden', hasInterview);
   $('#workspace').classList.toggle('hidden', !hasInterview);
   $('#active-title').textContent = hasInterview ? formatInterviewName(interview) : '面接を作成してください';
-  $('#delete-interview').disabled = !hasInterview;
+  $('#delete-interview').disabled = !hasInterview || !state.dbReady;
   $('#open-kraepelin').disabled = !hasInterview;
   $('#refresh-kraepelin').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
+  $('#interview-form button[type="submit"]').disabled = !state.dbReady;
   if (hasInterview) renderTable(interview);
   if (window.lucide) lucide.createIcons();
 }
 
-function createInterview(event) {
+async function createInterview(event) {
   event.preventDefault();
+  if (!state.dbReady) return;
   const date = $('#interview-date').value;
   const company = $('#interview-company').value.trim();
   const count = Math.max(1, Number($('#candidate-count').value || 1));
-  const interview = {
-    id: crypto.randomUUID(),
-    date,
-    company,
-    candidates: Array.from({ length: count }, (_, index) => ({ no: String(index + 1), name: '', score: {} })),
-    createdAt: new Date().toISOString(),
-  };
+
+  const { data, error } = await supabase
+    .from('interview_sessions')
+    .insert({ interview_date: date, company })
+    .select('*')
+    .single();
+  if (error) {
+    alert('面接作成に失敗しました: ' + error.message);
+    return;
+  }
+
+  const interview = interviewFromDb(data, new Map());
+  for (let i = 1; i <= count; i++) {
+    interview.candidates.push(await createCandidate(interview.id, String(i)));
+  }
+
   state.interviews.unshift(interview);
   state.activeId = interview.id;
-  saveData();
+  saveActiveId();
   event.target.reset();
   $('#candidate-count').value = 8;
   render();
 }
 
-function addCandidate(event) {
+async function addCandidate(event) {
   event.preventDefault();
   const interview = activeInterview();
-  if (!interview) return;
+  if (!interview || !state.dbReady) return;
   const no = normalizeNo($('#candidate-no').value || String(interview.candidates.length + 1));
   if (!no) return;
   if (interview.candidates.some(candidate => candidate.no === no)) {
     alert('同じ候補者番号があります');
     return;
   }
-  interview.candidates.push({ no, name: $('#candidate-name').value.trim(), score: {} });
-  $('#candidate-no').value = '';
-  $('#candidate-name').value = '';
-  saveData();
-  render();
+  try {
+    const candidate = await createCandidate(interview.id, no, $('#candidate-name').value.trim());
+    interview.candidates.push(candidate);
+    $('#candidate-no').value = '';
+    $('#candidate-name').value = '';
+    render();
+  } catch (error) {
+    alert('候補者追加に失敗しました: ' + error.message);
+  }
 }
 
-function updateScore(no, field, value) {
+function findCandidateById(id) {
   const interview = activeInterview();
-  const candidate = interview?.candidates.find(item => item.no === no);
+  return interview?.candidates.find(item => item.id === id) || null;
+}
+
+async function updateScore(id, field, value) {
+  const candidate = findCandidateById(id);
   if (!candidate) return;
-  ensureScore(candidate)[field] = value === '' ? '' : Number(value);
-  saveData();
+  const columnByField = {
+    math: 'math_score',
+    vietnamese: 'vietnamese_score',
+    japanese: 'japanese_score',
+    pin1Ok: 'pin1_ok',
+    pin1Time: 'pin1_time',
+    pin2Ok: 'pin2_ok',
+    pin2Time: 'pin2_time',
+  };
+  const column = columnByField[field];
+  const next = toDbNumber(value);
+  const { error } = await supabase.from('interview_candidates').update({ [column]: next }).eq('id', id);
+  if (error) {
+    alert('保存に失敗しました: ' + error.message);
+    return;
+  }
+  ensureScore(candidate)[field] = next ?? '';
   render();
 }
 
-function updateCandidateName(no, value) {
-  const interview = activeInterview();
-  const candidate = interview?.candidates.find(item => item.no === no);
+async function updateCandidateName(id, value) {
+  const candidate = findCandidateById(id);
   if (!candidate) return;
-  candidate.name = value.trim();
-  saveData();
-  render();
+  const name = value.trim();
+  const { error } = await supabase.from('interview_candidates').update({ name }).eq('id', id);
+  if (error) {
+    alert('保存に失敗しました: ' + error.message);
+    return;
+  }
+  candidate.name = name;
 }
 
-function removeCandidate(no) {
+async function removeCandidate(id) {
   const interview = activeInterview();
-  if (!interview) return;
-  interview.candidates = interview.candidates.filter(candidate => candidate.no !== no);
-  saveData();
+  if (!interview || !confirm('この候補者を削除しますか。')) return;
+  const { error } = await supabase.from('interview_candidates').delete().eq('id', id);
+  if (error) {
+    alert('削除に失敗しました: ' + error.message);
+    return;
+  }
+  interview.candidates = interview.candidates.filter(candidate => candidate.id !== id);
   render();
 }
 
-function renumberCandidates() {
+async function renumberCandidates() {
   const interview = activeInterview();
-  if (!interview) return;
-  interview.candidates.forEach((candidate, index) => candidate.no = String(index + 1));
-  saveData();
+  if (!interview || !confirm('候補者番号を1から振り直しますか。')) return;
+  const sorted = [...interview.candidates].sort((a, b) => Number(a.no) - Number(b.no));
+  for (let i = 0; i < sorted.length; i++) {
+    const nextNo = String(i + 1);
+    const { error } = await supabase.from('interview_candidates').update({ candidate_no: nextNo }).eq('id', sorted[i].id);
+    if (error) {
+      alert('番号更新に失敗しました: ' + error.message);
+      return;
+    }
+    sorted[i].no = nextNo;
+  }
   render();
 }
 
-function deleteInterview() {
+async function deleteInterview() {
   const interview = activeInterview();
   if (!interview) return;
   if (!confirm(`${formatInterviewName(interview)}を削除しますか。`)) return;
+  const { error } = await supabase.from('interview_sessions').delete().eq('id', interview.id);
+  if (error) {
+    alert('削除に失敗しました: ' + error.message);
+    return;
+  }
   state.interviews = state.interviews.filter(item => item.id !== interview.id);
   state.activeId = state.interviews[0]?.id || '';
-  saveData();
+  saveActiveId();
   render();
 }
 
@@ -410,6 +545,5 @@ function bindEvents() {
   $('#export-csv').addEventListener('click', exportCsv);
 }
 
-loadData();
 bindEvents();
-render();
+loadData();
