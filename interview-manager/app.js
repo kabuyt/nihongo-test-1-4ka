@@ -72,11 +72,59 @@ function rowStats(row) {
   return answers.filter(answer => answer && answer.isCorrect).length;
 }
 
+function answerStats(row) {
+  const answers = Array.isArray(row?.answers) ? row.answers : [];
+  const correct = answers.filter(answer => answer && answer.isCorrect).length;
+  return { total: answers.length, correct };
+}
+
 function summarizeKraepelin(record) {
   const results = Array.isArray(record?.results) ? record.results : [];
   const first = results.filter(row => row.phase === 'first').reduce((sum, row) => sum + rowStats(row), 0);
   const second = results.filter(row => row.phase === 'second').reduce((sum, row) => sum + rowStats(row), 0);
-  return { first, second, total: first + second };
+  const allAnswers = results.reduce((sum, row) => {
+    const stats = answerStats(row);
+    return { total: sum.total + stats.total, correct: sum.correct + stats.correct };
+  }, { total: 0, correct: 0 });
+  const total = numeric(record?.total_correct) ?? first + second;
+  const errorRate = numeric(record?.error_rate) ?? (allAnswers.total > 0 ? (allAnswers.total - allAnswers.correct) / allAnswers.total : null);
+  const typicalityScore = numeric(record?.judgment_score);
+  return {
+    first,
+    second,
+    total,
+    errorRate,
+    typicalityScore,
+    judgment: record?.judgment_label || record?.judgment_type || '',
+  };
+}
+
+function kraepelinEvaluation(summary, maxTotal) {
+  if (!summary || summary.total == null) return null;
+  const work = maxTotal > 0 ? (summary.total / maxTotal) * 45 : 0;
+  const errorRate = summary.errorRate == null ? 1 : Math.max(0, summary.errorRate);
+  const accuracy = Math.max(0, 1 - (errorRate / 0.2)) * 35;
+  const stability = summary.typicalityScore == null ? 0 : Math.max(0, Math.min(100, summary.typicalityScore)) / 100 * 20;
+  return {
+    total: Number((work + accuracy + stability).toFixed(1)),
+    work: Number(work.toFixed(1)),
+    accuracy: Number(accuracy.toFixed(1)),
+    stability: Number(stability.toFixed(1)),
+  };
+}
+
+function formatPercent(value) {
+  return value == null ? '-' : `${(value * 100).toFixed(1)}%`;
+}
+
+function judgmentLabel(value) {
+  const labels = {
+    typical: '定型',
+    'near-typical': '準定型',
+    atypical: '非定型',
+    incomplete: '判定不可',
+  };
+  return labels[value] || value || '-';
 }
 
 function candidateFromDb(row) {
@@ -224,14 +272,19 @@ function buildRows(interview) {
       ...candidate,
       score,
       kraepelin,
+      kSummary,
       kraepelinTotal: kSummary?.total ?? null,
       math: numeric(score.math),
       vietnamese: numeric(score.vietnamese),
       japanese: numeric(score.japanese),
     };
   });
+  const maxKraepelinTotal = Math.max(...enriched.map(row => row.kraepelinTotal ?? 0), 0);
+  enriched.forEach(row => {
+    row.kraepelinEval = kraepelinEvaluation(row.kSummary, maxKraepelinTotal);
+  });
 
-  const kRank = rankValues(enriched, row => row.kraepelinTotal, 'desc');
+  const kRank = rankValues(enriched, row => row.kraepelinEval?.total ?? null, 'desc');
   const mathRank = rankValues(enriched, row => row.math, 'desc');
   const vietnameseRank = rankValues(enriched, row => row.vietnamese, 'desc');
   const japaneseRank = rankValues(enriched, row => row.japanese, 'desc');
@@ -292,12 +345,17 @@ function renderTable(interview) {
   body.innerHTML = rows.map(row => {
     const pin = pinSummary(row.score);
     const rankClass = row.finalRank <= 3 ? 'rank top' : 'rank';
+    const kraepelinCell = row.kraepelinEval == null
+      ? '<span class="status-pill missing">未取得</span>'
+      : `<span class="status-pill ok">${row.kraepelinEval.total}</span>
+         <div class="mini">順位 ${row.ranks.k} / 正答 ${row.kraepelinTotal} / 誤答 ${formatPercent(row.kSummary.errorRate)}</div>
+         <div class="mini">作業 ${row.kraepelinEval.work}・正確 ${row.kraepelinEval.accuracy}・安定 ${row.kraepelinEval.stability} / ${judgmentLabel(row.kSummary.judgment)}</div>`;
     return `
       <tr>
         <td><span class="${rankClass}">${row.finalRank}</span></td>
         <td>${candidateLabel(row)}</td>
         <td><input class="candidate-name" data-id="${row.id}" value="${(row.name || '').replace(/"/g, '&quot;')}"></td>
-        <td>${row.kraepelinTotal == null ? '<span class="status-pill missing">未取得</span>' : `<span class="status-pill ok">${row.kraepelinTotal}</span><div class="mini">順位 ${row.ranks.k}</div>`}</td>
+        <td class="kraepelin-cell">${kraepelinCell}</td>
         <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
         <td>${scoreInput(row, 'math')}</td>
         <td>${scoreInput(row, 'vietnamese')}</td>
@@ -520,10 +578,25 @@ function openKraepelin() {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン', '数学', 'ベトナム国語', '日本語単語', 'ピン成功数', 'ピン時間', 'ピン順位', '順位合計'];
+  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', '数学', 'ベトナム国語', '日本語単語', 'ピン成功数', 'ピン時間', 'ピン順位', '順位合計'];
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
-    return [row.finalRank, row.no, row.name || '', row.kraepelinTotal ?? '', row.math ?? '', row.vietnamese ?? '', row.japanese ?? '', pin.ok, pin.complete ? pin.time.toFixed(2) : '', row.ranks.pin, row.rankSum];
+    return [
+      row.finalRank,
+      row.no,
+      row.name || '',
+      row.kraepelinEval?.total ?? '',
+      row.kraepelinTotal ?? '',
+      row.kSummary?.errorRate == null ? '' : formatPercent(row.kSummary.errorRate),
+      judgmentLabel(row.kSummary?.judgment),
+      row.math ?? '',
+      row.vietnamese ?? '',
+      row.japanese ?? '',
+      pin.ok,
+      pin.complete ? pin.time.toFixed(2) : '',
+      row.ranks.pin,
+      row.rankSum,
+    ];
   });
   const csv = [headers, ...rows].map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });

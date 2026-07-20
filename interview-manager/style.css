@@ -269,7 +269,7 @@ h2 {
 
 table {
   width: 100%;
-  min-width: 1220px;
+  min-width: 1360px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -292,6 +292,10 @@ th {
 
 td:nth-child(3), th:nth-child(3) {
   text-align: left;
+}
+
+.kraepelin-cell {
+  min-width: 230px;
 }
 
 td input {
