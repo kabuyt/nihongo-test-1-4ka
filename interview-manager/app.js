@@ -1,6 +1,12 @@
 const ACTIVE_KEY = 'interviewManager.activeId.v2';
 const AUTH_EMAIL_DOMAIN = 'nihongo-test.local';
 const SENDERS = ['BARAEN', 'AKANE', 'VJC'];
+const PIN_GRADES = [
+  { value: 3, symbol: '◎', label: '正確に完了' },
+  { value: 2, symbol: '○', label: '自力で修正' },
+  { value: 1, symbol: '△', label: '一部ミス' },
+  { value: 0, symbol: '×', label: '継続困難' },
+];
 
 const state = {
   user: null,
@@ -202,6 +208,7 @@ function toDbNumber(value) {
 }
 
 function numeric(value) {
+  if (value === '' || value == null) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
@@ -429,15 +436,32 @@ function getKraepelinFor(candidate, interview) {
 }
 
 function pinSummary(score) {
-  const ok1 = Number(score.pin1Ok || 0);
-  const ok2 = Number(score.pin2Ok || 0);
+  const grade1 = numeric(score.pin1Ok);
+  const grade2 = numeric(score.pin2Ok);
   const time1 = numeric(score.pin1Time);
   const time2 = numeric(score.pin2Time);
+  const grades = [grade1, grade2];
+  const times = [time1, time2];
+  const enteredCount = grades.filter(value => value != null).length;
+  const requiredTimesComplete = grades.every((grade, index) => grade == null || grade < 2 || times[index] != null);
   return {
-    ok: ok1 + ok2,
-    time: (time1 || 0) + (time2 || 0),
-    complete: time1 != null && time2 != null,
+    grades,
+    times,
+    gradeTotal: grades.reduce((sum, value) => sum + (value ?? 0), 0),
+    enteredCount,
+    time: times.reduce((sum, value, index) => sum + (grades[index] >= 2 && value != null ? value : 0), 0),
+    complete: enteredCount === 2 && requiredTimesComplete,
   };
+}
+
+function pinGradeInfo(value) {
+  return PIN_GRADES.find(item => item.value === numeric(value)) || null;
+}
+
+function pinAttemptText(grade, time) {
+  const info = pinGradeInfo(grade);
+  if (!info) return '未入力';
+  return `${info.symbol}${info.label}${info.value >= 2 && time != null ? ` ${Number(time).toFixed(2)}秒` : ''}`;
 }
 
 function rankValues(items, getter, direction = 'desc') {
@@ -453,7 +477,8 @@ function pinRanks(items) {
   const sorted = [...items].sort((a, b) => {
     const pa = pinSummary(ensureScore(a));
     const pb = pinSummary(ensureScore(b));
-    if (pa.ok !== pb.ok) return pb.ok - pa.ok;
+    if (pa.enteredCount !== pb.enteredCount) return pb.enteredCount - pa.enteredCount;
+    if (pa.gradeTotal !== pb.gradeTotal) return pb.gradeTotal - pa.gradeTotal;
     if (pa.complete !== pb.complete) return pa.complete ? -1 : 1;
     return pa.time - pb.time;
   });
@@ -557,6 +582,47 @@ function scoreInput(row, field, type = 'number') {
   return `<input class="score-input" data-id="${row.id}" data-field="${field}" type="${type}" value="${String(value).replace(/"/g, '&quot;')}">`;
 }
 
+function pinGradeControl(row, round) {
+  const field = `pin${round}Ok`;
+  const current = numeric(row.score[field]);
+  return `
+    <div class="pin-grade-control" aria-label="ピン${round}評価">
+      ${PIN_GRADES.map(grade => `
+        <button
+          type="button"
+          class="pin-grade-btn grade-${grade.value} ${current === grade.value ? 'selected' : ''}"
+          data-id="${row.id}"
+          data-round="${round}"
+          data-value="${grade.value}"
+          title="${grade.label}"
+          aria-label="${grade.symbol} ${grade.label}"
+          aria-pressed="${current === grade.value}"
+        >${grade.symbol}</button>
+      `).join('')}
+    </div>
+  `;
+}
+
+function pinTimeInput(row, round) {
+  const grade = numeric(row.score[`pin${round}Ok`]);
+  const field = `pin${round}Time`;
+  const value = row.score[field] ?? '';
+  const enabled = grade != null && grade >= 2;
+  return `
+    <input
+      class="score-input pin-time-input"
+      data-id="${row.id}"
+      data-field="${field}"
+      type="number"
+      min="0"
+      step="0.01"
+      placeholder="${enabled ? '秒' : '-'}"
+      value="${enabled ? String(value).replace(/"/g, '&quot;') : ''}"
+      ${enabled ? '' : 'disabled'}
+    >
+  `;
+}
+
 function rankSummary(row) {
   return `ク${row.ranks.k} 数${row.ranks.math} 国${row.ranks.vietnamese} 日${row.ranks.japanese} ピ${row.ranks.pin}`;
 }
@@ -603,7 +669,10 @@ function renderPrintReport(interview, rows) {
               <td>${row.math == null ? '-' : `${formatScore(row.math)}点`}</td>
               <td>${row.vietnamese == null ? '-' : `${formatScore(row.vietnamese)}点`}</td>
               <td>${row.japanese == null ? '-' : `${row.japaneseRaw}/30<br>${formatScore(row.japanese)}点`}</td>
-              <td>${pin.complete ? `${pin.ok}/2<br>${pin.time.toFixed(2)}秒` : `${pin.ok}/2`}</td>
+              <td>
+                1回目 ${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}<br>
+                2回目 ${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}
+              </td>
               <td>${escapeHtml(rankSummary(row))}</td>
               <td>${row.rankSum}</td>
               <td>${escapeHtml(kraepelinComment(row.kSummary, row.kraepelinEval))}</td>
@@ -679,11 +748,17 @@ function renderTable(interview) {
         <td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>
         <td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>
         <td>${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>
-        <td>${scoreInput(row, 'pin1Ok')}</td>
-        <td>${scoreInput(row, 'pin1Time')}</td>
-        <td>${scoreInput(row, 'pin2Ok')}</td>
-        <td>${scoreInput(row, 'pin2Time')}</td>
-        <td>${row.ranks.pin}<div class="mini">${pin.ok}/2 ${pin.complete ? pin.time.toFixed(2) + '秒' : ''}</div></td>
+        <td>${pinGradeControl(row, 1)}</td>
+        <td>${pinTimeInput(row, 1)}</td>
+        <td>${pinGradeControl(row, 2)}</td>
+        <td>${pinTimeInput(row, 2)}</td>
+        <td>
+          ${row.ranks.pin}
+          <div class="mini">
+            ${pin.enteredCount}/2回入力
+            ${pin.complete && pin.time > 0 ? ` / ${pin.time.toFixed(2)}秒` : ''}
+          </div>
+        </td>
         <td><span class="rank-list">${rankSummary(row)}</span></td>
         <td><strong>${row.rankSum}</strong></td>
         <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button>` : ''}</td>
@@ -693,6 +768,9 @@ function renderTable(interview) {
 
   body.querySelectorAll('.score-input').forEach(input => {
     input.addEventListener('change', () => updateScore(input.dataset.id, input.dataset.field, input.value));
+  });
+  body.querySelectorAll('.pin-grade-btn').forEach(button => {
+    button.addEventListener('click', () => updatePinGrade(button.dataset.id, Number(button.dataset.round), Number(button.dataset.value)));
   });
   body.querySelectorAll('.candidate-name').forEach(input => {
     input.addEventListener('change', () => updateCandidateName(input.dataset.id, input.value));
@@ -826,8 +904,8 @@ async function updateScore(id, field, value) {
       math: 100,
       vietnamese: 100,
       japanese: 30,
-      pin1Ok: 1,
-      pin2Ok: 1,
+      pin1Ok: 3,
+      pin2Ok: 3,
     };
     const max = maxByField[field];
     if (max != null) next = Math.min(max, Math.max(0, next));
@@ -839,6 +917,28 @@ async function updateScore(id, field, value) {
     return;
   }
   ensureScore(candidate)[field] = next ?? '';
+  render();
+}
+
+async function updatePinGrade(id, round, grade) {
+  const candidate = findCandidateById(id);
+  if (!candidate || ![1, 2].includes(round) || !PIN_GRADES.some(item => item.value === grade)) return;
+  const gradeField = `pin${round}Ok`;
+  const timeField = `pin${round}Time`;
+  const gradeColumn = `pin${round}_ok`;
+  const timeColumn = `pin${round}_time`;
+  const update = { [gradeColumn]: grade };
+  if (grade < 2) update[timeColumn] = null;
+
+  const { error } = await supabase.from('interview_candidates').update(update).eq('id', id);
+  if (error) {
+    alert('ピン評価の保存に失敗しました: ' + error.message);
+    return;
+  }
+
+  const score = ensureScore(candidate);
+  score[gradeField] = grade;
+  if (grade < 2) score[timeField] = '';
   render();
 }
 
@@ -1036,7 +1136,7 @@ function printLinkSheet() {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', '数学順位', 'ベトナム国語', 'ベトナム国語順位', '日本語単語正答数', '日本語単語100点換算', '日本語単語順位', 'ピン成功数', 'ピン時間', 'ピン順位', '科目順位', '順位合計'];
+  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', '数学順位', 'ベトナム国語', 'ベトナム国語順位', '日本語単語正答数', '日本語単語100点換算', '日本語単語順位', 'ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位', '科目順位', '順位合計'];
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
     return [
@@ -1055,8 +1155,10 @@ function exportCsv() {
       row.japaneseRaw ?? '',
       row.japanese ?? '',
       row.ranks.japanese,
-      pin.ok,
-      pin.complete ? pin.time.toFixed(2) : '',
+      pinAttemptText(pin.grades[0], null),
+      pin.grades[0] >= 2 && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
+      pinAttemptText(pin.grades[1], null),
+      pin.grades[1] >= 2 && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
       row.ranks.pin,
       rankSummary(row),
       row.rankSum,

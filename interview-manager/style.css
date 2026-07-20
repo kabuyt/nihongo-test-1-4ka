@@ -440,6 +440,59 @@ td:nth-child(4), th:nth-child(4) {
   background: #fffaf0;
 }
 
+.pin-grade-control {
+  display: grid;
+  grid-template-columns: repeat(2, 34px);
+  gap: 4px;
+  justify-content: center;
+  min-width: 74px;
+}
+
+.pin-grade-btn {
+  width: 34px;
+  min-height: 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--muted);
+  background: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.pin-grade-btn.selected.grade-3 {
+  border-color: var(--green);
+  color: #fff;
+  background: var(--green);
+}
+
+.pin-grade-btn.selected.grade-2 {
+  border-color: var(--blue);
+  color: #fff;
+  background: var(--blue);
+}
+
+.pin-grade-btn.selected.grade-1 {
+  border-color: var(--amber);
+  color: #fff;
+  background: var(--amber);
+}
+
+.pin-grade-btn.selected.grade-0 {
+  border-color: var(--red);
+  color: #fff;
+  background: var(--red);
+}
+
+.pin-time-input {
+  width: 78px;
+}
+
+.pin-time-input:disabled {
+  color: var(--muted);
+  background: #f1f3f6;
+}
+
 .rank-list {
   display: inline-block;
   min-width: 112px;
