@@ -11,7 +11,7 @@
   <div id="screen-start" class="screen active">
     <div class="start-container">
       <h1>クレペリン検査 面接用<span class="vi-h">Bài kiểm tra Kraepelin</span></h1>
-      <p class="subtitle">候補者番号で自動集計します<span class="vi"> / Lưu kết quả theo số báo danh</span></p>
+      <p class="subtitle">面接名と候補者番号で自動集計します<span class="vi"> / Lưu kết quả theo buổi phỏng vấn và số báo danh</span></p>
 
       <div class="description">
         <h2>検査の説明<span class="vi-inline">（Hướng dẫn）</span></h2>
@@ -37,6 +37,9 @@
       </div>
 
       <div class="name-input-area">
+        <label for="input-event">面接名<span class="vi-inline">/ Buổi phỏng vấn</span></label>
+        <input type="text" id="input-event" placeholder="例: 2026-07-23 〇〇商事面接" autocomplete="off">
+
         <label for="input-name">候補者番号<span class="vi-inline">/ SBD</span></label>
         <input type="text" id="input-name" placeholder="例: 1 / 12 / A-03" autocomplete="off" inputmode="text">
       </div>

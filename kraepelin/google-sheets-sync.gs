@@ -8,16 +8,21 @@ function updateKraepelinResults() {
 
   records.forEach(record => {
     const candidateNo = extractCandidateNo_(record.name);
+    const interviewName = extractInterviewName_(record.name);
     if (!candidateNo) return;
-    if (!latestByCandidate[candidateNo]) latestByCandidate[candidateNo] = record;
+    const key = interviewName + '||' + candidateNo;
+    if (!latestByCandidate[key]) latestByCandidate[key] = record;
   });
 
   const rows = Object.keys(latestByCandidate)
-    .sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b), 'ja'))
-    .map(candidateNo => {
-      const record = latestByCandidate[candidateNo];
+    .sort((a, b) => a.localeCompare(b, 'ja'))
+    .map(key => {
+      const record = latestByCandidate[key];
+      const candidateNo = extractCandidateNo_(record.name);
+      const interviewName = extractInterviewName_(record.name);
       const summary = summarizeKraepelin_(record.results || []);
       return [
+        interviewName,
         candidateNo,
         record.started_at || record.created_at || '',
         record.judgment_type || '',
@@ -34,7 +39,8 @@ function updateKraepelinResults() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(KRAEPELIN_SHEET_NAME) || ss.insertSheet(KRAEPELIN_SHEET_NAME);
   sheet.clearContents();
-  sheet.getRange(1, 1, 1, 10).setValues([[
+  sheet.getRange(1, 1, 1, 11).setValues([[
+    '面接名',
     '候補者番号',
     '実施日時',
     '判定',
@@ -49,7 +55,7 @@ function updateKraepelinResults() {
   if (rows.length) {
     sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
   }
-  sheet.autoResizeColumns(1, 10);
+  sheet.autoResizeColumns(1, 11);
 }
 
 function createKraepelinAutoUpdateTrigger() {
@@ -77,7 +83,12 @@ function fetchKraepelinRecords_() {
 }
 
 function extractCandidateNo_(name) {
-  const match = String(name || '').trim().match(/^No\.?\s*(.+)$/i);
+  const match = String(name || '').trim().match(/(?:^|\/\s*)No\.?\s*(.+)$/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractInterviewName_(name) {
+  const match = String(name || '').trim().match(/^(.*?)\s*\/\s*No\.?\s*.+$/i);
   return match ? match[1].trim() : '';
 }
 

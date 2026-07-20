@@ -6,12 +6,22 @@ let currentRecord = null;
 
 function getCandidateNo(record) {
   if (!record || !record.name) return '';
-  const match = String(record.name).trim().match(/^No\.?\s*(.+)$/i);
+  const value = String(record.name).trim();
+  const match = value.match(/(?:^|\/\s*)No\.?\s*(.+)$/i);
+  return match ? match[1].trim() : '';
+}
+
+function getInterviewName(record) {
+  if (!record || !record.name) return '';
+  const value = String(record.name).trim();
+  const match = value.match(/^(.*?)\s*\/\s*No\.?\s*.+$/i);
   return match ? match[1].trim() : '';
 }
 
 function getDisplayName(record) {
   const candidateNo = getCandidateNo(record);
+  const interviewName = getInterviewName(record);
+  if (candidateNo && interviewName) return `${interviewName} / 候補者 ${candidateNo}`;
   return candidateNo ? `候補者 ${candidateNo}` : (record.name || '(無名)');
 }
 
@@ -47,15 +57,29 @@ async function loadRecords() {
 
     allRecords = data || [];
     stats.textContent = `${allRecords.length} 件`;
+    updateInterviewFilter();
     render();
   } catch (e) {
     container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">読み込み失敗: ${e.message}</div>`;
   }
 }
 
+function updateInterviewFilter() {
+  const select = document.getElementById('filter-interview');
+  if (!select) return;
+  const current = select.value;
+  const interviews = [...new Set(allRecords.map(getInterviewName).filter(Boolean))]
+    .sort((a, b) => b.localeCompare(a, 'ja'));
+  select.innerHTML = '<option value="">全ての面接</option>' + interviews
+    .map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join('');
+  if (interviews.includes(current)) select.value = current;
+}
+
 function render() {
   const container = document.getElementById('list-container');
   const search = document.getElementById('search-name').value.trim().toLowerCase();
+  const filterInterview = document.getElementById('filter-interview').value;
   const filterJudgment = document.getElementById('filter-judgment').value;
 
   let filtered = allRecords;
@@ -65,6 +89,7 @@ function render() {
       return target.includes(search);
     });
   }
+  if (filterInterview) filtered = filtered.filter(r => getInterviewName(r) === filterInterview);
   if (filterJudgment) filtered = filtered.filter(r => r.judgment_type === filterJudgment);
   currentFilteredRecords = filtered;
 
@@ -89,11 +114,13 @@ function render() {
     const judgeLabel = judgeLabels[judgeKey] || judgeKey;
     const summary = summarizeRecord(r);
     const candidateNo = getCandidateNo(r);
+    const interviewName = getInterviewName(r);
     const avg = summary.avgCorrect != null ? summary.avgCorrect.toFixed(1) : (r.avg_correct != null ? Number(r.avg_correct).toFixed(1) : '-');
     const errPct = r.error_rate != null ? (Number(r.error_rate) * 100).toFixed(1) + '%' : '-';
     return `
       <tr class="row-hover" data-id="${r.id}">
         <td onclick="event.stopPropagation();"><input type="checkbox" class="row-check" data-id="${r.id}"></td>
+        <td>${escapeHtml(interviewName || '-')}</td>
         <td class="col-name">${escapeHtml(candidateNo || '-')}</td>
         <td>${escapeHtml(getDisplayName(r))}</td>
         <td>${dateStr}</td>
@@ -115,6 +142,7 @@ function render() {
       <thead>
         <tr>
           <th><input type="checkbox" id="select-all-cb" title="全選択"></th>
+          <th>面接名</th>
           <th>候補者番号</th>
           <th>表示名</th>
           <th>検査日時</th>
@@ -226,6 +254,7 @@ function exportCsv() {
 
   const headers = [
     'candidate_no',
+    'interview_name',
     'display_name',
     'started_at',
     'judgment_type',
@@ -243,6 +272,7 @@ function exportCsv() {
     const summary = summarizeRecord(r);
     const row = [
       getCandidateNo(r),
+      getInterviewName(r),
       getDisplayName(r),
       r.started_at || r.created_at || '',
       r.judgment_type || '',
@@ -376,6 +406,7 @@ async function bulkDownloadPDF() {
 
 // イベント
 document.getElementById('search-name').addEventListener('input', render);
+document.getElementById('filter-interview').addEventListener('change', render);
 document.getElementById('filter-judgment').addEventListener('change', render);
 document.getElementById('csv-btn').addEventListener('click', exportCsv);
 document.getElementById('bulk-pdf-btn').addEventListener('click', bulkDownloadPDF);

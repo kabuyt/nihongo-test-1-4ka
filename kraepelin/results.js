@@ -654,12 +654,16 @@ const Results = (() => {
     if (!el) return;
     const name = meta && meta.name ? meta.name : '';
     const candidateNo = meta && meta.candidateNo ? meta.candidateNo : '';
+    const interviewName = meta && meta.interviewName ? meta.interviewName : '';
     const date = meta && meta.startedAt ? new Date(meta.startedAt) : new Date();
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     const dateStr = `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日`;
     const parts = [];
+    if (interviewName) {
+      parts.push(`<span class="meta-name">面接名: <strong>${interviewName}</strong></span>`);
+    }
     if (candidateNo) {
       parts.push(`<span class="meta-name">候補者番号: <strong>${candidateNo}</strong></span>`);
     } else if (name) {
@@ -692,7 +696,9 @@ const Results = (() => {
     const errorRate = all.length > 0 ? all.filter(a => !a.isCorrect).length / all.length : 0;
     const avgCorrect = allCounts.length > 0 ? allCounts.reduce((a, b) => a + b, 0) / allCounts.length : 0;
 
-    const displayName = meta && meta.candidateNo ? `No.${meta.candidateNo}` : meta.name;
+    const displayName = meta && meta.candidateNo
+      ? `${meta.interviewName || '面接未設定'} / No.${meta.candidateNo}`
+      : meta.name;
 
     return supabase.from('kraepelin_results').insert({
       name: displayName,
