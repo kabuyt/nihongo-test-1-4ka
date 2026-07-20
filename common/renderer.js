@@ -95,15 +95,21 @@ function parseDurationValue(value) {
   return { hours: match[1], minutes: match[2] };
 }
 
-function looksLikeDurationAnswerContext(text) {
+function isKnownDurationField(fieldId) {
+  const fid = String(fieldId || '').trim().toLowerCase();
+  return /^c5_[12]$/.test(fid);
+}
+
+function looksLikeDurationAnswerContext(text, fieldId) {
+  if (isKnownDurationField(fieldId)) return true;
   const plain = stripHtml(text || '').replace(/\s+/g, '');
   if (!plain) return false;
   return /○+時間○+分/.test(plain) || /時間.*分/.test(plain);
 }
 
-function enhanceDurationField(input, contextText) {
+function enhanceDurationField(input, contextText, fieldId) {
   if (!input || input.dataset.durationEnhanced === '1') return;
-  if (!looksLikeDurationAnswerContext(contextText)) return;
+  if (!looksLikeDurationAnswerContext(contextText, fieldId || input.id)) return;
 
   input.dataset.durationEnhanced = '1';
   input.type = 'hidden';
@@ -1898,7 +1904,7 @@ function makeField(f, parentEl) {
   parentEl.appendChild(el);
   if (f.input_type === 'text') {
     const contextText = [f.prefix, f.label, f.suffix, f.placeholder].filter(Boolean).join(' ');
-    enhanceDurationField(el, contextText);
+    enhanceDurationField(el, contextText, f.field_id);
   }
   if (f.suffix) parentEl.appendChild(document.createTextNode(f.suffix));
 }
@@ -1926,7 +1932,7 @@ R.render_free_text = function(q, container) {
     inp.style.cssText = 'width:100%;padding:6px;border:1px solid #aaa;border-radius:4px;font-size:14px;box-sizing:border-box';
     if (item.placeholder) inp.placeholder = item.placeholder;
     row.appendChild(inp);
-    enhanceDurationField(inp, [item.prompt_html, item.label, item.placeholder].filter(Boolean).join(' '));
+    enhanceDurationField(inp, [item.prompt_html, item.label, item.placeholder].filter(Boolean).join(' '), item.field_id);
     wrap.appendChild(row);
   });
   block.appendChild(wrap);
@@ -1957,7 +1963,7 @@ R.render_audio_free_text = function(q, container) {
     inp.type = 'text'; inp.id = item.field_id;
     inp.style.cssText = 'flex:1;min-width:200px;padding:5px;border:1px solid #aaa;border-radius:4px;font-size:13px';
     row.appendChild(inp);
-    enhanceDurationField(inp, [item.label, item.prompt_html, item.placeholder].filter(Boolean).join(' '));
+    enhanceDurationField(inp, [item.label, item.prompt_html, item.placeholder].filter(Boolean).join(' '), item.field_id);
     block.appendChild(row);
   });
   container.appendChild(block);
