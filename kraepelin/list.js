@@ -1,7 +1,33 @@
 // ============ クレペリン検査 結果一覧 ============
 
 let allRecords = [];
+let currentFilteredRecords = [];
 let currentRecord = null;
+
+function getCandidateNo(record) {
+  if (!record || !record.name) return '';
+  const match = String(record.name).trim().match(/^No\.?\s*(.+)$/i);
+  return match ? match[1].trim() : '';
+}
+
+function getDisplayName(record) {
+  const candidateNo = getCandidateNo(record);
+  return candidateNo ? `候補者 ${candidateNo}` : (record.name || '(無名)');
+}
+
+function summarizeRecord(record) {
+  const results = Array.isArray(record.results) ? record.results : [];
+  const rowCounts = results.map(r => Results.calcRowStats(r).correct);
+  const firstCorrect = results
+    .filter(r => r.phase === 'first')
+    .reduce((sum, r) => sum + Results.calcRowStats(r).correct, 0);
+  const secondCorrect = results
+    .filter(r => r.phase === 'second')
+    .reduce((sum, r) => sum + Results.calcRowStats(r).correct, 0);
+  const totalCorrect = rowCounts.reduce((sum, value) => sum + value, 0);
+  const avgCorrect = rowCounts.length ? totalCorrect / rowCounts.length : null;
+  return { firstCorrect, secondCorrect, totalCorrect, avgCorrect };
+}
 
 async function loadRecords() {
   const container = document.getElementById('list-container');
@@ -33,8 +59,14 @@ function render() {
   const filterJudgment = document.getElementById('filter-judgment').value;
 
   let filtered = allRecords;
-  if (search) filtered = filtered.filter(r => (r.name || '').toLowerCase().includes(search));
+  if (search) {
+    filtered = filtered.filter(r => {
+      const target = `${r.name || ''} ${getCandidateNo(r)} ${getDisplayName(r)}`.toLowerCase();
+      return target.includes(search);
+    });
+  }
   if (filterJudgment) filtered = filtered.filter(r => r.judgment_type === filterJudgment);
+  currentFilteredRecords = filtered;
 
   document.getElementById('stats').textContent = `${filtered.length} 件 / 全 ${allRecords.length} 件`;
 
@@ -55,15 +87,19 @@ function render() {
     const dateStr = formatDate(date);
     const judgeKey = r.judgment_type || 'incomplete';
     const judgeLabel = judgeLabels[judgeKey] || judgeKey;
-    const avg = r.avg_correct != null ? Number(r.avg_correct).toFixed(1) : '-';
+    const summary = summarizeRecord(r);
+    const candidateNo = getCandidateNo(r);
+    const avg = summary.avgCorrect != null ? summary.avgCorrect.toFixed(1) : (r.avg_correct != null ? Number(r.avg_correct).toFixed(1) : '-');
     const errPct = r.error_rate != null ? (Number(r.error_rate) * 100).toFixed(1) + '%' : '-';
     return `
       <tr class="row-hover" data-id="${r.id}">
         <td onclick="event.stopPropagation();"><input type="checkbox" class="row-check" data-id="${r.id}"></td>
-        <td class="col-name">${escapeHtml(r.name || '(無名)')}</td>
+        <td class="col-name">${escapeHtml(candidateNo || '-')}</td>
+        <td>${escapeHtml(getDisplayName(r))}</td>
         <td>${dateStr}</td>
         <td><span class="judge-badge ${judgeKey}">${judgeLabel}</span></td>
         <td>${r.judgment_score != null ? r.judgment_score : '-'}</td>
+        <td>${summary.totalCorrect || '-'}</td>
         <td>${avg}</td>
         <td>${errPct}</td>
         <td class="col-actions">
@@ -79,10 +115,12 @@ function render() {
       <thead>
         <tr>
           <th><input type="checkbox" id="select-all-cb" title="全選択"></th>
-          <th>氏名</th>
+          <th>候補者番号</th>
+          <th>表示名</th>
           <th>検査日時</th>
           <th>判定</th>
           <th>スコア</th>
+          <th>合計正答</th>
           <th>平均正答</th>
           <th>誤答率</th>
           <th></th>
@@ -168,6 +206,66 @@ function formatDate(iso) {
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function csvCell(value) {
+  const text = value == null ? '' : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function exportCsv() {
+  const selectedIds = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+  const source = selectedIds.length
+    ? selectedIds.map(id => allRecords.find(r => r.id === id)).filter(Boolean)
+    : currentFilteredRecords;
+
+  if (!source.length) {
+    alert('出力する記録がありません');
+    return;
+  }
+
+  const headers = [
+    'candidate_no',
+    'display_name',
+    'started_at',
+    'judgment_type',
+    'judgment_score',
+    'first_correct',
+    'second_correct',
+    'total_correct',
+    'avg_correct',
+    'error_rate',
+    'record_id',
+  ];
+
+  const lines = [headers.join(',')];
+  source.forEach(r => {
+    const summary = summarizeRecord(r);
+    const row = [
+      getCandidateNo(r),
+      getDisplayName(r),
+      r.started_at || r.created_at || '',
+      r.judgment_type || '',
+      r.judgment_score != null ? r.judgment_score : '',
+      summary.firstCorrect,
+      summary.secondCorrect,
+      summary.totalCorrect,
+      summary.avgCorrect != null ? summary.avgCorrect.toFixed(2) : '',
+      r.error_rate != null ? r.error_rate : '',
+      r.id || '',
+    ];
+    lines.push(row.map(csvCell).join(','));
+  });
+
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kraepelin_results_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 // guide.html をフェッチして PDF Blob を生成
@@ -279,6 +377,7 @@ async function bulkDownloadPDF() {
 // イベント
 document.getElementById('search-name').addEventListener('input', render);
 document.getElementById('filter-judgment').addEventListener('change', render);
+document.getElementById('csv-btn').addEventListener('click', exportCsv);
 document.getElementById('bulk-pdf-btn').addEventListener('click', bulkDownloadPDF);
 document.getElementById('modal-bg').addEventListener('click', (e) => {
   if (e.target === document.getElementById('modal-bg')) closeModal();

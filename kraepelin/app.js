@@ -20,7 +20,9 @@ const App = (() => {
   let timerInterval = null;
   let timeLeft = ROW_TIME;
   let userName = '';
+  let candidateNo = '';
   let testStartedAt = null;
+  const isInterviewMode = document.body && document.body.dataset.mode === 'interview';
 
   // DOM
   const screens = {
@@ -220,7 +222,12 @@ const App = (() => {
     } else if (phase === 'second' && currentRow >= ROWS_PER_HALF * 2) {
       // 全て終了 → 結果画面へ
       showScreen('result');
-      const meta = { name: userName, startedAt: testStartedAt };
+      const meta = {
+        name: userName,
+        candidateNo: candidateNo,
+        startedAt: testStartedAt,
+        source: isInterviewMode ? 'interview' : 'general',
+      };
       Results.render(allResults, meta);
       saveResultToCloud(allResults, meta);
     } else {
@@ -347,14 +354,15 @@ const App = (() => {
     // 開始ボタン（練習から開始 → 自動的に本番へ移行）
     document.getElementById('btn-start').addEventListener('click', () => {
       const nameInput = document.getElementById('input-name');
-      const name = nameInput.value.trim();
-      if (!name) {
+      const inputValue = nameInput.value.trim();
+      if (!inputValue) {
         nameInput.focus();
         nameInput.classList.add('input-error');
         setTimeout(() => nameInput.classList.remove('input-error'), 1500);
         return;
       }
-      userName = name;
+      candidateNo = isInterviewMode ? inputValue.replace(/^No\.?\s*/i, '') : '';
+      userName = isInterviewMode ? `No.${candidateNo}` : inputValue;
       mode = 'practice';
       phase = 'first';
       currentRow = 0;
@@ -379,7 +387,8 @@ const App = (() => {
       const orig = document.title;
       const d = testStartedAt || new Date();
       const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-      document.title = `クレペリン検査_${userName || '無名'}_${dateStr}`;
+      const safeName = (userName || '無名').replace(/[\\/:*?"<>|]/g, '');
+      document.title = `クレペリン検査_${safeName}_${dateStr}`;
       window.print();
       setTimeout(() => { document.title = orig; }, 1000);
     });

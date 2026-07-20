@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>クレペリン検査 面接用</title>
+  <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body data-mode="interview">
+  <!-- スタート画面 -->
+  <div id="screen-start" class="screen active">
+    <div class="start-container">
+      <h1>クレペリン検査 面接用<span class="vi-h">Bài kiểm tra Kraepelin</span></h1>
+      <p class="subtitle">候補者番号で自動集計します<span class="vi"> / Lưu kết quả theo số báo danh</span></p>
+
+      <div class="description">
+        <h2>検査の説明<span class="vi-inline">（Hướng dẫn）</span></h2>
+        <p>画面に表示される<strong>隣り合う2つの数字を足して</strong>、その答えの<strong>一の位</strong>を入力してください。</p>
+        <p class="vi">Cộng <strong>hai chữ số liền kề</strong> hiển thị trên màn hình, sau đó nhập <strong>chữ số hàng đơn vị</strong> của tổng.</p>
+        <div class="example-box">
+          <div class="example-numbers">
+            <span class="num">3</span>
+            <span class="num">8</span>
+            <span class="num dim">5</span>
+            <span class="num dim">2</span>
+            <span class="num dim">…</span>
+          </div>
+          <div class="example-arrow">↓</div>
+          <div class="example-answer">3 + 8 = 11 → <strong>1</strong> を入力</div>
+          <div class="example-answer vi">3 + 8 = 11 → Nhập <strong>1</strong></div>
+        </div>
+        <ul>
+          <li>1行あたり <strong>1分間</strong> で、できるだけ多く解いてください<div class="vi">Hãy giải càng nhiều càng tốt trong <strong>1 phút</strong> mỗi dòng.</div></li>
+          <li>前半5行 → 休憩5分 → 後半5行 の構成です（約15分）<div class="vi">Cấu trúc: nửa đầu 5 dòng → nghỉ 5 phút → nửa sau 5 dòng (khoảng 15 phút).</div></li>
+          <li>数字キーまたは画面下のテンキーで入力できます<div class="vi">Có thể nhập bằng phím số trên bàn phím hoặc bàn phím số trên màn hình.</div></li>
+        </ul>
+      </div>
+
+      <div class="name-input-area">
+        <label for="input-name">候補者番号<span class="vi-inline">/ SBD</span></label>
+        <input type="text" id="input-name" placeholder="例: 1 / 12 / A-03" autocomplete="off" inputmode="text">
+      </div>
+
+      <div class="start-buttons">
+        <button id="btn-start" class="btn btn-primary">開始（練習から）<span class="vi-btn">Bắt đầu (từ luyện tập)</span></button>
+      </div>
+      <p class="start-note">※ 必ず練習を行ってから本番に進みます<span class="vi-inline">/ Phải luyện tập trước khi vào bài kiểm tra chính thức</span></p>
+    </div>
+  </div>
+
+  <!-- 検査画面 -->
+  <div id="screen-test" class="screen">
+    <div class="test-header">
+      <div class="progress-info">
+        <span id="phase-label">前半</span>
+        <span id="row-label">1 / 5 行目</span>
+        <span class="vi-mini">Dòng / Phần</span>
+      </div>
+      <div id="timer" class="timer">1:00</div>
+    </div>
+
+    <div class="test-area">
+      <div id="number-row" class="number-row"></div>
+      <div id="answer-row" class="answer-row"></div>
+    </div>
+
+    <div id="practice-hint" class="practice-hint" style="display:none;"></div>
+
+    <div id="numpad" class="numpad">
+      <button class="numpad-btn" data-num="1">1</button>
+      <button class="numpad-btn" data-num="2">2</button>
+      <button class="numpad-btn" data-num="3">3</button>
+      <button class="numpad-btn" data-num="4">4</button>
+      <button class="numpad-btn" data-num="5">5</button>
+      <button class="numpad-btn" data-num="6">6</button>
+      <button class="numpad-btn" data-num="7">7</button>
+      <button class="numpad-btn" data-num="8">8</button>
+      <button class="numpad-btn" data-num="9">9</button>
+      <button class="numpad-btn" data-num="0">0</button>
+    </div>
+  </div>
+
+  <!-- 練習→本番 移行画面 -->
+  <div id="screen-transition" class="screen">
+    <div class="break-container">
+      <div class="transition-icon">✓</div>
+      <h2>練習完了！<span class="vi-h">Đã hoàn thành luyện tập!</span></h2>
+      <p>これから本番の検査を開始します。<br>本番では正解は表示されません。</p>
+      <p class="vi">Bây giờ bắt đầu bài kiểm tra chính thức.<br>Trong bài chính thức không hiển thị đáp án.</p>
+      <div style="margin: 24px 0; background: var(--gray-50); border-radius: 10px; padding: 16px; text-align:left; max-width: 360px; margin-left: auto; margin-right: auto;">
+        <div style="font-size:0.9rem; color: var(--gray-700); line-height: 1.7;">
+          <strong>本番の流れ<span class="vi-inline">/ Quy trình bài chính thức</span>:</strong><br>
+          ① 前半 5行（各1分）<span class="vi-inline">/ Nửa đầu: 5 dòng (mỗi dòng 1 phút)</span><br>
+          ② 休憩 5分（強制）<span class="vi-inline">/ Nghỉ 5 phút (bắt buộc)</span><br>
+          ③ 後半 5行（各1分）<span class="vi-inline">/ Nửa sau: 5 dòng (mỗi dòng 1 phút)</span>
+        </div>
+      </div>
+      <button id="btn-start-real" class="btn btn-primary">検査を開始する<span class="vi-btn">Bắt đầu kiểm tra</span></button>
+    </div>
+  </div>
+
+  <!-- 休憩画面 -->
+  <div id="screen-break" class="screen">
+    <div class="break-container">
+      <h2>休憩時間<span class="vi-h">Thời gian nghỉ</span></h2>
+      <p>前半が終了しました。<strong>必ず5分間休んでください。</strong></p>
+      <p class="vi">Đã kết thúc nửa đầu. <strong>Hãy nghỉ đủ 5 phút.</strong></p>
+      <div id="break-timer" class="break-timer">5:00</div>
+      <p class="break-note">後半は自動で開始します<span class="vi-inline">/ Nửa sau sẽ tự động bắt đầu</span></p>
+    </div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="screen-result" class="screen">
+    <div class="result-container">
+      <h2>検査結果<span class="vi-h">Kết quả kiểm tra</span></h2>
+      <div id="result-meta" class="result-meta"></div>
+
+      <!-- 総合判定 -->
+      <div id="judgment-card" class="judgment-card">
+        <div id="judgment-icon" class="judgment-icon"></div>
+        <div id="judgment-label" class="judgment-label"></div>
+        <div id="judgment-desc" class="judgment-desc"></div>
+      </div>
+
+      <!-- 作業曲線 -->
+      <div class="result-section">
+        <h3>作業曲線<span class="vi-inline">/ Đường cong làm việc</span></h3>
+        <canvas id="chart-curve" width="800" height="350"></canvas>
+        <div id="curve-note" class="curve-note"></div>
+      </div>
+
+      <!-- 4つの評価軸 -->
+      <div class="result-section">
+        <h3>性格・行動特性（4軸評価）<span class="vi-inline">/ Tính cách・hành vi (4 trục)</span></h3>
+        <div id="four-axes" class="four-axes"></div>
+      </div>
+
+      <!-- 総合スコア -->
+      <div class="result-section">
+        <h3>作業能力<span class="vi-inline">/ Năng lực làm việc</span></h3>
+        <div id="summary-stats" class="summary-stats"></div>
+      </div>
+
+      <!-- 詳細分析 -->
+      <div class="result-section">
+        <h3>詳細分析<span class="vi-inline">/ Phân tích chi tiết</span></h3>
+        <div id="analysis" class="analysis"></div>
+      </div>
+
+      <!-- 各行の詳細 -->
+      <div class="result-section">
+        <h3>各行の詳細<span class="vi-inline">/ Chi tiết từng dòng</span></h3>
+        <div class="table-wrapper">
+          <table id="detail-table">
+            <thead>
+              <tr>
+                <th>行<div class="vi-th">Dòng</div></th>
+                <th>区分<div class="vi-th">Phần</div></th>
+                <th>正答数<div class="vi-th">Đúng</div></th>
+                <th>誤答数<div class="vi-th">Sai</div></th>
+                <th>正答率<div class="vi-th">Tỉ lệ</div></th>
+              </tr>
+            </thead>
+            <tbody id="detail-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="save-status" class="save-status no-print"></div>
+
+      <div class="start-buttons no-print">
+        <button id="btn-pdf" class="btn btn-secondary">PDF保存<span class="vi-btn">Lưu PDF</span></button>
+        <button id="btn-retry" class="btn btn-primary">もう一度<span class="vi-btn">Làm lại</span></button>
+        <a href="list.html" class="btn btn-secondary admin-only" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">集計一覧を見る</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../common/config.js"></script>
+  <script src="app.js"></script>
+  <script src="results.js"></script>
+</body>
+</html>

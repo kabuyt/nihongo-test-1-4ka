@@ -653,13 +653,18 @@ const Results = (() => {
     const el = document.getElementById('result-meta');
     if (!el) return;
     const name = meta && meta.name ? meta.name : '';
+    const candidateNo = meta && meta.candidateNo ? meta.candidateNo : '';
     const date = meta && meta.startedAt ? new Date(meta.startedAt) : new Date();
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     const dateStr = `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日`;
     const parts = [];
-    if (name) parts.push(`<span class="meta-name">受検者: <strong>${name}</strong> さん</span>`);
+    if (candidateNo) {
+      parts.push(`<span class="meta-name">候補者番号: <strong>${candidateNo}</strong></span>`);
+    } else if (name) {
+      parts.push(`<span class="meta-name">受検者: <strong>${name}</strong> さん</span>`);
+    }
     parts.push(`<span class="meta-date">検査日: ${dateStr}</span>`);
     el.innerHTML = parts.join('');
   }
@@ -687,8 +692,10 @@ const Results = (() => {
     const errorRate = all.length > 0 ? all.filter(a => !a.isCorrect).length / all.length : 0;
     const avgCorrect = allCounts.length > 0 ? allCounts.reduce((a, b) => a + b, 0) / allCounts.length : 0;
 
+    const displayName = meta && meta.candidateNo ? `No.${meta.candidateNo}` : meta.name;
+
     return supabase.from('kraepelin_results').insert({
-      name: meta.name,
+      name: displayName,
       started_at: meta.startedAt,
       rows_per_half: allResults.filter(r => r.phase === 'first').length,
       results: allResults,
