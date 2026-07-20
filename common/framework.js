@@ -339,7 +339,7 @@ TF.submitResults = async function() {
     btn.style.background = '#aaa';
     status.style.color = '#27ae60';
     status.innerHTML = '✅ ' + trainee.name_romaji + ' さんの結果を送信しました！<br>'
-      + '語彙:' + _scores.goii + '点　文法:' + _scores.bunpo + '点　聴解:' + _scores.chokkai + '点<br>'
+      + '採点結果は、先生の確認後に管理ページで確定します。<br>'
       + '<small>（' + new Date().toLocaleString('ja-JP') + '）</small>';
 
   } catch(e) {
