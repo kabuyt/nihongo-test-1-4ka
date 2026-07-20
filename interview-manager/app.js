@@ -479,6 +479,9 @@ function pinRanks(items) {
     const pb = pinSummary(ensureScore(b));
     if (pa.enteredCount !== pb.enteredCount) return pb.enteredCount - pa.enteredCount;
     if (pa.gradeTotal !== pb.gradeTotal) return pb.gradeTotal - pa.gradeTotal;
+    const paSecond = pa.grades[1] ?? -1;
+    const pbSecond = pb.grades[1] ?? -1;
+    if (paSecond !== pbSecond) return pbSecond - paSecond;
     if (pa.complete !== pb.complete) return pa.complete ? -1 : 1;
     return pa.time - pb.time;
   });
@@ -586,20 +589,19 @@ function pinGradeControl(row, round) {
   const field = `pin${round}Ok`;
   const current = numeric(row.score[field]);
   return `
-    <div class="pin-grade-control" aria-label="ピン${round}評価">
+    <select
+      class="pin-grade-select grade-${current ?? 'empty'}"
+      data-id="${row.id}"
+      data-round="${round}"
+      aria-label="ピン${round}評価"
+    >
+      <option value="" ${current == null ? 'selected' : ''}>未入力</option>
       ${PIN_GRADES.map(grade => `
-        <button
-          type="button"
-          class="pin-grade-btn grade-${grade.value} ${current === grade.value ? 'selected' : ''}"
-          data-id="${row.id}"
-          data-round="${round}"
-          data-value="${grade.value}"
-          title="${grade.label}"
-          aria-label="${grade.symbol} ${grade.label}"
-          aria-pressed="${current === grade.value}"
-        >${grade.symbol}</button>
+        <option value="${grade.value}" ${current === grade.value ? 'selected' : ''}>
+          ${grade.symbol} ${grade.label}
+        </option>
       `).join('')}
-    </div>
+    </select>
   `;
 }
 
@@ -769,8 +771,8 @@ function renderTable(interview) {
   body.querySelectorAll('.score-input').forEach(input => {
     input.addEventListener('change', () => updateScore(input.dataset.id, input.dataset.field, input.value));
   });
-  body.querySelectorAll('.pin-grade-btn').forEach(button => {
-    button.addEventListener('click', () => updatePinGrade(button.dataset.id, Number(button.dataset.round), Number(button.dataset.value)));
+  body.querySelectorAll('.pin-grade-select').forEach(select => {
+    select.addEventListener('change', () => updatePinGrade(select.dataset.id, Number(select.dataset.round), select.value));
   });
   body.querySelectorAll('.candidate-name').forEach(input => {
     input.addEventListener('change', () => updateCandidateName(input.dataset.id, input.value));
@@ -922,13 +924,14 @@ async function updateScore(id, field, value) {
 
 async function updatePinGrade(id, round, grade) {
   const candidate = findCandidateById(id);
-  if (!candidate || ![1, 2].includes(round) || !PIN_GRADES.some(item => item.value === grade)) return;
+  const nextGrade = grade === '' ? null : Number(grade);
+  if (!candidate || ![1, 2].includes(round) || (nextGrade != null && !PIN_GRADES.some(item => item.value === nextGrade))) return;
   const gradeField = `pin${round}Ok`;
   const timeField = `pin${round}Time`;
   const gradeColumn = `pin${round}_ok`;
   const timeColumn = `pin${round}_time`;
-  const update = { [gradeColumn]: grade };
-  if (grade < 2) update[timeColumn] = null;
+  const update = { [gradeColumn]: nextGrade };
+  if (nextGrade == null || nextGrade < 2) update[timeColumn] = null;
 
   const { error } = await supabase.from('interview_candidates').update(update).eq('id', id);
   if (error) {
@@ -937,8 +940,8 @@ async function updatePinGrade(id, round, grade) {
   }
 
   const score = ensureScore(candidate);
-  score[gradeField] = grade;
-  if (grade < 2) score[timeField] = '';
+  score[gradeField] = nextGrade ?? '';
+  if (nextGrade == null || nextGrade < 2) score[timeField] = '';
   render();
 }
 

@@ -116,6 +116,23 @@
           </div>
         </div>
 
+        <section class="pin-guide" aria-labelledby="pin-guide-title">
+          <div class="pin-guide-head">
+            <h3 id="pin-guide-title">ピンボード評価基準</h3>
+            <span>正確さを優先し、同じ評価なら早い人が上位</span>
+          </div>
+          <div class="pin-guide-grid">
+            <div><strong class="pin-symbol grade-3">◎</strong><span><b>正確に完了</b> — 間違いなく最後まで完成した</span></div>
+            <div><strong class="pin-symbol grade-2">○</strong><span><b>自力で修正</b> — 途中で間違えたが、指示なしで気づいて直し完成した</span></div>
+            <div><strong class="pin-symbol grade-1">△</strong><span><b>一部ミス</b> — ほぼできたが、間違いが残った、または自力で直せなかった</span></div>
+            <div><strong class="pin-symbol grade-0">×</strong><span><b>継続困難</b> — 間違いが続き、作業を進めたり修正したりできなかった</span></div>
+          </div>
+          <p class="pin-ranking-rule">
+            順位：◎=3、○=2、△=1、×=0として2回分を合計します。
+            同点なら2回目の評価、それも同じなら◎・○で完了した合計時間が短い人を上位にします。
+          </p>
+        </section>
+
         <div class="candidate-tools">
           <form id="candidate-form" class="inline-form">
             <input id="candidate-no" type="text" placeholder="候補者番号">
@@ -176,6 +193,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>
