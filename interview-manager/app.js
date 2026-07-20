@@ -11,6 +11,16 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
+}
+
 function activeInterview() {
   return state.interviews.find(item => item.id === state.activeId) || null;
 }
@@ -115,6 +125,16 @@ function kraepelinEvaluation(summary, maxTotal) {
 
 function formatPercent(value) {
   return value == null ? '-' : `${(value * 100).toFixed(1)}%`;
+}
+
+function formatScore(value) {
+  return value == null ? '-' : Number(value).toFixed(Number.isInteger(value) ? 0 : 1);
+}
+
+function japaneseTo100(value) {
+  const raw = numeric(value);
+  if (raw == null) return null;
+  return Number(Math.min(100, Math.max(0, raw / 30 * 100)).toFixed(1));
 }
 
 function judgmentLabel(value) {
@@ -309,7 +329,8 @@ function buildRows(interview) {
       kraepelinTotal: kSummary?.total ?? null,
       math: numeric(score.math),
       vietnamese: numeric(score.vietnamese),
-      japanese: numeric(score.japanese),
+      japaneseRaw: numeric(score.japanese),
+      japanese: japaneseTo100(score.japanese),
     };
   });
   const maxKraepelinTotal = Math.max(...enriched.map(row => row.kraepelinTotal ?? 0), 0);
@@ -367,9 +388,81 @@ function renderMetrics(interview, rows) {
   $('#metric-pinboard').textContent = rows.filter(row => pinSummary(row.score).complete).length;
 }
 
+function subjectScoreCell(row, field, value, rank, options = {}) {
+  const rawValue = row.score[field] ?? '';
+  const max = options.max ?? 100;
+  const placeholder = options.placeholder ?? '0-100';
+  const doneClass = value == null ? 'missing-input' : 'done-input';
+  const note = value == null
+    ? '未入力'
+    : (options.note ? options.note(value, rawValue) : `${formatScore(value)}点`);
+  return `
+    <div class="score-cell">
+      <input class="score-input ${doneClass}" data-id="${row.id}" data-field="${field}" type="number" min="0" max="${max}" step="1" placeholder="${placeholder}" value="${String(rawValue).replace(/"/g, '&quot;')}">
+      <div class="mini">${note} / 順位 ${rank}</div>
+    </div>
+  `;
+}
+
 function scoreInput(row, field, type = 'number') {
   const value = row.score[field] ?? '';
   return `<input class="score-input" data-id="${row.id}" data-field="${field}" type="${type}" value="${String(value).replace(/"/g, '&quot;')}">`;
+}
+
+function rankSummary(row) {
+  return `ク${row.ranks.k} 数${row.ranks.math} 国${row.ranks.vietnamese} 日${row.ranks.japanese} ピ${row.ranks.pin}`;
+}
+
+function renderPrintReport(interview, rows) {
+  const report = $('#print-report');
+  if (!report || !interview) return;
+  const today = new Date().toLocaleDateString('ja-JP');
+  report.innerHTML = `
+    <div class="print-header">
+      <div>
+        <div class="print-label">事前テスト集計</div>
+        <h1>${escapeHtml(formatInterviewName(interview))}</h1>
+      </div>
+      <div class="print-date">出力日 ${today}</div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>総合</th>
+          <th>No.</th>
+          <th>氏名・メモ</th>
+          <th>クレペリン</th>
+          <th>数学</th>
+          <th>ベトナム国語</th>
+          <th>日本語単語</th>
+          <th>ピン</th>
+          <th>科目順位</th>
+          <th>順位合計</th>
+          <th>備考</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(row => {
+          const pin = pinSummary(row.score);
+          return `
+            <tr>
+              <td>${row.finalRank}</td>
+              <td>${escapeHtml(candidateLabel(row))}</td>
+              <td>${escapeHtml(row.name || '')}</td>
+              <td>${row.kraepelinEval ? `${formatScore(row.kraepelinEval.total)}点<br>正答 ${row.kraepelinTotal}<br>誤答 ${formatPercent(row.kSummary.errorRate)}` : '未取得'}</td>
+              <td>${row.math == null ? '-' : `${formatScore(row.math)}点`}</td>
+              <td>${row.vietnamese == null ? '-' : `${formatScore(row.vietnamese)}点`}</td>
+              <td>${row.japanese == null ? '-' : `${row.japaneseRaw}/30<br>${formatScore(row.japanese)}点`}</td>
+              <td>${pin.complete ? `${pin.ok}/2<br>${pin.time.toFixed(2)}秒` : `${pin.ok}/2`}</td>
+              <td>${escapeHtml(rankSummary(row))}</td>
+              <td>${row.rankSum}</td>
+              <td>${escapeHtml(kraepelinComment(row.kSummary, row.kraepelinEval))}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderTable(interview) {
@@ -388,17 +481,18 @@ function renderTable(interview) {
       <tr>
         <td><span class="${rankClass}">${row.finalRank}</span></td>
         <td>${candidateLabel(row)}</td>
-        <td><input class="candidate-name" data-id="${row.id}" value="${(row.name || '').replace(/"/g, '&quot;')}"></td>
+        <td><input class="candidate-name" data-id="${row.id}" value="${escapeHtml(row.name || '')}"></td>
         <td class="kraepelin-cell">${kraepelinCell}</td>
         <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
-        <td>${scoreInput(row, 'math')}</td>
-        <td>${scoreInput(row, 'vietnamese')}</td>
-        <td>${scoreInput(row, 'japanese')}</td>
+        <td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>
+        <td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese)}</td>
+        <td>${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>
         <td>${scoreInput(row, 'pin1Ok')}</td>
         <td>${scoreInput(row, 'pin1Time')}</td>
         <td>${scoreInput(row, 'pin2Ok')}</td>
         <td>${scoreInput(row, 'pin2Time')}</td>
         <td>${row.ranks.pin}<div class="mini">${pin.ok}/2 ${pin.complete ? pin.time.toFixed(2) + '秒' : ''}</div></td>
+        <td><span class="rank-list">${rankSummary(row)}</span></td>
         <td><strong>${row.rankSum}</strong></td>
         <td><button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button></td>
       </tr>
@@ -416,6 +510,7 @@ function renderTable(interview) {
   });
 
   renderMetrics(interview, rows);
+  renderPrintReport(interview, rows);
 }
 
 function render() {
@@ -429,9 +524,11 @@ function render() {
   $('#delete-interview').disabled = !hasInterview || !state.dbReady;
   $('#open-kraepelin').disabled = !hasInterview;
   $('#refresh-kraepelin').disabled = !hasInterview;
+  $('#print-pdf').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
   $('#interview-form button[type="submit"]').disabled = !state.dbReady;
   if (hasInterview) renderTable(interview);
+  else if ($('#print-report')) $('#print-report').innerHTML = '';
   if (window.lucide) lucide.createIcons();
 }
 
@@ -504,7 +601,19 @@ async function updateScore(id, field, value) {
     pin2Time: 'pin2_time',
   };
   const column = columnByField[field];
-  const next = toDbNumber(value);
+  let next = toDbNumber(value);
+  if (next != null) {
+    const maxByField = {
+      math: 100,
+      vietnamese: 100,
+      japanese: 30,
+      pin1Ok: 1,
+      pin2Ok: 1,
+    };
+    const max = maxByField[field];
+    if (max != null) next = Math.min(max, Math.max(0, next));
+    if (field === 'pin1Time' || field === 'pin2Time') next = Math.max(0, next);
+  }
   const { error } = await supabase.from('interview_candidates').update({ [column]: next }).eq('id', id);
   if (error) {
     alert('保存に失敗しました: ' + error.message);
@@ -637,10 +746,17 @@ function openKraepelin() {
   window.open('../kraepelin/interview.html', '_blank', 'noopener');
 }
 
+function printPdf() {
+  const interview = activeInterview();
+  if (!interview) return;
+  renderPrintReport(interview, buildRows(interview));
+  window.print();
+}
+
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', 'ベトナム国語', '日本語単語', 'ピン成功数', 'ピン時間', 'ピン順位', '順位合計'];
+  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', '数学順位', 'ベトナム国語', 'ベトナム国語順位', '日本語単語正答数', '日本語単語100点換算', '日本語単語順位', 'ピン成功数', 'ピン時間', 'ピン順位', '科目順位', '順位合計'];
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
     return [
@@ -653,11 +769,16 @@ function exportCsv() {
       judgmentLabel(row.kSummary?.judgment),
       kraepelinComment(row.kSummary, row.kraepelinEval),
       row.math ?? '',
+      row.ranks.math,
       row.vietnamese ?? '',
+      row.ranks.vietnamese,
+      row.japaneseRaw ?? '',
       row.japanese ?? '',
+      row.ranks.japanese,
       pin.ok,
       pin.complete ? pin.time.toFixed(2) : '',
       row.ranks.pin,
+      rankSummary(row),
       row.rankSum,
     ];
   });
@@ -678,6 +799,7 @@ function bindEvents() {
   $('#delete-interview').addEventListener('click', deleteInterview);
   $('#refresh-kraepelin').addEventListener('click', fetchKraepelin);
   $('#open-kraepelin').addEventListener('click', openKraepelin);
+  $('#print-pdf').addEventListener('click', printPdf);
   $('#export-csv').addEventListener('click', exportCsv);
 }
 

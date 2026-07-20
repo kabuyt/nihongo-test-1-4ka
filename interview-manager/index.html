@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
   <div class="app">
@@ -45,6 +45,7 @@
         <div class="actions">
           <button id="open-kraepelin" class="btn"><i data-lucide="external-link"></i>クレペリンURL</button>
           <button id="refresh-kraepelin" class="btn"><i data-lucide="cloud-download"></i>クレペリン取込</button>
+          <button id="print-pdf" class="btn"><i data-lucide="printer"></i>PDF</button>
           <button id="export-csv" class="btn"><i data-lucide="download"></i>CSV</button>
         </div>
       </section>
@@ -93,12 +94,13 @@
                 <th>受験URL</th>
                 <th>数学</th>
                 <th>ベトナム国語</th>
-                <th>日本語単語</th>
+                <th>日本語単語<br><span class="th-sub">30問</span></th>
                 <th>ピン1</th>
                 <th>秒</th>
                 <th>ピン2</th>
                 <th>秒</th>
                 <th>ピン順位</th>
+                <th>科目順位</th>
                 <th>順位合計</th>
                 <th></th>
               </tr>
@@ -110,9 +112,11 @@
     </main>
   </div>
 
+  <section id="print-report" class="print-report"></section>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>

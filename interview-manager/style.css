@@ -311,6 +311,27 @@ td:nth-child(3), th:nth-child(3) {
   line-height: 1.45;
 }
 
+.score-cell {
+  min-width: 96px;
+}
+
+.score-input.done-input {
+  border-color: #7cc7a7;
+  background: #f4fbf8;
+}
+
+.score-input.missing-input {
+  border-color: #f1c77d;
+  background: #fffaf0;
+}
+
+.rank-list {
+  display: inline-block;
+  min-width: 112px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
 td input {
   min-height: 34px;
   padding: 5px 7px;
@@ -380,6 +401,15 @@ td input {
   font-weight: 800;
 }
 
+.th-sub {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.print-report {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .app {
     grid-template-columns: 1fr;
@@ -396,5 +426,77 @@ td input {
 
   .summary-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: #fff;
+    color: #111827;
+  }
+
+  .app {
+    display: none;
+  }
+
+  .print-report {
+    display: block;
+    font-family: "Yu Gothic", "Meiryo", sans-serif;
+  }
+
+  .print-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .print-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #4b5563;
+  }
+
+  .print-header h1 {
+    margin: 2px 0 0;
+    font-size: 20px;
+  }
+
+  .print-date {
+    font-size: 11px;
+    color: #4b5563;
+  }
+
+  .print-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #cbd5e1;
+    padding: 5px;
+    font-size: 10px;
+    line-height: 1.35;
+    text-align: center;
+    vertical-align: top;
+  }
+
+  .print-table th {
+    position: static;
+    background: #e5e7eb;
+    font-weight: 800;
+  }
+
+  .print-table td:nth-child(3),
+  .print-table td:nth-child(11) {
+    text-align: left;
   }
 }
