@@ -72,6 +72,17 @@ button { touch-action: manipulation; }
   line-height: 1.35;
 }
 
+.auth-brand {
+  width: 150px;
+  padding-bottom: 3px;
+}
+
+.auth-brand img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .auth-error {
   margin: 0;
   color: var(--red);
@@ -97,17 +108,20 @@ button { touch-action: manipulation; }
   min-width: 0;
 }
 
-.brand-mark {
-  flex: 0 0 42px;
-  height: 42px;
+.brand-logo {
+  flex: 0 0 68px;
+  min-height: 48px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 11px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  font-size: 21px;
-  font-weight: 800;
+  padding: 7px 8px;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.brand-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .brand p {
@@ -747,6 +761,21 @@ td input { min-height: 34px; padding: 5px 7px; }
     padding-bottom: 8px;
     border-bottom: 2px solid #1d3555;
   }
+
+  .print-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .print-brand > img {
+    flex: 0 0 auto;
+    width: 58px;
+    height: auto;
+  }
+
+  .print-title-block { min-width: 0; }
 
   .print-label {
     margin-bottom: 2px;

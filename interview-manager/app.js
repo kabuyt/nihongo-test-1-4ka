@@ -639,9 +639,12 @@ function renderPrintReport(interview, rows) {
     : '-';
   report.innerHTML = `
     <header class="print-header">
-      <div class="print-title-block">
-        <div class="print-label">PRE-INTERVIEW ASSESSMENT</div>
-        <h1>面接事前テスト 評価報告書</h1>
+      <div class="print-brand">
+        <img src="assets/grop-vietnam-logo.png" alt="GROP VIETNAM">
+        <div class="print-title-block">
+          <div class="print-label">PRE-INTERVIEW ASSESSMENT</div>
+          <h1>面接事前テスト 評価報告書</h1>
+        </div>
       </div>
       <div class="print-document-meta">
         <span>社内資料</span>
