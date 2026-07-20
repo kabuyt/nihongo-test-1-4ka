@@ -195,7 +195,7 @@ async function reload() {
 
   const [secRes, resRes] = await Promise.all([
     supabase.from('test_sections').select('test_id,section_type,answer_key,scoring_rules,questions'),
-    supabase.from('test_results').select('id,trainee_id,test_name,answers_json').not('answers_json', 'is', null)
+    supabase.from('test_results').select('id,trainee_id,test_name,answers_json,manual_scores_json').not('answers_json', 'is', null)
   ]);
 
   if (secRes.error || resRes.error) {
@@ -399,6 +399,7 @@ function aggregate() {
     if (!secIdx[testId] && ALT_TEST_ID[testId]) testId = ALT_TEST_ID[testId];
     if (!secIdx[testId]) return;
     const answers = r.answers_json || {};
+    const manualScores = parseManualScores(r.manual_scores_json);
 
     Object.entries(secIdx[testId]).forEach(([secType, secRow]) => {
       const rules = secRow.scoring_rules || {};
@@ -415,6 +416,7 @@ function aggregate() {
         fieldIds.forEach((fid, idx) => {
           const userAns = answers[fid];
           if (userAns === null || userAns === undefined || String(userAns).trim() === '') return;
+          if (isReviewedByManualOverride(manualScores, fid)) return;
 
           // 選択式はスキップ（自由入力系・word_puzzle のみ対象）
           const kind = secRow._fieldTypes[fid];
@@ -454,6 +456,19 @@ function aggregate() {
   });
 
   _aggregated = [...buckets.values()].sort((a, b) => b.count - a.count);
+}
+
+function parseManualScores(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw) || {}; } catch (e) { return {}; }
+  }
+  return raw || {};
+}
+
+function isReviewedByManualOverride(manualScores, fieldId) {
+  const row = manualScores && manualScores[fieldId];
+  return !!(row && row.input_mode === 'binary');
 }
 
 function formatExpected(akBlock, fid, idx) {
