@@ -542,7 +542,7 @@ async function fetchKraepelin() {
   }
   const interview = activeInterview();
   if (!interview) return;
-  const columns = 'id,name,started_at,rows_per_half,results,judgment_type,judgment_score,avg_correct,error_rate,total_correct';
+  const columns = 'id,name,started_at,rows_per_half,results,judgment_type,judgment_score,avg_correct,error_rate';
   const candidateNames = interview.candidates.flatMap(candidate => [
     `No.${candidate.no}`,
     `No. ${candidate.no}`,
