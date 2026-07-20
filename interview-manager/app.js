@@ -642,8 +642,8 @@ function renderPrintReport(interview, rows) {
       <div class="print-brand">
         <img src="assets/grop-vietnam-logo.png" alt="GROP VIETNAM">
         <div class="print-title-block">
-          <div class="print-label">PRE-INTERVIEW ASSESSMENT</div>
-          <h1>面接事前テスト 評価報告書</h1>
+          <div class="print-label">PRE-INTERVIEW TEST RESULTS</div>
+          <h1>事前テスト結果</h1>
         </div>
       </div>
       <div class="print-document-meta">
@@ -691,10 +691,12 @@ function renderPrintReport(interview, rows) {
             <tr>
               <td class="print-rank"><strong>${row.finalRank}</strong><span>位</span></td>
               <td class="print-candidate">
-                ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
-                <div>
-                  <span class="print-candidate-no">${escapeHtml(candidateLabel(row))}</span>
-                  <strong>${escapeHtml(row.name || '氏名未入力')}</strong>
+                <div class="print-candidate-inner">
+                  ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
+                  <div class="print-candidate-copy">
+                    <span class="print-candidate-no">${escapeHtml(candidateLabel(row))}</span>
+                    <strong>${escapeHtml(row.name || '氏名未入力')}</strong>
+                  </div>
                 </div>
               </td>
               <td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong><span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>

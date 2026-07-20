@@ -820,13 +820,13 @@ td input { min-height: 34px; padding: 5px 7px; }
   }
 
   .print-col-rank { width: 5.5%; }
-  .print-col-candidate { width: 14%; }
+  .print-col-candidate { width: 17%; }
   .print-col-kraepelin { width: 11%; }
   .print-col-score { width: 7%; }
   .print-col-pin { width: 12.5%; }
   .print-col-subject-rank { width: 11%; }
   .print-col-total { width: 6%; }
-  .print-col-note { width: 19%; }
+  .print-col-note { width: 16%; }
 
   .print-table th,
   .print-table td {
@@ -855,15 +855,26 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-rank span { margin-left: 1px; color: #66758a; font-size: 7px; }
 
   .print-candidate {
+    text-align: left !important;
+  }
+
+  .print-candidate-inner {
+    width: 100%;
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr);
     align-items: center;
     gap: 5px;
-    text-align: left !important;
   }
-  .print-candidate > div:last-child { min-width: 0; }
+
+  .print-candidate-copy { min-width: 0; }
   .print-candidate-no { display: block; margin-bottom: 2px; color: #52647c; font-size: 7px; font-weight: 700; white-space: nowrap; }
-  .print-candidate strong { display: block; overflow-wrap: anywhere; font-size: 8.5px; line-height: 1.35; }
+  .print-candidate strong {
+    display: block;
+    font-size: 8.5px;
+    line-height: 1.35;
+    overflow-wrap: normal;
+    word-break: keep-all;
+  }
   .print-photo { width: 32px; height: 39px; border: 1px solid #c1cad5; border-radius: 2px; object-fit: cover; background: #fff; }
   .print-photo-empty { display: grid; place-items: center; color: #8995a5; background: #f1f3f6; font-size: 5.5px; }
 
