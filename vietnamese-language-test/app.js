@@ -100,20 +100,13 @@ async function saveScore(candidateNo, result) {
   if (!sessionId) return 'Điểm đã tính xong. Không có mã phỏng vấn nên chưa lưu tự động.';
   if (typeof supabase === 'undefined') return 'Điểm đã tính xong. Không đọc được thiết lập lưu điểm.';
 
-  const { data, error: findError } = await supabase
-    .from('interview_candidates')
-    .select('id')
-    .eq('interview_id', sessionId)
-    .eq('candidate_no', candidateNo)
-    .maybeSingle();
-  if (findError) return `Không lưu được điểm: ${findError.message}`;
-  if (!data) return 'Không tìm thấy số báo danh trong buổi phỏng vấn này.';
-
-  const { error } = await supabase
-    .from('interview_candidates')
-    .update({ vietnamese_score: result.score })
-    .eq('id', data.id);
-  return error ? `Không lưu được điểm: ${error.message}` : 'Điểm đã được lưu tự động.';
+  const { data, error } = await supabase.rpc('submit_vietnamese_score', {
+    p_interview_id: sessionId,
+    p_candidate_no: candidateNo,
+    p_score: result.score,
+  });
+  if (error) return `Không lưu được điểm: ${error.message}`;
+  return data ? 'Điểm đã được lưu tự động.' : 'Không tìm thấy số báo danh trong buổi phỏng vấn này.';
 }
 
 function startTest() {

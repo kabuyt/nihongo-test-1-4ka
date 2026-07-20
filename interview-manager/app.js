@@ -1,14 +1,9 @@
 const ACTIVE_KEY = 'interviewManager.activeId.v2';
-const AUTH_KEY = 'interviewManager.auth.v1';
-const AUTH_USERS = [
-  { label: 'GROP管理者', role: 'admin', sender: '', hash: '8ef3454133ea0e1e516fbc66bfa0d342856a847f69f4cd9a09ee73027c4d41b4' },
-  { label: 'BARAEN', role: 'sender', sender: 'BARAEN', hash: '7f48737ab0d08f5b9c524baa7e59f667425cb68e7e92540d09af5b07caa398f1' },
-  { label: 'AKANE', role: 'sender', sender: 'AKANE', hash: 'f7b24bb40a6b6deb1416df1b416f925ed538072795cfa71953a1c4eb0f546929' },
-  { label: 'VJC', role: 'sender', sender: 'VJC', hash: '18f4fe1b00ad5ffc97dd20a8f874adc8095904fc0a69eb59bd55292387ea6a39' },
-];
+const AUTH_EMAIL_DOMAIN = 'nihongo-test.local';
 const SENDERS = ['BARAEN', 'AKANE', 'VJC'];
 
 const state = {
+  user: null,
   interviews: [],
   activeId: '',
   kraepelinRecords: [],
@@ -19,23 +14,12 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 
-async function sha256(text) {
-  const data = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
 function isAuthed() {
   return !!currentUser();
 }
 
 function currentUser() {
-  try {
-    const saved = JSON.parse(sessionStorage.getItem(AUTH_KEY) || 'null');
-    return saved && saved.role ? saved : null;
-  } catch (_) {
-    return null;
-  }
+  return state.user;
 }
 
 function isAdminUser() {
@@ -55,29 +39,74 @@ function showAdminApp() {
 
 async function handleAuth(event) {
   event.preventDefault();
+  const account = $('#auth-account').value;
   const input = $('#auth-password');
-  const hash = await sha256(input.value);
-  const user = AUTH_USERS.find(item => item.hash === hash);
-  if (!user) {
+  const button = event.submitter || event.target.querySelector('button[type="submit"]');
+  button.disabled = true;
+  $('#auth-error').classList.add('hidden');
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: `${account}@${AUTH_EMAIL_DOMAIN}`,
+    password: input.value,
+  });
+  if (error || !data.session || !(await loadCurrentUser())) {
+    await supabase.auth.signOut();
+    state.user = null;
+    $('#auth-error').textContent = error?.message === 'Invalid login credentials'
+      ? 'アカウントまたはパスワードが違います。'
+      : 'このアカウントには管理画面の権限がありません。';
     $('#auth-error').classList.remove('hidden');
     input.select();
+    button.disabled = false;
     return;
   }
-  sessionStorage.setItem(AUTH_KEY, JSON.stringify({ label: user.label, role: user.role, sender: user.sender }));
   $('#auth-error').classList.add('hidden');
   input.value = '';
+  button.disabled = false;
   showAdminApp();
   await loadData();
 }
 
-function logout() {
-  sessionStorage.removeItem(AUTH_KEY);
+async function loadCurrentUser() {
+  const { data, error } = await supabase
+    .from('manager_accounts')
+    .select('display_name,role,sender_org')
+    .single();
+  if (error || !data) return false;
+  state.user = {
+    label: data.display_name,
+    role: data.role,
+    sender: data.sender_org || '',
+  };
+  return true;
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  state.user = null;
   state.interviews = [];
   state.activeId = '';
   state.kraepelinRecords = [];
   state.dbReady = false;
   state.loading = false;
   state.error = '';
+  showAuthScreen();
+}
+
+async function initializeAuth() {
+  if (typeof supabase === 'undefined') {
+    showAuthScreen();
+    $('#auth-error').textContent = 'Supabase設定を読み込めません。';
+    $('#auth-error').classList.remove('hidden');
+    return;
+  }
+  const { data } = await supabase.auth.getSession();
+  if (data.session && await loadCurrentUser()) {
+    showAdminApp();
+    await loadData();
+    return;
+  }
+  if (data.session) await supabase.auth.signOut();
   showAuthScreen();
 }
 
@@ -1043,9 +1072,4 @@ function bindEvents() {
 }
 
 bindEvents();
-if (isAuthed()) {
-  showAdminApp();
-  loadData();
-} else {
-  showAuthScreen();
-}
+initializeAuth();

@@ -700,15 +700,33 @@ const Results = (() => {
       ? `session:${meta.interviewSessionId} / No.${meta.candidateNo}`
       : (meta && meta.candidateNo ? `No.${meta.candidateNo}` : meta.name);
 
+    const payload = {
+      p_started_at: meta.startedAt,
+      p_rows_per_half: allResults.filter(r => r.phase === 'first').length,
+      p_results: allResults,
+      p_judgment_type: judgment.type,
+      p_judgment_score: judgment.score,
+      p_avg_correct: Number(avgCorrect.toFixed(2)),
+      p_error_rate: Number(errorRate.toFixed(4)),
+    };
+
+    if (meta && meta.interviewSessionId && meta.candidateNo) {
+      return supabase.rpc('submit_interview_kraepelin_result', {
+        p_interview_id: meta.interviewSessionId,
+        p_candidate_no: meta.candidateNo,
+        ...payload,
+      });
+    }
+
     return supabase.from('kraepelin_results').insert({
       name: displayName,
-      started_at: meta.startedAt,
-      rows_per_half: allResults.filter(r => r.phase === 'first').length,
-      results: allResults,
-      judgment_type: judgment.type,
-      judgment_score: judgment.score,
-      avg_correct: Number(avgCorrect.toFixed(2)),
-      error_rate: Number(errorRate.toFixed(4)),
+      started_at: payload.p_started_at,
+      rows_per_half: payload.p_rows_per_half,
+      results: payload.p_results,
+      judgment_type: payload.p_judgment_type,
+      judgment_score: payload.p_judgment_score,
+      avg_correct: payload.p_avg_correct,
+      error_rate: payload.p_error_rate,
     });
   }
 

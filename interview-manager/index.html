@@ -12,11 +12,20 @@
       <p class="eyebrow">管理者入口</p>
       <h1>面接事前テスト管理</h1>
       <label>
+        アカウント
+        <select id="auth-account" autocomplete="username">
+          <option value="grop-admin">GROP管理者</option>
+          <option value="baraen">BARAEN</option>
+          <option value="akane">AKANE</option>
+          <option value="vjc">VJC</option>
+        </select>
+      </label>
+      <label>
         ログインパスワード
         <input id="auth-password" type="password" autocomplete="current-password" required>
       </label>
       <button type="submit" class="btn primary">入る</button>
-      <p id="auth-error" class="auth-error hidden">パスワードが違います。</p>
+      <p id="auth-error" class="auth-error hidden">ログインできませんでした。</p>
     </form>
   </section>
 
@@ -168,6 +177,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=17"></script>
+  <script src="app.js?v=18"></script>
 </body>
 </html>

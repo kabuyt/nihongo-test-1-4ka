@@ -38,44 +38,5 @@ create index if not exists interview_sessions_sender_org_idx
 alter table public.interview_sessions enable row level security;
 alter table public.interview_candidates enable row level security;
 
-drop policy if exists "public can read interview sessions" on public.interview_sessions;
-create policy "public can read interview sessions"
-  on public.interview_sessions for select
-  using (true);
-
-drop policy if exists "public can write interview sessions" on public.interview_sessions;
-create policy "public can write interview sessions"
-  on public.interview_sessions for insert
-  with check (true);
-
-drop policy if exists "public can update interview sessions" on public.interview_sessions;
-create policy "public can update interview sessions"
-  on public.interview_sessions for update
-  using (true)
-  with check (true);
-
-drop policy if exists "public can delete interview sessions" on public.interview_sessions;
-create policy "public can delete interview sessions"
-  on public.interview_sessions for delete
-  using (true);
-
-drop policy if exists "public can read interview candidates" on public.interview_candidates;
-create policy "public can read interview candidates"
-  on public.interview_candidates for select
-  using (true);
-
-drop policy if exists "public can write interview candidates" on public.interview_candidates;
-create policy "public can write interview candidates"
-  on public.interview_candidates for insert
-  with check (true);
-
-drop policy if exists "public can update interview candidates" on public.interview_candidates;
-create policy "public can update interview candidates"
-  on public.interview_candidates for update
-  using (true)
-  with check (true);
-
-drop policy if exists "public can delete interview candidates" on public.interview_candidates;
-create policy "public can delete interview candidates"
-  on public.interview_candidates for delete
-  using (true);
+-- RLS is intentionally default-deny here. After creating the Auth users,
+-- run enable-auth-rls.sql to install the manager and anonymous-test policies.
