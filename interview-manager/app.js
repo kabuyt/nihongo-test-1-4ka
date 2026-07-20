@@ -46,13 +46,13 @@ function kraepelinUrl(interview, candidate) {
 
 function parseKraepelinName(name) {
   const raw = String(name || '').trim();
-  const sessionMatch = raw.match(/^session:([^/]+)\s*\/\s*No\.?\s*(.+)$/i);
+  const sessionMatch = raw.match(/^session:([^/]+)\s*\/\s*(?:No\.?|候補者)\s*(.+)$/i);
   if (sessionMatch) {
     return { sessionId: sessionMatch[1].trim(), interviewName: '', candidateNo: sessionMatch[2].trim() };
   }
-  const match = raw.match(/^(.*?)\s*\/\s*No\.?\s*(.+)$/i);
+  const match = raw.match(/^(.*?)\s*\/\s*(?:No\.?|候補者)\s*(.+)$/i);
   if (match) return { sessionId: '', interviewName: match[1].trim(), candidateNo: match[2].trim() };
-  const noOnly = raw.match(/^No\.?\s*(.+)$/i);
+  const noOnly = raw.match(/^(?:No\.?|候補者)\s*(.+)$/i);
   return noOnly ? { sessionId: '', interviewName: '', candidateNo: noOnly[1].trim() } : { sessionId: '', interviewName: '', candidateNo: '' };
 }
 
