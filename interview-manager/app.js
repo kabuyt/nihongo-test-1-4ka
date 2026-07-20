@@ -540,15 +540,43 @@ async function fetchKraepelin() {
     alert('Supabase設定を読み込めません');
     return;
   }
-  const { data, error } = await supabase
-    .from('kraepelin_results')
-    .select('*')
-    .order('started_at', { ascending: false, nullsFirst: false });
+  const interview = activeInterview();
+  if (!interview) return;
+  const columns = 'id,name,started_at,rows_per_half,results,judgment_type,judgment_score,avg_correct,error_rate,total_correct';
+  const candidateNames = interview.candidates.flatMap(candidate => [
+    `No.${candidate.no}`,
+    `No. ${candidate.no}`,
+    `No ${candidate.no}`,
+    `候補者 ${candidate.no}`,
+  ]);
+
+  const [sessionResp, legacyResp, unassignedResp] = await Promise.all([
+    supabase
+      .from('kraepelin_results')
+      .select(columns)
+      .ilike('name', `session:${interview.id} / %`)
+      .order('started_at', { ascending: false, nullsFirst: false }),
+    supabase
+      .from('kraepelin_results')
+      .select(columns)
+      .ilike('name', `${formatInterviewName(interview)} / %`)
+      .order('started_at', { ascending: false, nullsFirst: false }),
+    supabase
+      .from('kraepelin_results')
+      .select(columns)
+      .in('name', candidateNames)
+      .order('started_at', { ascending: false, nullsFirst: false }),
+  ]);
+  const error = sessionResp.error || legacyResp.error || unassignedResp.error;
   if (error) {
     alert('クレペリン結果の取得に失敗しました: ' + error.message);
     return;
   }
-  state.kraepelinRecords = data || [];
+  const byId = new Map();
+  [...(sessionResp.data || []), ...(legacyResp.data || []), ...(unassignedResp.data || [])].forEach(record => {
+    byId.set(record.id, record);
+  });
+  state.kraepelinRecords = [...byId.values()];
   await attachUnassignedKraepelin();
   render();
 }
