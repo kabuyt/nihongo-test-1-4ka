@@ -138,7 +138,8 @@
           </div>
           <p class="pin-ranking-rule">
             順位：◎=3、○=2、△=1、×=0として2回分を合計します。
-            同点なら2回目の評価、それも同じなら◎・○で完了した合計時間が短い人を上位にします。
+            同点なら2回目の評価、それも同じなら◎・○・△の合計時間が短い人を上位にします。
+            △まで時間を入力し、×は時間入力不要です。
           </p>
         </section>
 
@@ -174,7 +175,7 @@
                 <th>2回目<br><span class="th-sub">時間（秒）</span></th>
                 <th>ピン順位</th>
                 <th>科目順位</th>
-                <th></th>
+                <th>削除</th>
               </tr>
             </thead>
             <tbody id="score-body"></tbody>
@@ -205,6 +206,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=31"></script>
+  <script src="app.js?v=32"></script>
 </body>
 </html>

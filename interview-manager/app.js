@@ -475,13 +475,13 @@ function pinSummary(score) {
   const grades = [grade1, grade2];
   const times = [time1, time2];
   const enteredCount = grades.filter(value => value != null).length;
-  const requiredTimesComplete = grades.every((grade, index) => grade == null || grade < 2 || times[index] != null);
+  const requiredTimesComplete = grades.every((grade, index) => grade == null || grade < 1 || times[index] != null);
   return {
     grades,
     times,
     gradeTotal: grades.reduce((sum, value) => sum + (value ?? 0), 0),
     enteredCount,
-    time: times.reduce((sum, value, index) => sum + (grades[index] >= 2 && value != null ? value : 0), 0),
+    time: times.reduce((sum, value, index) => sum + (grades[index] >= 1 && value != null ? value : 0), 0),
     complete: enteredCount === 2 && requiredTimesComplete,
   };
 }
@@ -493,7 +493,7 @@ function pinGradeInfo(value) {
 function pinAttemptText(grade, time) {
   const info = pinGradeInfo(grade);
   if (!info) return '未入力';
-  return `${info.symbol}${info.label}${info.value >= 2 && time != null ? ` ${Number(time).toFixed(2)}秒` : ''}`;
+  return `${info.symbol}${info.label}${info.value >= 1 && time != null ? ` ${Number(time).toFixed(2)}秒` : ''}`;
 }
 
 function rankValues(items, getter, direction = 'desc') {
@@ -643,7 +643,7 @@ function pinTimeInput(row, round) {
   const grade = numeric(row.score[`pin${round}Ok`]);
   const field = `pin${round}Time`;
   const value = row.score[field] ?? '';
-  const enabled = grade != null && grade >= 2;
+  const enabled = grade != null && grade >= 1;
   return `
     <input
       class="score-input pin-time-input"
@@ -852,7 +852,7 @@ function renderTable(interview) {
           </div>
         </td>
         <td><span class="rank-list">${rankSummaryHtml(row)}</span></td>
-        <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button>` : ''}</td>
+        <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="候補者を削除" aria-label="${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '')}を削除"><i data-lucide="trash-2"></i></button>` : ''}</td>
       </tr>
     `;
   }).join('');
@@ -1020,7 +1020,7 @@ async function updatePinGrade(id, round, grade) {
   const gradeColumn = `pin${round}_ok`;
   const timeColumn = `pin${round}_time`;
   const update = { [gradeColumn]: nextGrade };
-  if (nextGrade == null || nextGrade < 2) update[timeColumn] = null;
+  if (nextGrade == null || nextGrade < 1) update[timeColumn] = null;
 
   const { error } = await supabase.from('interview_candidates').update(update).eq('id', id);
   if (error) {
@@ -1030,7 +1030,7 @@ async function updatePinGrade(id, round, grade) {
 
   const score = ensureScore(candidate);
   score[gradeField] = nextGrade ?? '';
-  if (nextGrade == null || nextGrade < 2) score[timeField] = '';
+  if (nextGrade == null || nextGrade < 1) score[timeField] = '';
   render();
 }
 
@@ -1080,11 +1080,19 @@ async function updateCandidatePhoto(id, file) {
 
 async function removeCandidate(id) {
   const interview = activeInterview();
+  const candidate = findCandidateById(id);
   if (!isAdminUser()) {
     alert('候補者を削除できるのはGROP管理者だけです。');
     return;
   }
-  if (!interview || !confirm('この候補者を削除しますか。')) return;
+  if (!interview || !candidate) return;
+  const label = `${candidateLabel(candidate)} ${candidate.name || '氏名未入力'}`;
+  const confirmed = confirm(
+    `候補者を削除します。\n\n${label}\n\n` +
+    '写真・点数・ピンボード結果も削除されます。\n' +
+    'この操作は取り消せません。\n\n削除してよろしいですか？'
+  );
+  if (!confirmed) return;
   const { error } = await supabase.from('interview_candidates').delete().eq('id', id);
   if (error) {
     alert('削除に失敗しました: ' + error.message);
@@ -1249,9 +1257,9 @@ function exportCsv() {
       row.japanese ?? '',
       row.ranks.japanese,
       pinAttemptText(pin.grades[0], null),
-      pin.grades[0] >= 2 && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
+      pin.grades[0] >= 1 && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
       pinAttemptText(pin.grades[1], null),
-      pin.grades[1] >= 2 && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
+      pin.grades[1] >= 1 && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
       row.ranks.pin,
       rankSummary(row),
     ];
