@@ -89,77 +89,6 @@ function stripHtml(value) {
   return div.textContent || div.innerText || '';
 }
 
-function parseDurationValue(value) {
-  const match = String(value || '').match(/^\s*(\d{1,2})\s*時間\s*(\d{1,2})\s*分\s*$/);
-  if (!match) return null;
-  return { hours: match[1], minutes: match[2] };
-}
-
-function looksLikeDurationAnswerContext(text) {
-  const plain = stripHtml(text || '').replace(/\s+/g, '');
-  if (!plain) return false;
-  return /○+時間○+分/.test(plain) || /時間.*分/.test(plain);
-}
-
-function enhanceDurationField(input, contextText) {
-  if (!input || input.dataset.durationEnhanced === '1') return;
-  if (!looksLikeDurationAnswerContext(contextText)) return;
-
-  input.dataset.durationEnhanced = '1';
-  input.type = 'hidden';
-
-  const wrap = document.createElement('span');
-  wrap.className = 'duration-picker';
-  wrap.setAttribute('role', 'group');
-  wrap.setAttribute('aria-label', '時間と分を選んでください');
-
-  const hourSelect = document.createElement('select');
-  hourSelect.className = 'duration-select';
-  hourSelect.setAttribute('aria-label', '時間');
-  const minuteSelect = document.createElement('select');
-  minuteSelect.className = 'duration-select';
-  minuteSelect.setAttribute('aria-label', '分');
-
-  const addOptions = (select, max, suffix) => {
-    const blank = document.createElement('option');
-    blank.value = '';
-    blank.textContent = '--';
-    select.appendChild(blank);
-    for (let i = 0; i <= max; i++) {
-      const option = document.createElement('option');
-      option.value = String(i);
-      option.textContent = `${i}${suffix}`;
-      select.appendChild(option);
-    }
-  };
-
-  addOptions(hourSelect, 23, '時間');
-  addOptions(minuteSelect, 59, '分');
-
-  const initial = parseDurationValue(input.value);
-  if (initial) {
-    hourSelect.value = String(Number(initial.hours));
-    minuteSelect.value = String(Number(initial.minutes));
-  }
-
-  const syncValue = () => {
-    if (hourSelect.value === '' && minuteSelect.value === '') {
-      input.value = '';
-      return;
-    }
-    const hours = hourSelect.value === '' ? '0' : hourSelect.value;
-    const minutes = minuteSelect.value === '' ? '0' : minuteSelect.value;
-    input.value = `${hours}時間${minutes}分`;
-  };
-
-  hourSelect.addEventListener('change', syncValue);
-  minuteSelect.addEventListener('change', syncValue);
-
-  wrap.appendChild(hourSelect);
-  wrap.appendChild(minuteSelect);
-  input.insertAdjacentElement('afterend', wrap);
-}
-
 function highlightTargetInElement(root, target) {
   const needle = String(target || '').trim();
   if (!needle) return false;
@@ -1896,10 +1825,6 @@ function makeField(f, parentEl) {
     el = makeSelect(f.field_id, f.options || [], 'font-size:13px;margin:2px');
   }
   parentEl.appendChild(el);
-  if (f.input_type === 'text') {
-    const contextText = [f.prefix, f.label, f.suffix, f.placeholder].filter(Boolean).join(' ');
-    enhanceDurationField(el, contextText);
-  }
   if (f.suffix) parentEl.appendChild(document.createTextNode(f.suffix));
 }
 
@@ -1926,7 +1851,6 @@ R.render_free_text = function(q, container) {
     inp.style.cssText = 'width:100%;padding:6px;border:1px solid #aaa;border-radius:4px;font-size:14px;box-sizing:border-box';
     if (item.placeholder) inp.placeholder = item.placeholder;
     row.appendChild(inp);
-    enhanceDurationField(inp, [item.prompt_html, item.label, item.placeholder].filter(Boolean).join(' '));
     wrap.appendChild(row);
   });
   block.appendChild(wrap);
@@ -1957,7 +1881,6 @@ R.render_audio_free_text = function(q, container) {
     inp.type = 'text'; inp.id = item.field_id;
     inp.style.cssText = 'flex:1;min-width:200px;padding:5px;border:1px solid #aaa;border-radius:4px;font-size:13px';
     row.appendChild(inp);
-    enhanceDurationField(inp, [item.label, item.prompt_html, item.placeholder].filter(Boolean).join(' '));
     block.appendChild(row);
   });
   container.appendChild(block);
