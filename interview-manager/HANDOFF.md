@@ -17,7 +17,9 @@
 - 候補者ごとの受験リンク一覧を表示、印刷
 - 受験リンク一覧にはクレペリンとベトナム国語テストのQRを表示
 - 送り出し担当として `BARAEN`, `AKANE`, `VJC` を面接に登録
-- 簡易ログインで送り出し別に表示を絞り込み
+- Supabase AuthでGROP管理者、BARAEN、AKANE、VJCがログイン
+- RLSで送り出し別にDBの閲覧・更新範囲を制限
+- QR受験はログイン不要のまま、専用DB関数で点数・結果だけを保存
 
 ## 現在のログイン
 
@@ -33,19 +35,22 @@
 - GROP管理者だけが面接削除と送り出し変更をできる
 - 各送り出しは、自分の担当面接だけ見られる
 - 各送り出しは、担当面接の候補者情報や点数を入力できる
+- 未ログイン状態では面接、候補者、クレペリン結果を直接読めない
+- 株式会社オオタ面接の送り出しは `BARAEN`
 
-## 重要な残タスク
+## Supabase Auth + RLS
 
-現在の送り出し別ログインは、静的サイト上で表示を絞る簡易スクリーニング。
-スタッフに本格運用で渡す前に、Supabase AuthとRLSでDB側からも他社データを読めない形にする。
+2026-07-20に本番適用・公開・確認済み。
+
+- `interview-manager/enable-auth-rls.sql` を本番DBへ適用済み
+- GROP / BARAEN / AKANE / VJCのAuthアカウントを作成済み
+- GROPとBARAENは株式会社オオタ面接を取得
+- AKANE、VJC、未ログイン状態は同面接を取得できない
+- 公開管理画面でGROPとBARAENのログイン表示を確認済み
 
 次にやる候補:
 
-1. Supabaseで `interview-manager/add-sender-org.sql` を実行する
-2. オオタ面接の送り出し担当を画面で設定する
-3. BARAEN / AKANE / VJCでログインし、表示される面接が分かれるか確認する
-4. Supabase Auth + RLSに移行する
-5. 送り出しスタッフ用に、不要なPDF/CSV/削除系のUIをさらに整理する
+1. 送り出しスタッフ用に、不要なPDF/CSV/候補者削除系のUIをさらに整理する
 
 ## 関連ファイル
 
@@ -54,6 +59,8 @@
 - `interview-manager/style.css`: 管理画面CSS
 - `interview-manager/supabase-schema.sql`: 新規構築用SQL
 - `interview-manager/add-sender-org.sql`: 既存DBへ送り出し列を追加するSQL
+- `interview-manager/enable-auth-rls.sql`: Auth・RLS・匿名受験用DB関数
+- `interview-manager/AUTH-SETUP.md`: AuthとRLSの設定・確認手順
 - `interview-manager/TODO.md`: 残タスク
 - `vietnamese-language-test/`: ベトナム国語テスト
 - `kraepelin/interview.html`: 面接用クレペリン受験画面
@@ -62,4 +69,4 @@
 
 - 未追跡ファイルが他フォルダにあることがある。今回の面接管理作業では、関係するファイルだけをstage/commitする。
 - 公開後はGitHub Pagesの反映待ちが必要。`gh -R kabuyt/nihongo-test-1-4ka run watch <run_id> --exit-status` で確認していた。
-- 静的サイトの簡易ログインは、画面上の表示制御であり、本格的なデータ保護ではない。
+- 権限変更SQLと対応するJavaScriptは、公開時に必ず同じ版へ揃える。
