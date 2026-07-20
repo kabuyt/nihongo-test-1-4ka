@@ -794,6 +794,25 @@ td input { min-height: 34px; padding: 5px 7px; }
   }
 
   .print-header h1 { margin: 0; font-size: 19px; line-height: 1.25; letter-spacing: 0.04em; }
+  .print-pin-legend {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 3px;
+    color: #5f6e82;
+    font-size: 6.5px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .print-pin-legend b {
+    color: #243b5a;
+    font-weight: 700;
+  }
+  .print-pin-legend span { white-space: nowrap; }
+  .print-pin-legend strong {
+    color: #243b5a;
+    font-size: 7.5px;
+  }
   .print-document-meta { display: grid; justify-items: end; gap: 3px; color: #566579; font-size: 8px; }
   .print-document-meta span { padding: 2px 7px; border: 1px solid #aab4c1; border-radius: 999px; font-weight: 700; }
   .print-document-meta strong { font-size: 8px; }

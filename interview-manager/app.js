@@ -692,6 +692,13 @@ function renderPrintReport(interview, rows) {
         <div class="print-title-block">
           <div class="print-label">PRE-INTERVIEW TEST RESULTS</div>
           <h1>事前テスト結果</h1>
+          <div class="print-pin-legend" aria-label="ピンボード評価基準">
+            <b>ピンボード評価</b>
+            <span><strong>◎</strong> 正確に完了</span>
+            <span><strong>○</strong> 自力で修正</span>
+            <span><strong>△</strong> 一部ミス</span>
+            <span><strong>×</strong> 継続困難</span>
+          </div>
         </div>
       </div>
       <div class="print-document-meta">
