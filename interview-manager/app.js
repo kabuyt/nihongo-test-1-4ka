@@ -127,6 +127,39 @@ function judgmentLabel(value) {
   return labels[value] || value || '-';
 }
 
+function kraepelinComment(summary, evaluation) {
+  if (!summary || !evaluation) return '';
+  const comments = [];
+  const errorRate = summary.errorRate ?? 1;
+  const first = summary.first || 0;
+  const second = summary.second || 0;
+  const total = summary.total || 0;
+
+  if (second > first * 1.15 && second - first >= 10) {
+    comments.push('後半に調子が上がるタイプです');
+  } else if (first > second * 1.2 && first - second >= 10) {
+    comments.push('後半に疲れが出やすい傾向があります');
+  } else if (evaluation.stability >= 14) {
+    comments.push('安定して作業できています');
+  } else if (evaluation.stability <= 6 && total > 0) {
+    comments.push('作業の波が大きい傾向があります');
+  }
+
+  if (errorRate >= 0.3) {
+    comments.push('ミスが多く、注意がそれやすい傾向があります');
+  } else if (errorRate >= 0.15) {
+    comments.push('作業は進みますが、ミスに注意が必要です');
+  } else if (evaluation.work >= 35) {
+    comments.push('作業量はしっかり出ています');
+  } else if (evaluation.work <= 22) {
+    comments.push('慎重ですが、作業量は少なめです');
+  } else if (errorRate <= 0.05) {
+    comments.push('落ち着いて正確に作業できています');
+  }
+
+  return [...new Set(comments)].slice(0, 2).join('。') + (comments.length ? '。' : '');
+}
+
 function candidateFromDb(row) {
   return {
     id: row.id,
@@ -349,7 +382,8 @@ function renderTable(interview) {
       ? '<span class="status-pill missing">未取得</span>'
       : `<span class="status-pill ok">${row.kraepelinEval.total}</span>
          <div class="mini">順位 ${row.ranks.k} / 正答 ${row.kraepelinTotal} / 誤答 ${formatPercent(row.kSummary.errorRate)}</div>
-         <div class="mini">作業 ${row.kraepelinEval.work}・正確 ${row.kraepelinEval.accuracy}・安定 ${row.kraepelinEval.stability} / ${judgmentLabel(row.kSummary.judgment)}</div>`;
+         <div class="mini">作業 ${row.kraepelinEval.work}・正確 ${row.kraepelinEval.accuracy}・安定 ${row.kraepelinEval.stability} / ${judgmentLabel(row.kSummary.judgment)}</div>
+         <div class="comment-text">${kraepelinComment(row.kSummary, row.kraepelinEval)}</div>`;
     return `
       <tr>
         <td><span class="${rankClass}">${row.finalRank}</span></td>
@@ -606,7 +640,7 @@ function openKraepelin() {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', '数学', 'ベトナム国語', '日本語単語', 'ピン成功数', 'ピン時間', 'ピン順位', '順位合計'];
+  const headers = ['総合順位', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', 'ベトナム国語', '日本語単語', 'ピン成功数', 'ピン時間', 'ピン順位', '順位合計'];
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
     return [
@@ -617,6 +651,7 @@ function exportCsv() {
       row.kraepelinTotal ?? '',
       row.kSummary?.errorRate == null ? '' : formatPercent(row.kSummary.errorRate),
       judgmentLabel(row.kSummary?.judgment),
+      kraepelinComment(row.kSummary, row.kraepelinEval),
       row.math ?? '',
       row.vietnamese ?? '',
       row.japanese ?? '',

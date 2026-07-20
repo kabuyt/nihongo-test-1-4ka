@@ -269,7 +269,7 @@ h2 {
 
 table {
   width: 100%;
-  min-width: 1360px;
+  min-width: 1420px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -295,7 +295,20 @@ td:nth-child(3), th:nth-child(3) {
 }
 
 .kraepelin-cell {
-  min-width: 230px;
+  min-width: 280px;
+  text-align: left;
+}
+
+.kraepelin-cell .status-pill {
+  margin-bottom: 3px;
+}
+
+.comment-text {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 td input {
