@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -58,6 +58,7 @@
         <div class="actions">
           <button id="open-kraepelin" class="btn"><i data-lucide="external-link"></i>クレペリンURL</button>
           <button id="refresh-kraepelin" class="btn"><i data-lucide="cloud-download"></i>クレペリン取込</button>
+          <button id="open-link-sheet" class="btn"><i data-lucide="qr-code"></i>受験リンク</button>
           <button id="print-pdf" class="btn"><i data-lucide="printer"></i>PDF</button>
           <button id="export-csv" class="btn"><i data-lucide="download"></i>CSV</button>
           <button id="logout" class="btn"><i data-lucide="log-out"></i>退出</button>
@@ -129,9 +130,25 @@
 
   <section id="print-report" class="print-report"></section>
 
+  <section id="link-sheet" class="link-sheet hidden" aria-label="受験リンク一覧">
+    <div class="link-sheet-inner">
+      <header class="link-sheet-head">
+        <div>
+          <p class="eyebrow">受験リンク一覧</p>
+          <h1 id="link-sheet-title">面接を選択してください</h1>
+        </div>
+        <div class="link-sheet-actions">
+          <button id="print-link-sheet" class="btn"><i data-lucide="printer"></i>印刷</button>
+          <button id="close-link-sheet" class="btn"><i data-lucide="x"></i>閉じる</button>
+        </div>
+      </header>
+      <div id="link-sheet-body" class="link-grid"></div>
+    </div>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

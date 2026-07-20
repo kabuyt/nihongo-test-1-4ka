@@ -111,6 +111,14 @@ function vietnameseTestUrl(interview, candidate) {
   return url.href;
 }
 
+function qrImageUrl(targetUrl) {
+  const url = new URL('https://api.qrserver.com/v1/create-qr-code/');
+  url.searchParams.set('size', '150x150');
+  url.searchParams.set('margin', '8');
+  url.searchParams.set('data', targetUrl);
+  return url.href;
+}
+
 function parseKraepelinName(name) {
   const raw = String(name || '').trim();
   const sessionMatch = raw.match(/^session:([^/]+)\s*\/\s*(?:No\.?|候補者)\s*(.+)$/i);
@@ -526,6 +534,40 @@ function renderPrintReport(interview, rows) {
   `;
 }
 
+function renderLinkSheet(interview) {
+  const sheet = $('#link-sheet');
+  if (!sheet || !interview) return;
+  $('#link-sheet-title').textContent = formatInterviewName(interview);
+  const candidates = [...(interview.candidates || [])].sort((a, b) => Number(a.no) - Number(b.no));
+  $('#link-sheet-body').innerHTML = candidates.map(candidate => {
+    const kUrl = kraepelinUrl(interview, candidate);
+    const vUrl = vietnameseTestUrl(interview, candidate);
+    return `
+      <article class="link-card">
+        <div class="link-candidate">
+          ${candidate.photo ? `<img class="link-photo" src="${escapeHtml(candidate.photo)}" alt="">` : '<div class="link-photo empty-photo"></div>'}
+          <div>
+            <div class="link-no">${escapeHtml(candidateLabel(candidate))}</div>
+            <h2>${escapeHtml(candidate.name || '')}</h2>
+          </div>
+        </div>
+        <div class="qr-pair">
+          <div class="qr-box">
+            <div class="qr-title">クレペリン</div>
+            <img src="${escapeHtml(qrImageUrl(kUrl))}" alt="クレペリンQR">
+            <a href="${escapeHtml(kUrl)}" target="_blank" rel="noopener">${escapeHtml(kUrl)}</a>
+          </div>
+          <div class="qr-box">
+            <div class="qr-title">ベトナム国語</div>
+            <img src="${escapeHtml(qrImageUrl(vUrl))}" alt="ベトナム国語QR">
+            <a href="${escapeHtml(vUrl)}" target="_blank" rel="noopener">${escapeHtml(vUrl)}</a>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
 function renderTable(interview) {
   const rows = buildRows(interview);
   const body = $('#score-body');
@@ -595,6 +637,7 @@ function render() {
   $('#delete-interview').disabled = !hasInterview || !state.dbReady;
   $('#open-kraepelin').disabled = !hasInterview;
   $('#refresh-kraepelin').disabled = !hasInterview;
+  $('#open-link-sheet').disabled = !hasInterview;
   $('#print-pdf').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
   $('#interview-form button[type="submit"]').disabled = !state.dbReady;
@@ -841,6 +884,28 @@ function printPdf() {
   window.print();
 }
 
+function openLinkSheet() {
+  const interview = activeInterview();
+  if (!interview) return;
+  renderLinkSheet(interview);
+  $('#link-sheet').classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeLinkSheet() {
+  $('#link-sheet').classList.add('hidden');
+  document.body.classList.remove('printing-links');
+}
+
+function printLinkSheet() {
+  const interview = activeInterview();
+  if (!interview) return;
+  renderLinkSheet(interview);
+  document.body.classList.add('printing-links');
+  window.print();
+  setTimeout(() => document.body.classList.remove('printing-links'), 500);
+}
+
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
@@ -888,6 +953,9 @@ function bindEvents() {
   $('#delete-interview').addEventListener('click', deleteInterview);
   $('#refresh-kraepelin').addEventListener('click', fetchKraepelin);
   $('#open-kraepelin').addEventListener('click', openKraepelin);
+  $('#open-link-sheet').addEventListener('click', openLinkSheet);
+  $('#close-link-sheet').addEventListener('click', closeLinkSheet);
+  $('#print-link-sheet').addEventListener('click', printLinkSheet);
   $('#print-pdf').addEventListener('click', printPdf);
   $('#export-csv').addEventListener('click', exportCsv);
   $('#logout').addEventListener('click', logout);
