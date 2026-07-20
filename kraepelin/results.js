@@ -696,9 +696,7 @@ const Results = (() => {
     const errorRate = all.length > 0 ? all.filter(a => !a.isCorrect).length / all.length : 0;
     const avgCorrect = allCounts.length > 0 ? allCounts.reduce((a, b) => a + b, 0) / allCounts.length : 0;
 
-    const displayName = meta && meta.candidateNo
-      ? `${meta.interviewName || '面接未設定'} / No.${meta.candidateNo}`
-      : meta.name;
+    const displayName = meta && meta.candidateNo ? `No.${meta.candidateNo}` : meta.name;
 
     return supabase.from('kraepelin_results').insert({
       name: displayName,

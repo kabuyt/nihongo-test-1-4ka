@@ -25,6 +25,10 @@ function getDisplayName(record) {
   return candidateNo ? `候補者 ${candidateNo}` : (record.name || '(無名)');
 }
 
+function makeStoredName(interviewName, candidateNo) {
+  return `${interviewName.trim()} / No.${candidateNo.trim()}`;
+}
+
 function summarizeRecord(record) {
   const results = Array.isArray(record.results) ? record.results : [];
   const rowCounts = results.map(r => Results.calcRowStats(r).correct);
@@ -298,6 +302,55 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
+async function assignInterviewName() {
+  const input = document.getElementById('assign-interview-name');
+  const interviewName = input.value.trim();
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+
+  if (!interviewName) {
+    input.focus();
+    alert('面接名を入力してください');
+    return;
+  }
+  if (ids.length === 0) {
+    alert('面接名を設定する結果を選択してください');
+    return;
+  }
+
+  const targets = ids.map(id => allRecords.find(r => r.id === id)).filter(Boolean);
+  const missingCandidate = targets.filter(r => !getCandidateNo(r));
+  if (missingCandidate.length) {
+    alert('候補者番号が読み取れない記録が含まれています。No.形式の面接用結果だけを選択してください。');
+    return;
+  }
+
+  const btn = document.getElementById('assign-interview-btn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '設定中...';
+
+  try {
+    for (const record of targets) {
+      const newName = makeStoredName(interviewName, getCandidateNo(record));
+      const { error } = await supabase
+        .from('kraepelin_results')
+        .update({ name: newName })
+        .eq('id', record.id);
+      if (error) throw error;
+      record.name = newName;
+    }
+    updateInterviewFilter();
+    document.getElementById('filter-interview').value = interviewName;
+    render();
+  } catch (err) {
+    alert('面接名の設定に失敗しました: ' + err.message);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
 // guide.html をフェッチして PDF Blob を生成
 async function generateGuidePDF(opts) {
   const resp = await fetch('guide.html');
@@ -409,6 +462,7 @@ document.getElementById('search-name').addEventListener('input', render);
 document.getElementById('filter-interview').addEventListener('change', render);
 document.getElementById('filter-judgment').addEventListener('change', render);
 document.getElementById('csv-btn').addEventListener('click', exportCsv);
+document.getElementById('assign-interview-btn').addEventListener('click', assignInterviewName);
 document.getElementById('bulk-pdf-btn').addEventListener('click', bulkDownloadPDF);
 document.getElementById('modal-bg').addEventListener('click', (e) => {
   if (e.target === document.getElementById('modal-bg')) closeModal();

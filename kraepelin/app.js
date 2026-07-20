@@ -21,7 +21,6 @@ const App = (() => {
   let timeLeft = ROW_TIME;
   let userName = '';
   let candidateNo = '';
-  let interviewName = '';
   let testStartedAt = null;
   const isInterviewMode = document.body && document.body.dataset.mode === 'interview';
 
@@ -226,7 +225,6 @@ const App = (() => {
       const meta = {
         name: userName,
         candidateNo: candidateNo,
-        interviewName: interviewName,
         startedAt: testStartedAt,
         source: isInterviewMode ? 'interview' : 'general',
       };
@@ -327,15 +325,6 @@ const App = (() => {
 
   // ============ イベント設定 ============
   function init() {
-    if (isInterviewMode) {
-      const eventInput = document.getElementById('input-event');
-      if (eventInput) {
-        const params = new URLSearchParams(window.location.search);
-        const eventFromUrl = params.get('event') || params.get('interview') || '';
-        eventInput.value = eventFromUrl || localStorage.getItem('kraepelinInterviewName') || '';
-      }
-    }
-
     // テンキーボタン
     document.querySelectorAll('.numpad-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -364,18 +353,8 @@ const App = (() => {
 
     // 開始ボタン（練習から開始 → 自動的に本番へ移行）
     document.getElementById('btn-start').addEventListener('click', () => {
-      const eventInput = document.getElementById('input-event');
       const nameInput = document.getElementById('input-name');
-      const eventValue = eventInput ? eventInput.value.trim() : '';
       const inputValue = nameInput.value.trim();
-      if (isInterviewMode && !eventValue) {
-        if (eventInput) {
-          eventInput.focus();
-          eventInput.classList.add('input-error');
-          setTimeout(() => eventInput.classList.remove('input-error'), 1500);
-        }
-        return;
-      }
       if (!inputValue) {
         nameInput.focus();
         nameInput.classList.add('input-error');
@@ -383,9 +362,7 @@ const App = (() => {
         return;
       }
       candidateNo = isInterviewMode ? inputValue.replace(/^No\.?\s*/i, '') : '';
-      interviewName = isInterviewMode ? eventValue : '';
-      if (isInterviewMode) localStorage.setItem('kraepelinInterviewName', interviewName);
-      userName = isInterviewMode ? `${interviewName} / No.${candidateNo}` : inputValue;
+      userName = isInterviewMode ? `No.${candidateNo}` : inputValue;
       mode = 'practice';
       phase = 'first';
       currentRow = 0;
