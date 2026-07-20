@@ -40,6 +40,8 @@
 - GROP管理者だけが面接削除と送り出し変更をできる
 - 各送り出しは、自分の担当面接だけ見られる
 - 各送り出しは、担当面接の候補者情報や点数を入力できる
+- PDF・CSV・候補者削除はGROP管理者だけが利用できる
+- 候補者削除はRLSでもGROP管理者だけに制限
 - 未ログイン状態では面接、候補者、クレペリン結果を直接読めない
 - 株式会社オオタ面接の送り出しは `BARAEN`
 
@@ -53,9 +55,7 @@
 - AKANE、VJC、未ログイン状態は同面接を取得できない
 - 公開管理画面でGROPとBARAENのログイン表示を確認済み
 
-次にやる候補:
-
-1. 送り出しスタッフ用に、不要なPDF/CSV/候補者削除系のUIをさらに整理する
+送り出しスタッフ用のPDF・CSV・候補者削除系UI整理は2026-07-20に完了。
 
 ## 関連ファイル
 
@@ -65,6 +65,7 @@
 - `interview-manager/supabase-schema.sql`: 新規構築用SQL
 - `interview-manager/add-sender-org.sql`: 既存DBへ送り出し列を追加するSQL
 - `interview-manager/enable-auth-rls.sql`: Auth・RLS・匿名受験用DB関数
+- `interview-manager/restrict-sender-candidate-delete.sql`: 既存DBの候補者削除権限を管理者限定にするSQL
 - `interview-manager/AUTH-SETUP.md`: AuthとRLSの設定・確認手順
 - `interview-manager/TODO.md`: 残タスク
 - `vietnamese-language-test/`: ベトナム国語テスト

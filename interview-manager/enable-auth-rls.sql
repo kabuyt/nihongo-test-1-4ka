@@ -173,10 +173,10 @@ create policy "manager can update allowed candidates"
   using (public.can_access_interview(interview_id))
   with check (public.can_access_interview(interview_id));
 
-create policy "manager can delete allowed candidates"
+create policy "admin can delete candidates"
   on public.interview_candidates for delete
   to authenticated
-  using (public.can_access_interview(interview_id));
+  using (public.is_manager_admin());
 
 create policy "manager can read allowed kraepelin results"
   on public.kraepelin_results for select

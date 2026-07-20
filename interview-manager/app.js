@@ -652,6 +652,7 @@ function renderLinkSheet(interview) {
 function renderTable(interview) {
   const rows = buildRows(interview);
   const body = $('#score-body');
+  const canDeleteCandidates = isAdminUser();
   body.innerHTML = rows.map(row => {
     const pin = pinSummary(row.score);
     const rankClass = row.finalRank <= 3 ? 'rank top' : 'rank';
@@ -685,7 +686,7 @@ function renderTable(interview) {
         <td>${row.ranks.pin}<div class="mini">${pin.ok}/2 ${pin.complete ? pin.time.toFixed(2) + '秒' : ''}</div></td>
         <td><span class="rank-list">${rankSummary(row)}</span></td>
         <td><strong>${row.rankSum}</strong></td>
-        <td><button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button></td>
+        <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="削除"><i data-lucide="x"></i></button>` : ''}</td>
       </tr>
     `;
   }).join('');
@@ -734,6 +735,8 @@ function render() {
   $('#open-kraepelin').disabled = !hasInterview;
   $('#refresh-kraepelin').disabled = !hasInterview;
   $('#open-link-sheet').disabled = !hasInterview;
+  $('#print-pdf').classList.toggle('hidden', !isAdmin);
+  $('#export-csv').classList.toggle('hidden', !isAdmin);
   $('#print-pdf').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
   $('#interview-form button[type="submit"]').disabled = !state.dbReady || !isAdmin;
@@ -884,6 +887,10 @@ async function updateCandidatePhoto(id, file) {
 
 async function removeCandidate(id) {
   const interview = activeInterview();
+  if (!isAdminUser()) {
+    alert('候補者を削除できるのはGROP管理者だけです。');
+    return;
+  }
   if (!interview || !confirm('この候補者を削除しますか。')) return;
   const { error } = await supabase.from('interview_candidates').delete().eq('id', id);
   if (error) {
