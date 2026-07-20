@@ -192,6 +192,7 @@ function candidateFromDb(row) {
     id: row.id,
     no: row.candidate_no,
     name: row.name || '',
+    photo: row.memo || '',
     score: {
       math: row.math_score ?? '',
       vietnamese: row.vietnamese_score ?? '',
@@ -438,6 +439,7 @@ function renderPrintReport(interview, rows) {
         <tr>
           <th>総合</th>
           <th>No.</th>
+          <th>写真</th>
           <th>氏名・メモ</th>
           <th>クレペリン</th>
           <th>数学</th>
@@ -456,6 +458,7 @@ function renderPrintReport(interview, rows) {
             <tr>
               <td>${row.finalRank}</td>
               <td>${escapeHtml(candidateLabel(row))}</td>
+              <td>${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : ''}</td>
               <td>${escapeHtml(row.name || '')}</td>
               <td>${row.kraepelinEval ? `${formatScore(row.kraepelinEval.total)}点<br>正答 ${row.kraepelinTotal}<br>誤答 ${formatPercent(row.kSummary.errorRate)}` : '未取得'}</td>
               <td>${row.math == null ? '-' : `${formatScore(row.math)}点`}</td>
@@ -489,6 +492,13 @@ function renderTable(interview) {
       <tr>
         <td><span class="${rankClass}">${row.finalRank}</span></td>
         <td>${candidateLabel(row)}</td>
+        <td class="photo-cell">
+          ${row.photo ? `<img class="candidate-photo" src="${escapeHtml(row.photo)}" alt="">` : '<span class="photo-empty">未登録</span>'}
+          <label class="photo-upload">
+            写真
+            <input class="photo-input" data-id="${row.id}" type="file" accept="image/*">
+          </label>
+        </td>
         <td><input class="candidate-name" data-id="${row.id}" value="${escapeHtml(row.name || '')}"></td>
         <td class="kraepelin-cell">${kraepelinCell}</td>
         <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
@@ -512,6 +522,9 @@ function renderTable(interview) {
   });
   body.querySelectorAll('.candidate-name').forEach(input => {
     input.addEventListener('change', () => updateCandidateName(input.dataset.id, input.value));
+  });
+  body.querySelectorAll('.photo-input').forEach(input => {
+    input.addEventListener('change', () => updateCandidatePhoto(input.dataset.id, input.files?.[0]));
   });
   body.querySelectorAll('.remove-candidate').forEach(button => {
     button.addEventListener('click', () => removeCandidate(button.dataset.id));
@@ -641,6 +654,23 @@ async function updateCandidateName(id, value) {
     return;
   }
   candidate.name = name;
+}
+
+async function updateCandidatePhoto(id, file) {
+  const candidate = findCandidateById(id);
+  if (!candidate || !file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const photo = String(reader.result || '');
+    const { error } = await supabase.from('interview_candidates').update({ memo: photo }).eq('id', id);
+    if (error) {
+      alert('写真の保存に失敗しました: ' + error.message);
+      return;
+    }
+    candidate.photo = photo;
+    render();
+  };
+  reader.readAsDataURL(file);
 }
 
 async function removeCandidate(id) {

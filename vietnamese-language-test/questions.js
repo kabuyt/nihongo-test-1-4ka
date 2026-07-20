@@ -48,7 +48,7 @@ const QUESTIONS = [
     prompt: 'Trong câu sau có bao nhiêu tính từ và động từ? "Ngay thềm lăng, mười tám cây vạn tuế tượng trưng cho một đoàn quân danh dự đứng trang nghiêm."',
     type: 'pair',
     labels: ['Tính từ', 'Động từ'],
-    answer: ['2', '2'],
+    answer: ['1', '1'],
   },
   {
     id: 6,
@@ -160,7 +160,7 @@ const QUESTIONS = [
       'Biểu thị sự tăng tiến của sự việc.',
       'Biểu thị điều sắp nêu ra là nguyên nhân dẫn đến kết quả tốt đẹp được nói đến.',
     ],
-    answer: 'A',
+    answer: 'B',
   },
   {
     id: 18,
