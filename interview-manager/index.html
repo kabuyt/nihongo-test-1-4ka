@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>面接事前テスト管理</title>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <header class="brand">
+        <h1>面接事前テスト管理</h1>
+      </header>
+
+      <form id="interview-form" class="create-form">
+        <label>
+          面接日
+          <input id="interview-date" type="date" required>
+        </label>
+        <label>
+          会社名
+          <input id="interview-company" type="text" placeholder="〇〇商事" required>
+        </label>
+        <label>
+          候補者数
+          <input id="candidate-count" type="number" min="1" max="80" value="8" required>
+        </label>
+        <button type="submit" class="btn primary"><i data-lucide="plus"></i>作成</button>
+      </form>
+
+      <div class="sidebar-head">
+        <span>面接一覧</span>
+        <button id="delete-interview" class="icon-btn danger" title="面接を削除"><i data-lucide="trash-2"></i></button>
+      </div>
+      <div id="interview-list" class="interview-list"></div>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div>
+          <div class="eyebrow">選択中の面接</div>
+          <h2 id="active-title">面接を作成してください</h2>
+        </div>
+        <div class="actions">
+          <button id="open-kraepelin" class="btn"><i data-lucide="external-link"></i>クレペリンURL</button>
+          <button id="refresh-kraepelin" class="btn"><i data-lucide="cloud-download"></i>クレペリン取込</button>
+          <button id="export-csv" class="btn"><i data-lucide="download"></i>CSV</button>
+        </div>
+      </section>
+
+      <section id="empty-state" class="empty">
+        <div>左側で面接を作成すると、候補者一覧と集計表が表示されます。</div>
+      </section>
+
+      <section id="workspace" class="workspace hidden">
+        <div class="summary-strip">
+          <div>
+            <span class="metric-label">候補者</span>
+            <strong id="metric-candidates">0</strong>
+          </div>
+          <div>
+            <span class="metric-label">クレペリン取得</span>
+            <strong id="metric-kraepelin">0</strong>
+          </div>
+          <div>
+            <span class="metric-label">数学入力</span>
+            <strong id="metric-math">0</strong>
+          </div>
+          <div>
+            <span class="metric-label">ピンボード入力</span>
+            <strong id="metric-pinboard">0</strong>
+          </div>
+        </div>
+
+        <div class="candidate-tools">
+          <form id="candidate-form" class="inline-form">
+            <input id="candidate-no" type="text" placeholder="候補者番号">
+            <input id="candidate-name" type="text" placeholder="氏名・メモ">
+            <button type="submit" class="btn"><i data-lucide="user-plus"></i>追加</button>
+          </form>
+          <button id="renumber-candidates" class="btn"><i data-lucide="list-ordered"></i>番号を整える</button>
+        </div>
+
+        <div class="table-shell">
+          <table id="score-table">
+            <thead>
+              <tr>
+                <th class="sticky-col">総合順位</th>
+                <th>No.</th>
+                <th>氏名・メモ</th>
+                <th>クレペリン</th>
+                <th>数学</th>
+                <th>ベトナム国語</th>
+                <th>日本語単語</th>
+                <th>ピン1</th>
+                <th>秒</th>
+                <th>ピン2</th>
+                <th>秒</th>
+                <th>ピン順位</th>
+                <th>順位合計</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="score-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="../common/config.js"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
