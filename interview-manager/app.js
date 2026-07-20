@@ -163,19 +163,34 @@ function candidateLabel(candidate) {
   return `No.${candidate.no}`;
 }
 
-function normalizeCandidateName(value) {
-  const raw = String(value || '').trim();
-  if (!raw.includes('/')) return raw;
-  const [katakana, ...latinParts] = raw.split('/');
-  const latin = latinParts
-    .join('/')
+function normalizeLatinName(value) {
+  return String(value || '')
     .trim()
     .replace(/[Đđ]/g, char => char === 'Đ' ? 'D' : 'd')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .replace(/\s+/g, ' ');
-  return `${katakana.trim()} / ${latin}`.trim();
+}
+
+function splitCandidateName(value) {
+  const raw = String(value || '').trim();
+  if (!raw.includes('/')) {
+    const looksLatin = /[A-Za-z]/.test(raw) && !/[\u3040-\u30ff\u3400-\u9fff]/.test(raw);
+    return looksLatin ? { kana: '', latin: normalizeLatinName(raw) } : { kana: raw, latin: '' };
+  }
+  const [kana, ...latinParts] = raw.split('/');
+  return {
+    kana: kana.trim(),
+    latin: normalizeLatinName(latinParts.join('/')),
+  };
+}
+
+function composeCandidateName(kana, latin) {
+  const cleanKana = String(kana || '').trim();
+  const cleanLatin = normalizeLatinName(latin);
+  if (cleanKana && cleanLatin) return `${cleanKana} / ${cleanLatin}`;
+  return cleanKana || cleanLatin;
 }
 
 function kraepelinSessionName(interview, candidate) {
@@ -852,6 +867,7 @@ function renderTable(interview) {
          <div class="mini">順位 ${row.ranks.k} / 正答 ${row.kraepelinTotal} / 誤答 ${formatPercent(row.kSummary.errorRate)}</div>
          <div class="mini">作業 ${row.kraepelinEval.work}・正確 ${row.kraepelinEval.accuracy}・安定 ${row.kraepelinEval.stability} / ${judgmentLabel(row.kSummary.judgment)}</div>
          <div class="comment-text">${kraepelinComment(row.kSummary, row.kraepelinEval)}</div>`;
+    const nameParts = splitCandidateName(row.name);
     return `
       <tr>
         <td><span class="${rankClass}">${row.finalRank}</span></td>
@@ -863,7 +879,12 @@ function renderTable(interview) {
             <input class="photo-input" data-id="${row.id}" type="file" accept="image/*">
           </label>
         </td>
-        <td><input class="candidate-name" data-id="${row.id}" value="${escapeHtml(row.name || '')}"></td>
+        <td class="cell-name">
+          <div class="candidate-name-stack">
+            <input class="candidate-name-input candidate-name-kana" data-id="${row.id}" data-field="kana" value="${escapeHtml(nameParts.kana)}" placeholder="カタカナ" aria-label="${escapeHtml(candidateLabel(row))} カタカナ氏名">
+            <input class="candidate-name-input candidate-name-latin" data-id="${row.id}" data-field="latin" value="${escapeHtml(nameParts.latin)}" placeholder="LATIN NAME" aria-label="${escapeHtml(candidateLabel(row))} ラテン氏名">
+          </div>
+        </td>
         <td class="kraepelin-cell">${kraepelinCell}</td>
         <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
         <td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>
@@ -892,8 +913,8 @@ function renderTable(interview) {
   body.querySelectorAll('.pin-grade-select').forEach(select => {
     select.addEventListener('change', () => updatePinGrade(select.dataset.id, Number(select.dataset.round), select.value));
   });
-  body.querySelectorAll('.candidate-name').forEach(input => {
-    input.addEventListener('change', () => updateCandidateName(input.dataset.id, input.value));
+  body.querySelectorAll('.candidate-name-input').forEach(input => {
+    input.addEventListener('change', () => updateCandidateName(input.dataset.id));
   });
   body.querySelectorAll('.photo-input').forEach(input => {
     input.addEventListener('change', () => updateCandidatePhoto(input.dataset.id, input.files?.[0]));
@@ -990,10 +1011,12 @@ async function addCandidate(event) {
     return;
   }
   try {
-    const candidate = await createCandidate(interview.id, no, normalizeCandidateName($('#candidate-name').value));
+    const name = composeCandidateName($('#candidate-name-kana').value, $('#candidate-name-latin').value);
+    const candidate = await createCandidate(interview.id, no, name);
     interview.candidates.push(candidate);
     $('#candidate-no').value = '';
-    $('#candidate-name').value = '';
+    $('#candidate-name-kana').value = '';
+    $('#candidate-name-latin').value = '';
     render();
   } catch (error) {
     alert('候補者追加に失敗しました: ' + error.message);
@@ -1063,10 +1086,17 @@ async function updatePinGrade(id, round, grade) {
   render();
 }
 
-async function updateCandidateName(id, value) {
+async function updateCandidateName(id) {
   const candidate = findCandidateById(id);
   if (!candidate) return;
-  const name = normalizeCandidateName(value);
+  const row = [...document.querySelectorAll('.candidate-name-input')]
+    .find(input => input.dataset.id === id)
+    ?.closest('.candidate-name-stack');
+  if (!row) return;
+  const name = composeCandidateName(
+    row.querySelector('.candidate-name-kana')?.value,
+    row.querySelector('.candidate-name-latin')?.value
+  );
   const { error } = await supabase.from('interview_candidates').update({ name }).eq('id', id);
   if (error) {
     alert('保存に失敗しました: ' + error.message);
