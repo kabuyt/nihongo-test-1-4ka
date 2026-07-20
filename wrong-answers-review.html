@@ -486,6 +486,8 @@ function isReviewedByManualOverride(manualScores, fieldId) {
 
 function isManuallyReviewedBlock(sectionType, block) {
   if (!block) return false;
+  if (sectionType === 'goii' && block.id === 'g2') return true;
+  if (sectionType === 'bunpo' && block.id === 'b2') return true;
   const title = stripHtml(block.title_html || block.sub_title || '');
   if (sectionType === 'goii') return title.includes('漢字をひらがなで書いてください');
   if (sectionType === 'bunpo') return title.includes('正しい形を書いてください');
