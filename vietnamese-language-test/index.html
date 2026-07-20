@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài kiểm tra tiếng Việt</title>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <main class="app">
+    <section id="start-screen" class="panel">
+      <div class="header">
+        <p class="eyebrow">Bài kiểm tra trước phỏng vấn</p>
+        <h1>Bài kiểm tra tiếng Việt</h1>
+      </div>
+      <label>
+        Số báo danh
+        <input id="candidate-no" type="text" inputmode="numeric" autocomplete="off" required>
+      </label>
+      <button id="start-btn" class="btn primary">Bắt đầu</button>
+      <p class="note">Hãy chọn một đáp án đúng nhất cho mỗi câu. Sau khi nộp bài, điểm sẽ được lưu tự động.</p>
+      <div id="start-error" class="error hidden"></div>
+    </section>
+
+    <section id="test-screen" class="hidden">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">Số báo danh <span id="display-no"></span></p>
+          <h1>Bài kiểm tra tiếng Việt</h1>
+        </div>
+        <strong id="progress">0/20</strong>
+      </div>
+      <form id="test-form" class="question-list"></form>
+      <div class="submit-bar">
+        <button id="submit-btn" class="btn primary" type="submit" form="test-form">Nộp bài</button>
+      </div>
+    </section>
+
+    <section id="result-screen" class="panel hidden">
+      <p class="eyebrow">Kết quả</p>
+      <h1 id="score-title">0 điểm</h1>
+      <p id="score-detail"></p>
+      <p id="save-status" class="note"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../common/config.js"></script>
+  <script src="questions.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>

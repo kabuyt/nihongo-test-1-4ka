@@ -54,6 +54,13 @@ function kraepelinUrl(interview, candidate) {
   return url.href;
 }
 
+function vietnameseTestUrl(interview, candidate) {
+  const url = new URL('../vietnamese-language-test/index.html', window.location.href);
+  url.searchParams.set('session', interview.id);
+  url.searchParams.set('no', candidate.no);
+  return url.href;
+}
+
 function parseKraepelinName(name) {
   const raw = String(name || '').trim();
   const sessionMatch = raw.match(/^session:([^/]+)\s*\/\s*(?:No\.?|候補者)\s*(.+)$/i);
@@ -400,6 +407,7 @@ function subjectScoreCell(row, field, value, rank, options = {}) {
     <div class="score-cell">
       <input class="score-input ${doneClass}" data-id="${row.id}" data-field="${field}" type="number" min="0" max="${max}" step="1" placeholder="${placeholder}" value="${String(rawValue).replace(/"/g, '&quot;')}">
       <div class="mini">${note} / 順位 ${rank}</div>
+      ${options.link ? `<a class="mini-link" href="${options.link}" target="_blank" rel="noopener">受験</a>` : ''}
     </div>
   `;
 }
@@ -485,7 +493,7 @@ function renderTable(interview) {
         <td class="kraepelin-cell">${kraepelinCell}</td>
         <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
         <td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>
-        <td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese)}</td>
+        <td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>
         <td>${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>
         <td>${scoreInput(row, 'pin1Ok')}</td>
         <td>${scoreInput(row, 'pin1Time')}</td>
@@ -801,6 +809,9 @@ function bindEvents() {
   $('#open-kraepelin').addEventListener('click', openKraepelin);
   $('#print-pdf').addEventListener('click', printPdf);
   $('#export-csv').addEventListener('click', exportCsv);
+  window.addEventListener('focus', () => {
+    if (state.dbReady) loadData();
+  });
 }
 
 bindEvents();
