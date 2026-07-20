@@ -1,4 +1,6 @@
 const ACTIVE_KEY = 'interviewManager.activeId.v2';
+const AUTH_KEY = 'interviewManager.auth.v1';
+const PASSWORD_HASH = '9461cc351eba7158d56c48eb18bd2b1c42feaf94d2f23216860f527e545b21f3';
 
 const state = {
   interviews: [],
@@ -10,6 +12,54 @@ const state = {
 };
 
 const $ = (selector) => document.querySelector(selector);
+
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function isAuthed() {
+  return sessionStorage.getItem(AUTH_KEY) === 'ok';
+}
+
+function showAuthScreen() {
+  $('#auth-screen').classList.remove('hidden');
+  $('#admin-app').classList.add('hidden');
+  $('#auth-password').focus();
+}
+
+function showAdminApp() {
+  $('#auth-screen').classList.add('hidden');
+  $('#admin-app').classList.remove('hidden');
+}
+
+async function handleAuth(event) {
+  event.preventDefault();
+  const input = $('#auth-password');
+  const hash = await sha256(input.value);
+  if (hash !== PASSWORD_HASH) {
+    $('#auth-error').classList.remove('hidden');
+    input.select();
+    return;
+  }
+  sessionStorage.setItem(AUTH_KEY, 'ok');
+  $('#auth-error').classList.add('hidden');
+  input.value = '';
+  showAdminApp();
+  await loadData();
+}
+
+function logout() {
+  sessionStorage.removeItem(AUTH_KEY);
+  state.interviews = [];
+  state.activeId = '';
+  state.kraepelinRecords = [];
+  state.dbReady = false;
+  state.loading = false;
+  state.error = '';
+  showAuthScreen();
+}
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -831,6 +881,7 @@ function exportCsv() {
 }
 
 function bindEvents() {
+  $('#auth-form').addEventListener('submit', handleAuth);
   $('#interview-form').addEventListener('submit', createInterview);
   $('#candidate-form').addEventListener('submit', addCandidate);
   $('#renumber-candidates').addEventListener('click', renumberCandidates);
@@ -839,10 +890,16 @@ function bindEvents() {
   $('#open-kraepelin').addEventListener('click', openKraepelin);
   $('#print-pdf').addEventListener('click', printPdf);
   $('#export-csv').addEventListener('click', exportCsv);
+  $('#logout').addEventListener('click', logout);
   window.addEventListener('focus', () => {
-    if (state.dbReady) loadData();
+    if (isAuthed() && state.dbReady) loadData();
   });
 }
 
 bindEvents();
-loadData();
+if (isAuthed()) {
+  showAdminApp();
+  loadData();
+} else {
+  showAuthScreen();
+}

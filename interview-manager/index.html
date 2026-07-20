@@ -4,10 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
-  <div class="app">
+  <section id="auth-screen" class="auth-screen">
+    <form id="auth-form" class="auth-card">
+      <p class="eyebrow">管理者入口</p>
+      <h1>面接事前テスト管理</h1>
+      <label>
+        パスワード
+        <input id="auth-password" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="btn primary">入る</button>
+      <p id="auth-error" class="auth-error hidden">パスワードが違います。</p>
+    </form>
+  </section>
+
+  <div id="admin-app" class="app hidden">
     <aside class="sidebar">
       <header class="brand">
         <h1>面接事前テスト管理</h1>
@@ -47,6 +60,7 @@
           <button id="refresh-kraepelin" class="btn"><i data-lucide="cloud-download"></i>クレペリン取込</button>
           <button id="print-pdf" class="btn"><i data-lucide="printer"></i>PDF</button>
           <button id="export-csv" class="btn"><i data-lucide="download"></i>CSV</button>
+          <button id="logout" class="btn"><i data-lucide="log-out"></i>退出</button>
         </div>
       </section>
 
@@ -118,6 +132,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
