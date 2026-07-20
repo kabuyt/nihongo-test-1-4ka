@@ -593,7 +593,7 @@ function pinGradeControl(row, round) {
       class="pin-grade-select grade-${current ?? 'empty'}"
       data-id="${row.id}"
       data-round="${round}"
-      aria-label="ピン${round}評価"
+      aria-label="ピンボード ${round}回目評価"
     >
       <option value="" ${current == null ? 'selected' : ''}>未入力</option>
       ${PIN_GRADES.map(grade => `
@@ -621,6 +621,7 @@ function pinTimeInput(row, round) {
       placeholder="${enabled ? '秒' : '-'}"
       value="${enabled ? String(value).replace(/"/g, '&quot;') : ''}"
       ${enabled ? '' : 'disabled'}
+      aria-label="ピンボード ${round}回目時間（秒）"
     >
   `;
 }
