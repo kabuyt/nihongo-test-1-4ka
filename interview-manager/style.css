@@ -584,7 +584,30 @@ tbody tr:hover td:first-child { background: #f9fbfd; }
 .kraepelin-cell .status-pill { margin-bottom: 3px; }
 .mini { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.45; }
 .comment-text { margin-top: 5px; font-size: 11px; font-weight: 600; line-height: 1.5; }
-.score-cell { min-width: 0; }
+.score-cell {
+  min-width: 0;
+  min-height: 88px;
+  display: grid;
+  grid-template-rows: 38px 28px 16px;
+  align-content: center;
+  gap: 3px;
+}
+.score-meta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.3;
+  text-align: center;
+}
+.score-link-slot {
+  min-height: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
 .score-input.done-input { border-color: #82c4ab; background: #f4fbf8; }
 .score-input.missing-input { border-color: #e8c27e; background: #fffaf0; }
 
@@ -606,8 +629,15 @@ tbody tr:hover td:first-child { background: #f9fbfd; }
 }
 .rank-list span { display: flex; justify-content: space-between; gap: 7px; white-space: nowrap; }
 .rank-list b { font-weight: 700; }
-.mini-link { display: inline-flex; margin-top: 4px; color: var(--blue); font-size: 10px; font-weight: 800; text-decoration: none; }
+.mini-link { display: inline-flex; color: var(--blue); font-size: 10px; font-weight: 800; line-height: 1.3; text-decoration: none; }
 td input { min-height: 34px; padding: 5px 7px; }
+#score-table .candidate-name,
+#score-table .score-input,
+#score-table .pin-grade-select {
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+}
 .cell-number { width: 100%; }
 .cell-name { min-width: 0; }
 

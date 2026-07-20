@@ -606,8 +606,10 @@ function subjectScoreCell(row, field, value, rank, options = {}) {
   return `
     <div class="score-cell">
       <input class="score-input ${doneClass}" data-id="${row.id}" data-field="${field}" type="number" min="0" max="${max}" step="1" placeholder="${placeholder}" value="${String(rawValue).replace(/"/g, '&quot;')}">
-      <div class="mini">${note} / 順位 ${rank}</div>
-      ${options.link ? `<a class="mini-link" href="${options.link}" target="_blank" rel="noopener">受験</a>` : ''}
+      <div class="score-meta">${note} / 順位 ${rank}</div>
+      <div class="score-link-slot">
+        ${options.link ? `<a class="mini-link" href="${options.link}" target="_blank" rel="noopener">受験</a>` : ''}
+      </div>
     </div>
   `;
 }
