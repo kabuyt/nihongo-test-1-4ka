@@ -622,20 +622,25 @@ function scoreInput(row, field, type = 'number') {
 function pinGradeControl(row, round) {
   const field = `pin${round}Ok`;
   const current = numeric(row.score[field]);
+  const currentInfo = pinGradeInfo(current);
   return `
-    <select
-      class="pin-grade-select grade-${current ?? 'empty'}"
-      data-id="${row.id}"
-      data-round="${round}"
-      aria-label="ピンボード ${round}回目評価"
-    >
-      <option value="" ${current == null ? 'selected' : ''}>未入力</option>
-      ${PIN_GRADES.map(grade => `
-        <option value="${grade.value}" ${current === grade.value ? 'selected' : ''}>
-          ${grade.symbol} ${grade.label}
-        </option>
-      `).join('')}
-    </select>
+    <div class="score-cell pin-entry-cell">
+      <select
+        class="pin-grade-select grade-${current ?? 'empty'}"
+        data-id="${row.id}"
+        data-round="${round}"
+        aria-label="ピンボード ${round}回目評価"
+      >
+        <option value="" ${current == null ? 'selected' : ''}>未入力</option>
+        ${PIN_GRADES.map(grade => `
+          <option value="${grade.value}" ${current === grade.value ? 'selected' : ''}>
+            ${grade.symbol} ${grade.label}
+          </option>
+        `).join('')}
+      </select>
+      <div class="score-meta">${currentInfo ? `${currentInfo.symbol} ${currentInfo.label}` : '評価を選択'}</div>
+      <div class="score-link-slot"></div>
+    </div>
   `;
 }
 
@@ -645,18 +650,22 @@ function pinTimeInput(row, round) {
   const value = row.score[field] ?? '';
   const enabled = grade != null && grade >= 1;
   return `
-    <input
-      class="score-input pin-time-input"
-      data-id="${row.id}"
-      data-field="${field}"
-      type="number"
-      min="0"
-      step="0.01"
-      placeholder="${enabled ? '秒' : '-'}"
-      value="${enabled ? String(value).replace(/"/g, '&quot;') : ''}"
-      ${enabled ? '' : 'disabled'}
-      aria-label="ピンボード ${round}回目時間（秒）"
-    >
+    <div class="score-cell pin-entry-cell">
+      <input
+        class="score-input pin-time-input"
+        data-id="${row.id}"
+        data-field="${field}"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="${enabled ? '秒' : '-'}"
+        value="${enabled ? String(value).replace(/"/g, '&quot;') : ''}"
+        ${enabled ? '' : 'disabled'}
+        aria-label="ピンボード ${round}回目時間（秒）"
+      >
+      <div class="score-meta">${enabled ? (value === '' ? '秒数を入力' : `${Number(value).toFixed(2)}秒`) : (grade === 0 ? '×は入力不要' : '評価後に入力')}</div>
+      <div class="score-link-slot"></div>
+    </div>
   `;
 }
 
@@ -785,29 +794,49 @@ function renderLinkSheet(interview) {
     const kUrl = kraepelinUrl(interview, candidate);
     const vUrl = vietnameseTestUrl(interview, candidate);
     return `
-      <article class="link-card">
-        <div class="link-candidate">
-          ${candidate.photo ? `<img class="link-photo" src="${escapeHtml(candidate.photo)}" alt="">` : '<div class="link-photo empty-photo"></div>'}
-          <div>
-            <div class="link-no">${escapeHtml(candidateLabel(candidate))}</div>
-            <h2>${escapeHtml(candidate.name || '')}</h2>
+      <article class="link-card" data-candidate-id="${escapeHtml(candidate.id)}">
+        <div class="link-card-head">
+          <div class="link-candidate">
+            ${candidate.photo ? `<img class="link-photo" src="${escapeHtml(candidate.photo)}" alt="">` : '<div class="link-photo empty-photo"></div>'}
+            <div>
+              <div class="link-no">${escapeHtml(candidateLabel(candidate))}</div>
+              <h2>${escapeHtml(candidate.name || '氏名未入力')}</h2>
+            </div>
           </div>
+          <span class="candidate-ticket-label">候補者専用</span>
         </div>
+        <p class="link-card-guide">上記の番号と氏名が本人のものか確認してから受験してください。</p>
         <div class="qr-pair">
           <div class="qr-box">
-            <div class="qr-title">クレペリン</div>
+            <div class="qr-step"><span>1</span>クレペリン</div>
             <img src="${escapeHtml(qrImageUrl(kUrl))}" alt="クレペリンQR">
-            <a href="${escapeHtml(kUrl)}" target="_blank" rel="noopener">${escapeHtml(kUrl)}</a>
+            <div class="qr-actions">
+              <button class="qr-action copy-test-url" type="button" data-url="${escapeHtml(kUrl)}"><i data-lucide="copy"></i>URLコピー</button>
+              <a class="qr-action" href="${escapeHtml(kUrl)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>開く</a>
+            </div>
           </div>
           <div class="qr-box">
-            <div class="qr-title">ベトナム国語</div>
+            <div class="qr-step"><span>2</span>ベトナム国語</div>
             <img src="${escapeHtml(qrImageUrl(vUrl))}" alt="ベトナム国語QR">
-            <a href="${escapeHtml(vUrl)}" target="_blank" rel="noopener">${escapeHtml(vUrl)}</a>
+            <div class="qr-actions">
+              <button class="qr-action copy-test-url" type="button" data-url="${escapeHtml(vUrl)}"><i data-lucide="copy"></i>URLコピー</button>
+              <a class="qr-action" href="${escapeHtml(vUrl)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>開く</a>
+            </div>
           </div>
+        </div>
+        <div class="link-card-footer">
+          <span>この受験票は本人だけが使用してください。</span>
+          <button class="btn print-candidate-ticket" type="button" data-id="${escapeHtml(candidate.id)}"><i data-lucide="printer"></i>この1人を印刷</button>
         </div>
       </article>
     `;
   }).join('');
+  sheet.querySelectorAll('.copy-test-url').forEach(button => {
+    button.addEventListener('click', () => copyTestUrl(button));
+  });
+  sheet.querySelectorAll('.print-candidate-ticket').forEach(button => {
+    button.addEventListener('click', () => printCandidateLinkSheet(button.dataset.id));
+  });
 }
 
 function renderTable(interview) {
@@ -1222,16 +1251,60 @@ function openLinkSheet() {
 
 function closeLinkSheet() {
   $('#link-sheet').classList.add('hidden');
-  document.body.classList.remove('printing-links');
+  resetLinkPrintState();
+}
+
+function resetLinkPrintState() {
+  document.body.classList.remove('printing-links', 'printing-single-link');
+  document.querySelectorAll('.link-card.print-target').forEach(card => card.classList.remove('print-target'));
 }
 
 function printLinkSheet() {
   const interview = activeInterview();
   if (!interview) return;
   renderLinkSheet(interview);
+  resetLinkPrintState();
   document.body.classList.add('printing-links');
   window.print();
-  setTimeout(() => document.body.classList.remove('printing-links'), 500);
+  setTimeout(resetLinkPrintState, 500);
+}
+
+function printCandidateLinkSheet(candidateId) {
+  const target = [...document.querySelectorAll('.link-card')]
+    .find(card => card.dataset.candidateId === candidateId);
+  if (!target) return;
+  resetLinkPrintState();
+  target.classList.add('print-target');
+  document.body.classList.add('printing-links', 'printing-single-link');
+  window.print();
+  setTimeout(resetLinkPrintState, 500);
+}
+
+async function copyTestUrl(button) {
+  const url = button.dataset.url;
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch {
+    const input = document.createElement('textarea');
+    input.value = url;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+  }
+  const original = button.innerHTML;
+  button.innerHTML = '<i data-lucide="check"></i>コピー済み';
+  button.classList.add('copied');
+  if (window.lucide) lucide.createIcons();
+  setTimeout(() => {
+    button.innerHTML = original;
+    button.classList.remove('copied');
+    if (window.lucide) lucide.createIcons();
+  }, 1600);
 }
 
 function exportCsv() {
