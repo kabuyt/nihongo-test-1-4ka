@@ -26,7 +26,10 @@ const state = {
   dbReady: false,
   loading: false,
   error: '',
+  kraepelinLastFetchedAt: null,
 };
+
+let kraepelinFetchInFlight = false;
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -644,6 +647,13 @@ function pinSummary(score) {
   };
 }
 
+function pinScore(summary, fastestTime) {
+  if (!summary?.complete) return null;
+  const evaluationScore = 90 * (summary.gradeTotal / 6);
+  const timeScore = summary.time > 0 && fastestTime > 0 ? 10 * (fastestTime / summary.time) : 10;
+  return Number((evaluationScore + timeScore).toFixed(1));
+}
+
 function pinGradeInfo(value) {
   return PIN_GRADES.find(item => item.value === numeric(value)) || null;
 }
@@ -659,7 +669,7 @@ function rankValues(items, getter, direction = 'desc') {
   const valid = [...new Set(values.filter(value => value != null))].sort((a, b) => direction === 'desc' ? b - a : a - b);
   return new Map(items.map((item, index) => {
     const value = values[index];
-    return [item.no, value == null ? items.length + 1 : valid.indexOf(value) + 1];
+    return [item.no, value == null ? null : valid.indexOf(value) + 1];
   }));
 }
 
@@ -702,6 +712,18 @@ function buildRows(interview) {
     row.kraepelinEval = kraepelinEvaluation(row.kSummary, maxKraepelinTotal);
   });
 
+  enriched.forEach(row => {
+    row.pinSummaryData = pinSummary(row.score);
+  });
+  const fastestTime = enriched.reduce((fastest, row) => {
+    const summary = row.pinSummaryData;
+    if (summary.complete && summary.time > 0 && (fastest === 0 || summary.time < fastest)) return summary.time;
+    return fastest;
+  }, 0);
+  enriched.forEach(row => {
+    row.pinScoreValue = pinScore(row.pinSummaryData, fastestTime);
+  });
+
   const kRank = isTestEnabled(interview, 'kraepelin') ? rankValues(enriched, row => row.kraepelinEval?.total ?? null, 'desc') : new Map();
   const mathRank = isTestEnabled(interview, 'math') ? rankValues(enriched, row => row.math, 'desc') : new Map();
   const vietnameseRank = isTestEnabled(interview, 'vietnamese') ? rankValues(enriched, row => row.vietnamese, 'desc') : new Map();
@@ -713,10 +735,11 @@ function buildRows(interview) {
     if (test.key === 'math') return row.math != null;
     if (test.key === 'vietnamese') return row.vietnamese != null;
     if (test.key === 'japanese') return row.japanese != null;
-    if (test.key === 'pinboard') return pinSummary(row.score).complete;
+    if (test.key === 'pinboard') return row.pinScoreValue != null;
     return true;
   }));
 
+  const maxScore = rankedTests.length * 100;
   const ranked = enriched.map(row => {
     const ranks = {
       k: kRank.get(row.no) ?? null,
@@ -725,12 +748,21 @@ function buildRows(interview) {
       japanese: japaneseRank.get(row.no) ?? null,
       pin: pinRank.get(row.no) ?? null,
     };
-    const rankByTest = { kraepelin: ranks.k, math: ranks.math, vietnamese: ranks.vietnamese, japanese: ranks.japanese, pinboard: ranks.pin };
-    const rankSum = rankedTests.reduce((sum, test) => sum + (rankByTest[test.key] ?? 0), 0);
-    return { ...row, ranks, rankSum, rankingComplete: allResultsComplete && rankedTests.length > 0 };
+    const scoreByTest = {
+      kraepelin: row.kraepelinEval?.total ?? null,
+      math: row.math,
+      vietnamese: row.vietnamese,
+      japanese: row.japanese,
+      pinboard: row.pinScoreValue,
+    };
+    const rankedScores = rankedTests.map(test => scoreByTest[test.key]);
+    const totalScore = rankedScores.length === 0 || rankedScores.some(value => value == null)
+      ? null
+      : Number(rankedScores.reduce((sum, value) => sum + value, 0).toFixed(1));
+    return { ...row, ranks, totalScore, maxScore, rankingComplete: allResultsComplete && rankedTests.length > 0 };
   });
 
-  const finalRank = rankValues(ranked, row => -row.rankSum, 'desc');
+  const finalRank = rankValues(ranked, row => row.totalScore, 'desc');
   return ranked
     .map(row => ({ ...row, finalRank: row.rankingComplete ? finalRank.get(row.no) : null }))
     .sort((a, b) => (a.finalRank ?? Number.MAX_SAFE_INTEGER) - (b.finalRank ?? Number.MAX_SAFE_INTEGER) || Number(a.no) - Number(b.no));
@@ -963,7 +995,10 @@ function renderPrintReport(interview, rows) {
           const pin = pinSummary(row.score);
           return `
             <tr>
-              <td class="print-rank"><strong>${row.finalRank == null ? '集計中' : `第${row.finalRank}位`}</strong></td>
+              <td class="print-rank">
+                <strong>${row.finalRank == null ? '集計中' : `第${row.finalRank}位`}</strong>
+                ${row.totalScore != null ? `<span>${formatScore(row.totalScore)} / ${row.maxScore}点</span>` : ''}
+              </td>
               <td class="print-candidate">
                 <div class="print-candidate-inner">
                   ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
@@ -980,6 +1015,7 @@ function renderPrintReport(interview, rows) {
               ${isTestEnabled(interview, 'pinboard') ? `<td class="print-pin">
                 <span>1回目　${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}</span>
                 <span>2回目　${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}</span>
+                ${row.pinScoreValue != null ? `<span>得点　${formatScore(row.pinScoreValue)}点</span>` : ''}
               </td>` : ''}
               <td class="print-subject-rank">${rankSummaryHtml(row, interview)}</td>
               <td class="print-note">${escapeHtml(overallComment(row, interview))}</td>
@@ -989,7 +1025,7 @@ function renderPrintReport(interview, rows) {
       </tbody>
     </table>
     <footer class="print-footer">
-      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の順位をもとに総合順位を算出</span>
+      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の各100点満点、合計${rankedTests.length * 100}点で総合順位を算出</span>
       <span>${escapeHtml(formatInterviewName(interview))}</span>
     </footer>
     ${behaviorAppendix}
@@ -1096,7 +1132,10 @@ function renderTable(interview) {
     const nameParts = splitCandidateName(row.name);
     return `
       <tr>
-        <td><span class="${rankClass}">${row.finalRank == null ? '集計中' : row.finalRank}</span></td>
+        <td>
+          <span class="${rankClass}">${row.finalRank == null ? '集計中' : row.finalRank}</span>
+          ${row.totalScore != null ? `<div class="mini">${formatScore(row.totalScore)} / ${row.maxScore}点</div>` : ''}
+        </td>
         <td>${candidateLabel(row)}</td>
         <td class="photo-cell">
           ${row.photo ? `<img class="candidate-photo" src="${escapeHtml(row.photo)}" alt="">` : '<span class="photo-empty">未登録</span>'}
@@ -1124,6 +1163,7 @@ function renderTable(interview) {
           <div class="mini">
             ${pin.enteredCount}/2回入力
             ${pin.complete && pin.time > 0 ? ` / ${pin.time.toFixed(2)}秒` : ''}
+            ${row.pinScoreValue != null ? ` / ${formatScore(row.pinScoreValue)}点` : ''}
           </div>
         </td>` : ''}
         ${isTestEnabled(interview, 'behavior') ? `<td class="behavior-cell behavior-col">
@@ -1188,6 +1228,7 @@ function render() {
   $('#refresh-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
   $('#open-kraepelin').disabled = !hasInterview || !isTestEnabled(interview, 'kraepelin');
   $('#refresh-kraepelin').disabled = !hasInterview || !isTestEnabled(interview, 'kraepelin');
+  renderKraepelinSyncStatus();
   $('#open-link-sheet').disabled = !hasInterview;
   $('#print-pdf').classList.toggle('hidden', !isAdmin);
   $('#export-csv').classList.toggle('hidden', !isAdmin);
@@ -1465,56 +1506,93 @@ async function deleteInterview() {
 
 async function fetchKraepelin(options = {}) {
   const automatic = options?.automatic === true;
+  if (kraepelinFetchInFlight) return;
   if (typeof supabase === 'undefined') {
     if (!automatic) alert('Supabase設定を読み込めません');
     return;
   }
   const interview = activeInterview();
   if (!interview) return;
-  const columns = 'id,name,started_at,rows_per_half,results,judgment_type,judgment_score,avg_correct,error_rate';
-  const candidateNames = interview.candidates.flatMap(candidate => [
-    `No.${candidate.no}`,
-    `No. ${candidate.no}`,
-    `No ${candidate.no}`,
-    `候補者 ${candidate.no}`,
-  ]);
+  kraepelinFetchInFlight = true;
+  try {
+    const columns = 'id,name,started_at,rows_per_half,results,judgment_type,judgment_score,avg_correct,error_rate';
+    const candidateNames = interview.candidates.flatMap(candidate => [
+      `No.${candidate.no}`,
+      `No. ${candidate.no}`,
+      `No ${candidate.no}`,
+      `候補者 ${candidate.no}`,
+    ]);
 
-  const [sessionResp, legacyResp, unassignedResp] = await Promise.all([
-    supabase
-      .from('kraepelin_results')
-      .select(columns)
-      .ilike('name', `session:${interview.id} / %`)
-      .order('started_at', { ascending: false, nullsFirst: false }),
-    supabase
-      .from('kraepelin_results')
-      .select(columns)
-      .ilike('name', `${formatInterviewName(interview)} / %`)
-      .order('started_at', { ascending: false, nullsFirst: false }),
-    supabase
-      .from('kraepelin_results')
-      .select(columns)
-      .in('name', candidateNames)
-      .order('started_at', { ascending: false, nullsFirst: false }),
-  ]);
-  const error = sessionResp.error || legacyResp.error || unassignedResp.error;
-  if (error) {
-    if (automatic) {
-      state.error = 'クレペリン結果の自動取得に失敗しました。再読込ボタンを押してください。';
-      render();
-    } else {
-      alert('クレペリン結果の取得に失敗しました: ' + error.message);
+    const [sessionResp, legacyResp, unassignedResp] = await Promise.all([
+      supabase
+        .from('kraepelin_results')
+        .select(columns)
+        .ilike('name', `session:${interview.id} / %`)
+        .order('started_at', { ascending: false, nullsFirst: false }),
+      supabase
+        .from('kraepelin_results')
+        .select(columns)
+        .ilike('name', `${formatInterviewName(interview)} / %`)
+        .order('started_at', { ascending: false, nullsFirst: false }),
+      supabase
+        .from('kraepelin_results')
+        .select(columns)
+        .in('name', candidateNames)
+        .order('started_at', { ascending: false, nullsFirst: false }),
+    ]);
+    const error = sessionResp.error || legacyResp.error || unassignedResp.error;
+    if (error) {
+      if (automatic) {
+        state.error = 'クレペリン結果の自動取得に失敗しました。再読込ボタンを押してください。';
+        render();
+      } else {
+        alert('クレペリン結果の取得に失敗しました: ' + error.message);
+      }
+      return;
     }
-    return;
+    if (activeInterview()?.id !== interview.id) return;
+    const byId = new Map();
+    [...(sessionResp.data || []), ...(legacyResp.data || []), ...(unassignedResp.data || [])].forEach(record => {
+      byId.set(record.id, record);
+    });
+    state.kraepelinRecords = [...byId.values()];
+    await attachUnassignedKraepelin();
+    if (state.error.startsWith('クレペリン結果の自動取得')) state.error = '';
+    state.kraepelinLastFetchedAt = Date.now();
+    render();
+  } finally {
+    kraepelinFetchInFlight = false;
   }
-  if (activeInterview()?.id !== interview.id) return;
-  const byId = new Map();
-  [...(sessionResp.data || []), ...(legacyResp.data || []), ...(unassignedResp.data || [])].forEach(record => {
-    byId.set(record.id, record);
+}
+
+function shouldAutoFetchKraepelin() {
+  const interview = activeInterview();
+  return isAuthed() && !!interview && isTestEnabled(interview, 'kraepelin') && document.visibilityState === 'visible';
+}
+
+function startKraepelinPolling() {
+  setInterval(() => {
+    if (shouldAutoFetchKraepelin()) fetchKraepelin({ automatic: true });
+  }, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && shouldAutoFetchKraepelin()) {
+      fetchKraepelin({ automatic: true });
+    }
   });
-  state.kraepelinRecords = [...byId.values()];
-  await attachUnassignedKraepelin();
-  if (state.error.startsWith('クレペリン結果の自動取得')) state.error = '';
-  render();
+}
+
+function formatSyncTime(timestamp) {
+  if (!timestamp) return '';
+  return new Date(timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function renderKraepelinSyncStatus() {
+  const el = $('#kraepelin-sync-status');
+  if (!el) return;
+  const interview = activeInterview();
+  const show = !!interview && isTestEnabled(interview, 'kraepelin');
+  el.classList.toggle('hidden', !show);
+  el.textContent = show && state.kraepelinLastFetchedAt ? `最終取得 ${formatSyncTime(state.kraepelinLastFetchedAt)}` : '';
 }
 
 async function attachUnassignedKraepelin() {
@@ -1615,18 +1693,20 @@ async function copyTestUrl(button) {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合結果', '候補者番号', '氏名・メモ'];
+  const headers = ['総合結果', '総合得点', '満点', '候補者番号', '氏名・メモ'];
   if (isTestEnabled(interview, 'kraepelin')) headers.push('クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考');
   if (isTestEnabled(interview, 'math')) headers.push('数学', '数学順位');
   if (isTestEnabled(interview, 'vietnamese')) headers.push('ベトナム国語', 'ベトナム国語順位');
   if (isTestEnabled(interview, 'japanese')) headers.push('日本語単語正答数', '日本語単語100点換算', '日本語単語順位');
-  if (isTestEnabled(interview, 'pinboard')) headers.push('ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位');
+  if (isTestEnabled(interview, 'pinboard')) headers.push('ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位', 'ピンボード点');
   if (isTestEnabled(interview, 'behavior')) headers.push('行動選択受験状況', '行動選択所要秒', '行動選択回答傾向');
   headers.push('科目順位');
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
     const values = [
       row.finalRank == null ? '集計中' : `第${row.finalRank}位`,
+      row.totalScore == null ? '' : formatScore(row.totalScore),
+      row.maxScore,
       row.no,
       row.name || '',
     ];
@@ -1643,7 +1723,8 @@ function exportCsv() {
       pin.grades[0] != null && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
       pinAttemptText(pin.grades[1], null),
       pin.grades[1] != null && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
-      row.ranks.pin ?? ''
+      row.ranks.pin ?? '',
+      row.pinScoreValue == null ? '' : formatScore(row.pinScoreValue)
     );
     if (isTestEnabled(interview, 'behavior')) values.push(
       row.behavior ? '受験済み' : '未受験',
@@ -1685,3 +1766,4 @@ function bindEvents() {
 
 bindEvents();
 initializeAuth();
+startKraepelinPolling();
