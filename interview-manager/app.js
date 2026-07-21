@@ -391,7 +391,7 @@ function overallComment(row, interview) {
   const kraepelin = kraepelinComment(row.kSummary, row.kraepelinEval);
   if (isTestEnabled(interview, 'kraepelin') && kraepelin) comments.push(`【クレペリン】${kraepelin}`);
   if (isTestEnabled(interview, 'vietnamese')) comments.push(`【ベトナム国語】${vietnameseComment(row.vietnamese)}`);
-  return comments.join(' ');
+  return comments.join('\n');
 }
 
 function candidateFromDb(row) {
@@ -984,11 +984,11 @@ function renderPrintReport(interview, rows) {
         }).join('')}
       </tbody>
     </table>
-    ${behaviorAppendix}
     <footer class="print-footer">
       <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の順位をもとに総合順位を算出</span>
       <span>${escapeHtml(formatInterviewName(interview))}</span>
     </footer>
+    ${behaviorAppendix}
   `;
 }
 

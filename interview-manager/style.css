@@ -1170,7 +1170,11 @@ td input { min-height: 34px; padding: 5px 7px; }
     white-space: nowrap;
   }
   .print-subject-rank b { font-weight: 400; }
-  .print-note { text-align: left !important; overflow-wrap: anywhere; }
+  .print-note {
+    text-align: left !important;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+  }
 
   .print-footer {
     display: flex;
@@ -1179,6 +1183,8 @@ td input { min-height: 34px; padding: 5px 7px; }
     margin-top: 6px;
     color: #69778a;
     font-size: 6.5px;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   .print-footer span:last-child { max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
