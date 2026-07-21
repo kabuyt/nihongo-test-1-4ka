@@ -552,7 +552,7 @@ function behaviorSummary(record) {
 function behaviorTendencyComment(record) {
   if (!record || typeof QUESTIONS === 'undefined') return '未受験のため、行動傾向は未評価です。';
   const strengthComments = {
-    1: { 3: '遅れた場合に理由を説明する', 4: '遅れる可能性を早めに連絡する' },
+    1: { 3: '遅刻した場合に会社へ理由を説明する', 4: '遅刻する可能性を会社へ早めに連絡する' },
     2: { 2: 'ミスを会社へ報告する' },
     3: { 1: '相手の反応に左右されず挨拶を続ける', 2: '関係を悪化させず翌日から挨拶を再開する' },
     4: { 3: '他人の物を使う前に確認する' },
