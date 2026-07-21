@@ -490,13 +490,13 @@ function pinSummary(score) {
   const grades = [grade1, grade2];
   const times = [time1, time2];
   const enteredCount = grades.filter(value => value != null).length;
-  const requiredTimesComplete = grades.every((grade, index) => grade == null || grade < 1 || times[index] != null);
+  const requiredTimesComplete = grades.every((grade, index) => grade == null || times[index] != null);
   return {
     grades,
     times,
     gradeTotal: grades.reduce((sum, value) => sum + (value ?? 0), 0),
     enteredCount,
-    time: times.reduce((sum, value, index) => sum + (grades[index] >= 1 && value != null ? value : 0), 0),
+    time: times.reduce((sum, value, index) => sum + (grades[index] != null && value != null ? value : 0), 0),
     complete: enteredCount === 2 && requiredTimesComplete,
   };
 }
@@ -508,7 +508,7 @@ function pinGradeInfo(value) {
 function pinAttemptText(grade, time) {
   const info = pinGradeInfo(grade);
   if (!info) return '未入力';
-  return `${info.symbol}${info.label}${info.value >= 1 && time != null ? ` ${Number(time).toFixed(2)}秒` : ''}`;
+  return `${info.symbol}${info.label}${time != null ? ` ${Number(time).toFixed(2)}秒` : ''}`;
 }
 
 function rankValues(items, getter, direction = 'desc') {
@@ -663,7 +663,7 @@ function pinTimeInput(row, round) {
   const grade = numeric(row.score[`pin${round}Ok`]);
   const field = `pin${round}Time`;
   const value = row.score[field] ?? '';
-  const enabled = grade != null && grade >= 1;
+  const enabled = grade != null;
   return `
     <div class="score-cell pin-entry-cell">
       <input
@@ -678,7 +678,7 @@ function pinTimeInput(row, round) {
         ${enabled ? '' : 'disabled'}
         aria-label="ピンボード ${round}回目時間（秒）"
       >
-      <div class="score-meta">${enabled ? (value === '' ? '秒数を入力' : `${Number(value).toFixed(2)}秒`) : (grade === 0 ? '×は入力不要' : '評価後に入力')}</div>
+      <div class="score-meta">${enabled ? (value === '' ? '秒数を入力' : `${Number(value).toFixed(2)}秒`) : '評価後に入力'}</div>
       <div class="score-link-slot"></div>
     </div>
   `;
@@ -1072,7 +1072,7 @@ async function updatePinGrade(id, round, grade) {
   const gradeColumn = `pin${round}_ok`;
   const timeColumn = `pin${round}_time`;
   const update = { [gradeColumn]: nextGrade };
-  if (nextGrade == null || nextGrade < 1) update[timeColumn] = null;
+  if (nextGrade == null) update[timeColumn] = null;
 
   const { error } = await supabase.from('interview_candidates').update(update).eq('id', id);
   if (error) {
@@ -1082,7 +1082,7 @@ async function updatePinGrade(id, round, grade) {
 
   const score = ensureScore(candidate);
   score[gradeField] = nextGrade ?? '';
-  if (nextGrade == null || nextGrade < 1) score[timeField] = '';
+  if (nextGrade == null) score[timeField] = '';
   render();
 }
 
@@ -1360,9 +1360,9 @@ function exportCsv() {
       row.japanese ?? '',
       row.ranks.japanese,
       pinAttemptText(pin.grades[0], null),
-      pin.grades[0] >= 1 && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
+      pin.grades[0] != null && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
       pinAttemptText(pin.grades[1], null),
-      pin.grades[1] >= 1 && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
+      pin.grades[1] != null && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
       row.ranks.pin,
       rankSummary(row),
     ];
