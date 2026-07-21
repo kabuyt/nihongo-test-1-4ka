@@ -11,10 +11,10 @@ const TEST_DEFINITIONS = [
   { key: 'behavior', label: '行動選択テスト', ranked: false, online: true },
 ];
 const PIN_GRADES = [
-  { value: 3, symbol: '◎', label: 'ミス無しでクリア', detail: '間違いなく最後まで完成した' },
-  { value: 2, symbol: '○', label: 'ミス有りでクリア。作業内容に難あり', detail: '途中で間違えたが、指示なしで気づいて直し完成した' },
-  { value: 1, symbol: '△', label: 'ミスに気づかず終了、訂正を指示されて修正', detail: 'ほぼできたが、間違いが残った、または自力で直せなかった' },
-  { value: 0, symbol: '×', label: 'ミスに気づかず終了、訂正を指示されても修正できず', detail: '間違いが続き、作業を進めたり修正したりできなかった' },
+  { value: 3, symbol: '◎', label: '正確に完了', detail: '間違いなく最後まで完成した' },
+  { value: 2, symbol: '○', label: '自力で修正', detail: '途中で間違えたが、指示なしで気づいて直し完成した' },
+  { value: 1, symbol: '△', label: '一部ミス', detail: 'ほぼできたが、間違いが残った、または自力で直せなかった' },
+  { value: 0, symbol: '×', label: '継続困難', detail: '間違いが続き、作業を進めたり修正したりできなかった' },
 ];
 
 const state = {
