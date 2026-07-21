@@ -11,10 +11,10 @@ const TEST_DEFINITIONS = [
   { key: 'behavior', label: '行動選択テスト', ranked: false, online: true },
 ];
 const PIN_GRADES = [
-  { value: 3, symbol: '◎', label: 'ミス無しでクリア' },
-  { value: 2, symbol: '○', label: 'ミス有りでクリア。作業内容に難あり' },
-  { value: 1, symbol: '△', label: 'ミスに気づかず終了、訂正を指示されて修正' },
-  { value: 0, symbol: '×', label: 'ミスに気づかず終了、訂正を指示されても修正できず' },
+  { value: 3, symbol: '◎', label: 'ミス無しでクリア', detail: '間違いなく最後まで完成した' },
+  { value: 2, symbol: '○', label: 'ミス有りでクリア。作業内容に難あり', detail: '途中で間違えたが、指示なしで気づいて直し完成した' },
+  { value: 1, symbol: '△', label: 'ミスに気づかず終了、訂正を指示されて修正', detail: 'ほぼできたが、間違いが残った、または自力で直せなかった' },
+  { value: 0, symbol: '×', label: 'ミスに気づかず終了、訂正を指示されても修正できず', detail: '間違いが続き、作業を進めたり修正したりできなかった' },
 ];
 
 const state = {
@@ -933,10 +933,7 @@ function renderPrintReport(interview, rows) {
     </header>
     ${isTestEnabled(interview, 'pinboard') ? `<div class="print-pin-legend" aria-label="ピンボード評価基準">
       <b>ピンボード評価</b>
-      <span><strong>◎</strong>ミス無しでクリア</span>
-      <span><strong>○</strong>ミス有りでクリア。作業内容に難あり</span>
-      <span><strong>△</strong>ミスに気づかず終了、訂正を指示されて修正</span>
-      <span><strong>×</strong>ミスに気づかず終了、訂正を指示されても修正できず</span>
+      ${PIN_GRADES.map(grade => `<span><strong>${grade.symbol}</strong><em>${grade.label}<i>${grade.detail}</i></em></span>`).join('')}
     </div>` : ''}
     <section class="print-overview" aria-label="面接情報">
       <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
