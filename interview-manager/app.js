@@ -11,10 +11,10 @@ const TEST_DEFINITIONS = [
   { key: 'behavior', label: '行動選択テスト', ranked: false, online: true },
 ];
 const PIN_GRADES = [
-  { value: 3, symbol: '◎', label: '正確に完了' },
-  { value: 2, symbol: '○', label: '自力で修正' },
-  { value: 1, symbol: '△', label: '一部ミス' },
-  { value: 0, symbol: '×', label: '継続困難' },
+  { value: 3, symbol: '◎', label: 'ノーミス完遂' },
+  { value: 2, symbol: '○', label: '完遂したけど、雑、ミスがあった' },
+  { value: 1, symbol: '△', label: 'ミスに気づかず終了、訂正を指示されて修正' },
+  { value: 0, symbol: '×', label: 'ミスに気づかず終了、訂正を指示されても修正できず' },
 ];
 
 const state = {
@@ -926,10 +926,10 @@ function renderPrintReport(interview, rows) {
           <h1>事前テスト結果</h1>
           ${isTestEnabled(interview, 'pinboard') ? `<div class="print-pin-legend" aria-label="ピンボード評価基準">
             <b>ピンボード評価</b>
-            <span><strong>◎</strong> 正確に完了</span>
-            <span><strong>○</strong> 自力で修正</span>
-            <span><strong>△</strong> 一部ミス</span>
-            <span><strong>×</strong> 継続困難</span>
+            <span><strong>◎</strong> ノーミス完遂</span>
+            <span><strong>○</strong> 完遂したけど、雑、ミスがあった</span>
+            <span><strong>△</strong> ミスに気づかず終了、訂正を指示されて修正</span>
+            <span><strong>×</strong> ミスに気づかず終了、訂正を指示されても修正できず</span>
           </div>` : ''}
         </div>
       </div>

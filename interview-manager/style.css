@@ -1068,18 +1068,19 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-pin-legend {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 7px;
     margin-top: 3px;
     color: #5f6e82;
     font-size: 6.5px;
     line-height: 1.2;
-    white-space: nowrap;
+    white-space: normal;
   }
   .print-pin-legend b {
     color: #243b5a;
     font-weight: 700;
   }
-  .print-pin-legend span { white-space: nowrap; }
+  .print-pin-legend span { white-space: normal; }
   .print-pin-legend strong {
     color: #243b5a;
     font-size: 7.5px;
