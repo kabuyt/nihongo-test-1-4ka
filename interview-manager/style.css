@@ -516,6 +516,50 @@ h2 {
   line-height: 1.6;
 }
 
+.pin-formula-title { margin: 0 0 8px; font-size: 12px; font-weight: 800; }
+
+.pin-formula {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 9px;
+}
+
+.pin-formula > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 8px 11px;
+  border: 1px solid #dbe4f1;
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.pin-formula-label {
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pin-formula-body { min-width: 0; display: grid; gap: 2px; }
+.pin-formula-body b { font-size: 12px; }
+.pin-formula-body small { color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.5; }
+
+.pin-formula-note {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.pin-formula-note:last-child { margin-bottom: 0; }
+
 .candidate-tools {
   display: grid;
   grid-template-columns: auto minmax(400px, 1fr) auto;
@@ -1089,12 +1133,20 @@ td input { min-height: 34px; padding: 5px 7px; }
     line-height: 1.25;
   }
   .print-pin-legend b {
+    display: grid;
+    gap: 1px;
     padding: 4px 7px;
     border-right: 1px solid #d2d9e1;
     color: #243b5a;
     font-size: 7.5px;
     font-weight: 700;
     white-space: nowrap;
+  }
+  .print-pin-legend b > i {
+    color: #7c8899;
+    font-size: 6.2px;
+    font-style: normal;
+    font-weight: 500;
   }
   .print-pin-legend span {
     display: grid;

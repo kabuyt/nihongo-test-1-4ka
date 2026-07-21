@@ -673,21 +673,6 @@ function rankValues(items, getter, direction = 'desc') {
   }));
 }
 
-function pinRanks(items) {
-  const sorted = [...items].sort((a, b) => {
-    const pa = pinSummary(ensureScore(a));
-    const pb = pinSummary(ensureScore(b));
-    if (pa.enteredCount !== pb.enteredCount) return pb.enteredCount - pa.enteredCount;
-    if (pa.gradeTotal !== pb.gradeTotal) return pb.gradeTotal - pa.gradeTotal;
-    const paSecond = pa.grades[1] ?? -1;
-    const pbSecond = pb.grades[1] ?? -1;
-    if (paSecond !== pbSecond) return pbSecond - paSecond;
-    if (pa.complete !== pb.complete) return pa.complete ? -1 : 1;
-    return pa.time - pb.time;
-  });
-  return new Map(sorted.map((item, index) => [item.no, index + 1]));
-}
-
 function buildRows(interview) {
   const candidates = interview.candidates || [];
   const enriched = candidates.map(candidate => {
@@ -728,7 +713,7 @@ function buildRows(interview) {
   const mathRank = isTestEnabled(interview, 'math') ? rankValues(enriched, row => row.math, 'desc') : new Map();
   const vietnameseRank = isTestEnabled(interview, 'vietnamese') ? rankValues(enriched, row => row.vietnamese, 'desc') : new Map();
   const japaneseRank = isTestEnabled(interview, 'japanese') ? rankValues(enriched, row => row.japanese, 'desc') : new Map();
-  const pinRank = isTestEnabled(interview, 'pinboard') ? pinRanks(enriched) : new Map();
+  const pinRank = isTestEnabled(interview, 'pinboard') ? rankValues(enriched, row => row.pinScoreValue, 'desc') : new Map();
   const rankedTests = enabledTests(interview, test => test.ranked);
   const allResultsComplete = enriched.length > 0 && enriched.every(row => rankedTests.every(test => {
     if (test.key === 'kraepelin') return row.kraepelinEval != null;
@@ -964,7 +949,7 @@ function renderPrintReport(interview, rows) {
       </div>
     </header>
     ${isTestEnabled(interview, 'pinboard') ? `<div class="print-pin-legend" aria-label="ピンボード評価基準">
-      <b>ピンボード評価</b>
+      <b>ピンボード評価<i>評価90点（◎3・○2・△1・×0の2回合計÷6）＋時間10点（最速者÷本人の合計時間）</i></b>
       ${PIN_GRADES.map(grade => `<span><strong>${grade.symbol}</strong><em>${grade.label}<i>${grade.detail}</i></em></span>`).join('')}
     </div>` : ''}
     <section class="print-overview" aria-label="面接情報">
@@ -1159,7 +1144,7 @@ function renderTable(interview) {
         <td class="score-entry-table-cell pin-grade-col">${pinGradeControl(row, 2)}</td>
         <td class="score-entry-table-cell pin-time-col">${pinTimeInput(row, 2)}</td>
         <td class="pin-rank-col">
-          ${row.ranks.pin}
+          ${row.ranks.pin ?? '-'}
           <div class="mini">
             ${pin.enteredCount}/2回入力
             ${pin.complete && pin.time > 0 ? ` / ${pin.time.toFixed(2)}秒` : ''}
