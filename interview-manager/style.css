@@ -599,6 +599,14 @@ th:nth-child(16), td:nth-child(16) { width: 52px; }
   text-align: center;
 }
 
+#score-table .kraepelin-col { width: 310px; }
+#score-table .subject-score-col { width: 118px; }
+#score-table .pin-grade-col { width: 154px; }
+#score-table .pin-time-col { width: 94px; }
+#score-table .pin-rank-col { width: 106px; }
+#score-table .behavior-col { width: 230px; }
+#score-table .subject-rank-col { width: 132px; }
+
 #score-table .candidate-delete-cell .remove-candidate {
   width: 36px;
   min-width: 36px;
@@ -667,6 +675,7 @@ tbody tr:hover td:first-child { background: #f9fbfd; }
 
 .kraepelin-cell { min-width: 0; text-align: left; }
 .kraepelin-cell .status-pill { margin-bottom: 3px; }
+.kraepelin-link-slot { justify-content: flex-start; margin-top: 6px; }
 .mini { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.45; }
 .comment-text { margin-top: 5px; font-size: 11px; font-weight: 600; line-height: 1.5; }
 .score-cell {
@@ -726,7 +735,7 @@ td input { min-height: 34px; padding: 5px 7px; }
   max-height: 40px;
   margin: 0;
 }
-#score-table tbody td:nth-child(n+7):nth-child(-n+13) {
+.score-entry-table-cell {
   padding-top: 14px;
   vertical-align: top;
 }

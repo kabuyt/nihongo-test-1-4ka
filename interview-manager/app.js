@@ -1079,12 +1079,16 @@ function renderTable(interview) {
   body.innerHTML = rows.map(row => {
     const pin = pinSummary(row.score);
     const rankClass = row.finalRank != null && row.finalRank <= 3 ? 'rank top' : 'rank';
-    const kraepelinCell = row.kraepelinEval == null
+    const kraepelinResult = row.kraepelinEval == null
       ? '<span class="status-pill missing">未取得</span>'
       : `<span class="status-pill ok">${row.kraepelinEval.total}</span>
          <div class="mini">順位 ${row.ranks.k} / 正答 ${row.kraepelinTotal} / 誤答 ${formatPercent(row.kSummary.errorRate)}</div>
          <div class="mini">作業 ${row.kraepelinEval.work}・正確 ${row.kraepelinEval.accuracy}・安定 ${row.kraepelinEval.stability} / ${judgmentLabel(row.kSummary.judgment)}</div>
          <div class="comment-text">${kraepelinComment(row.kSummary, row.kraepelinEval)}</div>`;
+    const kraepelinCell = `${kraepelinResult}
+      <div class="score-link-slot kraepelin-link-slot">
+        <a class="mini-link" href="${escapeHtml(kraepelinUrl(interview, row))}" target="_blank" rel="noopener">受験</a>
+      </div>`;
     const nameParts = splitCandidateName(row.name);
     return `
       <tr>
@@ -1103,28 +1107,27 @@ function renderTable(interview) {
             <input class="candidate-name-input candidate-name-latin" data-id="${row.id}" data-field="latin" value="${escapeHtml(nameParts.latin)}" placeholder="LATIN NAME" aria-label="${escapeHtml(candidateLabel(row))} ラテン氏名">
           </div>
         </td>
-        ${isTestEnabled(interview, 'kraepelin') ? `<td class="kraepelin-cell">${kraepelinCell}</td>
-        <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>` : ''}
-        ${isTestEnabled(interview, 'math') ? `<td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>` : ''}
-        ${isTestEnabled(interview, 'vietnamese') ? `<td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>` : ''}
-        ${isTestEnabled(interview, 'japanese') ? `<td>${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>` : ''}
-        ${isTestEnabled(interview, 'pinboard') ? `<td>${pinGradeControl(row, 1)}</td>
-        <td>${pinTimeInput(row, 1)}</td>
-        <td>${pinGradeControl(row, 2)}</td>
-        <td>${pinTimeInput(row, 2)}</td>
-        <td>
+        ${isTestEnabled(interview, 'kraepelin') ? `<td class="kraepelin-cell kraepelin-col">${kraepelinCell}</td>` : ''}
+        ${isTestEnabled(interview, 'math') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>` : ''}
+        ${isTestEnabled(interview, 'vietnamese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>` : ''}
+        ${isTestEnabled(interview, 'japanese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>` : ''}
+        ${isTestEnabled(interview, 'pinboard') ? `<td class="score-entry-table-cell pin-grade-col">${pinGradeControl(row, 1)}</td>
+        <td class="score-entry-table-cell pin-time-col">${pinTimeInput(row, 1)}</td>
+        <td class="score-entry-table-cell pin-grade-col">${pinGradeControl(row, 2)}</td>
+        <td class="score-entry-table-cell pin-time-col">${pinTimeInput(row, 2)}</td>
+        <td class="pin-rank-col">
           ${row.ranks.pin}
           <div class="mini">
             ${pin.enteredCount}/2回入力
             ${pin.complete && pin.time > 0 ? ` / ${pin.time.toFixed(2)}秒` : ''}
           </div>
         </td>` : ''}
-        ${isTestEnabled(interview, 'behavior') ? `<td class="behavior-cell">
+        ${isTestEnabled(interview, 'behavior') ? `<td class="behavior-cell behavior-col">
           <span class="status-pill ${row.behavior ? 'ok' : 'missing'}">${row.behavior ? '受験済み' : '未受験'}</span>
           <div class="behavior-tendency-brief">${escapeHtml(behaviorTendencyComment(row.behavior))}</div>
           ${row.behavior ? `<button type="button" class="btn behavior-detail-btn" data-id="${row.id}">回答傾向を見る</button>` : `<a class="mini-link" href="${escapeHtml(behaviorTestUrl(interview, row))}" target="_blank" rel="noopener">受験</a>`}
         </td>` : ''}
-        <td><span class="rank-list">${rankSummaryHtml(row, interview)}</span></td>
+        <td class="subject-rank-col"><span class="rank-list">${rankSummaryHtml(row, interview)}</span></td>
         <td class="candidate-delete-cell">${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="候補者を削除" aria-label="${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '')}を削除"><i data-lucide="trash-2"></i></button>` : ''}</td>
       </tr>
     `;

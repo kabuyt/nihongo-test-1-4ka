@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -187,18 +187,17 @@
                 <th>No.</th>
                 <th>写真</th>
                 <th>氏名<br><span class="th-sub">カタカナ / LATIN NAME</span></th>
-                <th data-test-col="kraepelin">クレペリン評価</th>
-                <th data-test-col="kraepelin">受験URL</th>
-                <th data-test-col="math">数学</th>
-                <th data-test-col="vietnamese">ベトナム国語</th>
-                <th data-test-col="japanese">日本語単語<br><span class="th-sub">30問</span></th>
-                <th data-test-col="pinboard">ピンボード<br><span class="th-sub">1回目評価</span></th>
-                <th data-test-col="pinboard">1回目<br><span class="th-sub">時間（秒）</span></th>
-                <th data-test-col="pinboard">ピンボード<br><span class="th-sub">2回目評価</span></th>
-                <th data-test-col="pinboard">2回目<br><span class="th-sub">時間（秒）</span></th>
-                <th data-test-col="pinboard">ピン順位</th>
-                <th data-test-col="behavior">行動選択<br><span class="th-sub">順位対象外</span></th>
-                <th>科目順位</th>
+                <th class="kraepelin-col" data-test-col="kraepelin">クレペリン評価</th>
+                <th class="subject-score-col" data-test-col="math">数学</th>
+                <th class="subject-score-col" data-test-col="vietnamese">ベトナム国語</th>
+                <th class="subject-score-col" data-test-col="japanese">日本語単語<br><span class="th-sub">30問</span></th>
+                <th class="pin-grade-col" data-test-col="pinboard">ピンボード<br><span class="th-sub">1回目評価</span></th>
+                <th class="pin-time-col" data-test-col="pinboard">1回目<br><span class="th-sub">時間（秒）</span></th>
+                <th class="pin-grade-col" data-test-col="pinboard">ピンボード<br><span class="th-sub">2回目評価</span></th>
+                <th class="pin-time-col" data-test-col="pinboard">2回目<br><span class="th-sub">時間（秒）</span></th>
+                <th class="pin-rank-col" data-test-col="pinboard">ピン順位</th>
+                <th class="behavior-col" data-test-col="behavior">行動選択<br><span class="th-sub">順位対象外</span></th>
+                <th class="subject-rank-col">科目順位</th>
                 <th class="candidate-delete-col">削除</th>
               </tr>
             </thead>
@@ -247,6 +246,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
   <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
 </body>
 </html>
