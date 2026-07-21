@@ -1125,7 +1125,7 @@ function renderTable(interview) {
           ${row.behavior ? `<button type="button" class="btn behavior-detail-btn" data-id="${row.id}">回答傾向を見る</button>` : `<a class="mini-link" href="${escapeHtml(behaviorTestUrl(interview, row))}" target="_blank" rel="noopener">受験</a>`}
         </td>` : ''}
         <td><span class="rank-list">${rankSummaryHtml(row, interview)}</span></td>
-        <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="候補者を削除" aria-label="${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '')}を削除"><i data-lucide="trash-2"></i></button>` : ''}</td>
+        <td class="candidate-delete-cell">${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="候補者を削除" aria-label="${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '')}を削除"><i data-lucide="trash-2"></i></button>` : ''}</td>
       </tr>
     `;
   }).join('');

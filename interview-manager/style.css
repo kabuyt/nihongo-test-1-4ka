@@ -591,6 +591,35 @@ th:nth-child(14), td:nth-child(14) { width: 106px; }
 th:nth-child(15), td:nth-child(15) { width: 132px; }
 th:nth-child(16), td:nth-child(16) { width: 52px; }
 
+#score-table .candidate-delete-col,
+#score-table .candidate-delete-cell {
+  width: 64px;
+  min-width: 64px;
+  padding-inline: 8px;
+  text-align: center;
+}
+
+#score-table .candidate-delete-cell .remove-candidate {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  color: var(--red);
+  border-color: #edc1bd;
+  background: var(--red-soft);
+  box-shadow: none;
+}
+
+#score-table .candidate-delete-cell .remove-candidate:hover {
+  border-color: #d69089;
+  background: #f9d9d6;
+}
+
+#score-table .candidate-delete-cell .remove-candidate svg {
+  flex: 0 0 auto;
+}
+
 .sticky-col {
   position: sticky;
   left: 0;
