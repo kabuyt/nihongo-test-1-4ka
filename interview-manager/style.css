@@ -1066,24 +1066,39 @@ td input { min-height: 34px; padding: 5px 7px; }
 
   .print-header h1 { margin: 0; font-size: 19px; line-height: 1.25; letter-spacing: 0.04em; }
   .print-pin-legend {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto repeat(4, minmax(0, 1fr));
     align-items: center;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 3px;
+    gap: 0;
+    margin-bottom: 8px;
+    border: 1px solid #bcc6d2;
+    border-radius: 3px;
     color: #5f6e82;
-    font-size: 6.5px;
-    line-height: 1.2;
-    white-space: normal;
+    font-size: 7px;
+    line-height: 1.25;
   }
   .print-pin-legend b {
-    color: #243b5a;
-    font-weight: 700;
-  }
-  .print-pin-legend span { white-space: normal; }
-  .print-pin-legend strong {
+    padding: 4px 7px;
+    border-right: 1px solid #d2d9e1;
     color: #243b5a;
     font-size: 7.5px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .print-pin-legend span {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 4px 7px;
+    border-right: 1px solid #d2d9e1;
+    white-space: normal;
+  }
+  .print-pin-legend span:last-child { border-right: 0; }
+  .print-pin-legend strong {
+    color: #243b5a;
+    font-size: 8.5px;
   }
   .print-document-meta { display: grid; justify-items: end; gap: 3px; color: #566579; font-size: 8px; }
   .print-document-meta span { padding: 2px 7px; border: 1px solid #aab4c1; border-radius: 999px; font-weight: 700; }

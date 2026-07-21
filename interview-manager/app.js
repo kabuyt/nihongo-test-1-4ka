@@ -11,8 +11,8 @@ const TEST_DEFINITIONS = [
   { key: 'behavior', label: '行動選択テスト', ranked: false, online: true },
 ];
 const PIN_GRADES = [
-  { value: 3, symbol: '◎', label: 'ノーミス完遂' },
-  { value: 2, symbol: '○', label: '完遂したけど、雑、ミスがあった' },
+  { value: 3, symbol: '◎', label: 'ミス無しでクリア' },
+  { value: 2, symbol: '○', label: 'ミス有りでクリア。作業内容に難あり' },
   { value: 1, symbol: '△', label: 'ミスに気づかず終了、訂正を指示されて修正' },
   { value: 0, symbol: '×', label: 'ミスに気づかず終了、訂正を指示されても修正できず' },
 ];
@@ -924,13 +924,6 @@ function renderPrintReport(interview, rows) {
         <div class="print-title-block">
           <div class="print-label">PRE-INTERVIEW TEST RESULTS</div>
           <h1>事前テスト結果</h1>
-          ${isTestEnabled(interview, 'pinboard') ? `<div class="print-pin-legend" aria-label="ピンボード評価基準">
-            <b>ピンボード評価</b>
-            <span><strong>◎</strong> ノーミス完遂</span>
-            <span><strong>○</strong> 完遂したけど、雑、ミスがあった</span>
-            <span><strong>△</strong> ミスに気づかず終了、訂正を指示されて修正</span>
-            <span><strong>×</strong> ミスに気づかず終了、訂正を指示されても修正できず</span>
-          </div>` : ''}
         </div>
       </div>
       <div class="print-document-meta">
@@ -938,6 +931,13 @@ function renderPrintReport(interview, rows) {
         <strong>作成日 ${today}</strong>
       </div>
     </header>
+    ${isTestEnabled(interview, 'pinboard') ? `<div class="print-pin-legend" aria-label="ピンボード評価基準">
+      <b>ピンボード評価</b>
+      <span><strong>◎</strong>ミス無しでクリア</span>
+      <span><strong>○</strong>ミス有りでクリア。作業内容に難あり</span>
+      <span><strong>△</strong>ミスに気づかず終了、訂正を指示されて修正</span>
+      <span><strong>×</strong>ミスに気づかず終了、訂正を指示されても修正できず</span>
+    </div>` : ''}
     <section class="print-overview" aria-label="面接情報">
       <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
       <div><span>受入企業</span><strong>${escapeHtml(interview.company || '-')}</strong></div>
