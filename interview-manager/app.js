@@ -549,6 +549,41 @@ function behaviorSummary(record) {
   return `受験済み（${count}/6問${seconds == null ? '' : `・${Math.floor(seconds / 60)}分${seconds % 60}秒`}）`;
 }
 
+function behaviorTendencyComment(record) {
+  if (!record || typeof QUESTIONS === 'undefined') return '未受験のため、行動傾向は未評価です。';
+  const labels = {
+    1: { strength: '早めの連絡', review: '遅れそうな場合の事前連絡' },
+    2: { strength: 'ミスの報告', review: 'ミス発生時の報告' },
+    3: { strength: '礼儀の継続', review: '相手の反応に左右されず挨拶を続ける姿勢' },
+    4: { strength: 'ルールに沿った確認', review: '共有物を使う前の確認' },
+    5: { strength: '余裕を持った時間管理', review: '移動時間を逆算した行動' },
+    6: { strength: '当事者との話し合い', review: '共同生活での適切な意思表示' },
+  };
+  const responses = QUESTIONS.map(question => {
+    const selectedId = numeric(record[`q${question.n}`]);
+    const selected = question.choices.find(choice => choice.id === selectedId);
+    return selected ? { number: question.n, score: numeric(selected.score) ?? 0 } : null;
+  }).filter(Boolean);
+  if (!responses.length) return '回答不足のため、行動傾向は未評価です。';
+
+  const strengths = responses
+    .filter(item => item.score >= 2)
+    .sort((a, b) => b.score - a.score || a.number - b.number)
+    .slice(0, 2)
+    .map(item => labels[item.number].strength);
+  const reviews = responses
+    .filter(item => item.score <= 1)
+    .sort((a, b) => a.score - b.score || a.number - b.number)
+    .slice(0, 1)
+    .map(item => labels[item.number].review);
+
+  if (strengths.length && reviews.length) {
+    return `${strengths.join('と')}を意識する傾向があります。${reviews[0]}は面接で確認するとよいでしょう。`;
+  }
+  if (strengths.length) return `${strengths.join('と')}を意識して行動する傾向があります。`;
+  return `${reviews[0]}について、面接で具体的に確認するとよいでしょう。`;
+}
+
 function pinSummary(score) {
   const grade1 = numeric(score.pin1Ok);
   const grade2 = numeric(score.pin2Ok);
@@ -830,6 +865,7 @@ function renderPrintReport(interview, rows) {
           const items = behaviorAnswerItems(row.behavior);
           return `<article class="print-behavior-card">
             <h3>${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '氏名未入力')} — ${escapeHtml(behaviorSummary(row.behavior))}</h3>
+            <p class="print-behavior-summary"><strong>一言コメント：</strong>${escapeHtml(behaviorTendencyComment(row.behavior))}</p>
             ${items.map(item => `<p><strong>設問${item.number}：</strong>${escapeHtml(item.analysis)}</p>`).join('') || '<p>未受験</p>'}
           </article>`;
         }).join('')}
@@ -979,7 +1015,11 @@ function openBehaviorDetail(candidateId) {
   const items = behaviorAnswerItems(record);
   $('#behavior-dialog-title').textContent = `${candidateLabel(candidate)} ${candidate.name || '氏名未入力'}`;
   $('#behavior-dialog-body').innerHTML = `
-    <p class="pin-ranking-rule">${escapeHtml(behaviorSummary(record))}。この結果は総合順位には反映しません。</p>
+    <div class="behavior-tendency-summary">
+      <strong>一言コメント</strong>
+      <p>${escapeHtml(behaviorTendencyComment(record))}</p>
+      <small>${escapeHtml(behaviorSummary(record))}。この結果は総合順位には反映しません。</small>
+    </div>
     ${items.map(item => `
       <section class="behavior-answer">
         <h3>設問${item.number}</h3>
@@ -1043,7 +1083,7 @@ function renderTable(interview) {
         </td>` : ''}
         ${isTestEnabled(interview, 'behavior') ? `<td class="behavior-cell">
           <span class="status-pill ${row.behavior ? 'ok' : 'missing'}">${row.behavior ? '受験済み' : '未受験'}</span>
-          <div class="mini">${escapeHtml(behaviorSummary(row.behavior))}</div>
+          <div class="behavior-tendency-brief">${escapeHtml(behaviorTendencyComment(row.behavior))}</div>
           ${row.behavior ? `<button type="button" class="btn behavior-detail-btn" data-id="${row.id}">回答傾向を見る</button>` : `<a class="mini-link" href="${escapeHtml(behaviorTestUrl(interview, row))}" target="_blank" rel="noopener">受験</a>`}
         </td>` : ''}
         <td><span class="rank-list">${rankSummaryHtml(row, interview)}</span></td>
@@ -1555,7 +1595,7 @@ function exportCsv() {
     if (isTestEnabled(interview, 'behavior')) values.push(
       row.behavior ? '受験済み' : '未受験',
       row.behavior?.duration_seconds ?? '',
-      behaviorAnswerItems(row.behavior).map(item => `設問${item.number}: ${item.analysis}`).join(' / ')
+      behaviorTendencyComment(row.behavior)
     );
     values.push(rankSummary(row, interview));
     return values;
