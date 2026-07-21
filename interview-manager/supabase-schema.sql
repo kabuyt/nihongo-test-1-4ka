@@ -6,6 +6,7 @@ create table if not exists public.interview_sessions (
   interview_date date not null,
   company text not null,
   sender_org text not null default 'BARAEN' check (sender_org in ('BARAEN', 'AKANE', 'VJC')),
+  test_settings jsonb not null default '{"kraepelin":true,"math":true,"vietnamese":true,"japanese":true,"pinboard":true,"behavior":true}'::jsonb,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

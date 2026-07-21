@@ -15,7 +15,11 @@
 - 総合順位をWeb上で表示
 - PDF印刷用の集計表を表示
 - 候補者ごとのQR受験票を表示、印刷
-- 候補者別QR受験票にはクレペリンとベトナム国語テストのQRを表示
+- 候補者別QR受験票には、面接で有効にしたクレペリン・ベトナム国語・行動選択テストのQRを表示
+- 面接ごとにクレペリン、数学、ベトナム国語、日本語単語、ピンボード、行動選択テストの実施有無を設定
+- QR受験票・管理表・報告書・CSVには、その面接で実施するテストだけを表示
+- 行動選択テストは候補者専用URLで自動紐付けし、回答傾向を参考資料として表示（総合順位には不算入）
+- 実施しない採点科目は総合順位から除外し、実施予定科目が未入力の間は総合順位を「集計中」と表示
 - QR受験票は全員分または候補者1人分を印刷でき、各受験URLもコピー可能
 - 送り出し担当として `BARAEN`, `AKANE`, `VJC` を面接に登録
 - Supabase AuthでGROP管理者、BARAEN、AKANE、VJCがログイン
@@ -70,6 +74,7 @@
 - `interview-manager/add-sender-org.sql`: 既存DBへ送り出し列を追加するSQL
 - `interview-manager/enable-auth-rls.sql`: Auth・RLS・匿名受験用DB関数
 - `interview-manager/restrict-sender-candidate-delete.sql`: 既存DBの候補者削除権限を管理者限定にするSQL
+- `interview-manager/add-test-settings-behavior.sql`: 企業別テスト設定と行動選択テスト統合を追加するSQL
 - `interview-manager/AUTH-SETUP.md`: AuthとRLSの設定・確認手順
 - `interview-manager/TODO.md`: 残タスク
 - `vietnamese-language-test/`: ベトナム国語テスト

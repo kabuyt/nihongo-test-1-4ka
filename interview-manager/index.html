@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -60,6 +60,15 @@
           候補者数
           <input id="candidate-count" type="number" min="1" max="80" value="8" required>
         </label>
+        <fieldset class="test-selector compact-selector">
+          <legend>実施するテスト</legend>
+          <label><input type="checkbox" name="create-test" value="kraepelin" checked>クレペリン</label>
+          <label><input type="checkbox" name="create-test" value="math" checked>数学</label>
+          <label><input type="checkbox" name="create-test" value="vietnamese" checked>ベトナム国語</label>
+          <label><input type="checkbox" name="create-test" value="japanese" checked>日本語単語</label>
+          <label><input type="checkbox" name="create-test" value="pinboard" checked>ピンボード</label>
+          <label><input type="checkbox" name="create-test" value="behavior" checked>行動選択 <small>順位対象外</small></label>
+        </fieldset>
         <button type="submit" class="btn primary"><i data-lucide="plus"></i>作成</button>
       </form>
 
@@ -106,16 +115,25 @@
       </section>
 
       <section id="workspace" class="workspace hidden">
-        <div class="summary-strip">
+        <section class="test-settings-panel" aria-labelledby="test-settings-title">
           <div>
+            <p class="eyebrow">企業別設定</p>
+            <h3 id="test-settings-title">実施するテスト</h3>
+            <p>チェックしたテストだけを管理画面・QR受験票・報告書に表示します。</p>
+          </div>
+          <div id="active-test-settings" class="test-selector active-test-selector"></div>
+        </section>
+
+        <div class="summary-strip">
+          <div data-test-card="kraepelin">
             <span class="metric-label">候補者</span>
             <strong id="metric-candidates">0</strong>
           </div>
-          <div>
+          <div data-test-card="math">
             <span class="metric-label">クレペリン取得</span>
             <strong id="metric-kraepelin">0</strong>
           </div>
-          <div>
+          <div data-test-card="pinboard">
             <span class="metric-label">数学入力済</span>
             <strong id="metric-math">0</strong>
           </div>
@@ -123,9 +141,13 @@
             <span class="metric-label">ピンボード入力</span>
             <strong id="metric-pinboard">0</strong>
           </div>
+          <div data-test-card="behavior">
+            <span class="metric-label">行動選択受験</span>
+            <strong id="metric-behavior">0</strong>
+          </div>
         </div>
 
-        <section class="pin-guide" aria-labelledby="pin-guide-title">
+        <section class="pin-guide" data-test-section="pinboard" aria-labelledby="pin-guide-title">
           <div class="pin-guide-head">
             <h3 id="pin-guide-title">ピンボード評価基準</h3>
             <span>正確さを優先し、同じ評価なら早い人が上位</span>
@@ -165,16 +187,17 @@
                 <th>No.</th>
                 <th>写真</th>
                 <th>氏名<br><span class="th-sub">カタカナ / LATIN NAME</span></th>
-                <th>クレペリン評価</th>
-                <th>受験URL</th>
-                <th>数学</th>
-                <th>ベトナム国語</th>
-                <th>日本語単語<br><span class="th-sub">30問</span></th>
-                <th>ピンボード<br><span class="th-sub">1回目評価</span></th>
-                <th>1回目<br><span class="th-sub">時間（秒）</span></th>
-                <th>ピンボード<br><span class="th-sub">2回目評価</span></th>
-                <th>2回目<br><span class="th-sub">時間（秒）</span></th>
-                <th>ピン順位</th>
+                <th data-test-col="kraepelin">クレペリン評価</th>
+                <th data-test-col="kraepelin">受験URL</th>
+                <th data-test-col="math">数学</th>
+                <th data-test-col="vietnamese">ベトナム国語</th>
+                <th data-test-col="japanese">日本語単語<br><span class="th-sub">30問</span></th>
+                <th data-test-col="pinboard">ピンボード<br><span class="th-sub">1回目評価</span></th>
+                <th data-test-col="pinboard">1回目<br><span class="th-sub">時間（秒）</span></th>
+                <th data-test-col="pinboard">ピンボード<br><span class="th-sub">2回目評価</span></th>
+                <th data-test-col="pinboard">2回目<br><span class="th-sub">時間（秒）</span></th>
+                <th data-test-col="pinboard">ピン順位</th>
+                <th data-test-col="behavior">行動選択<br><span class="th-sub">順位対象外</span></th>
                 <th>科目順位</th>
                 <th>削除</th>
               </tr>
@@ -207,9 +230,23 @@
     </div>
   </section>
 
+  <dialog id="behavior-dialog" class="behavior-dialog">
+    <form method="dialog" class="behavior-dialog-card">
+      <header>
+        <div>
+          <p class="eyebrow">参考資料・順位対象外</p>
+          <h2 id="behavior-dialog-title">行動選択テスト結果</h2>
+        </div>
+        <button class="icon-btn" value="close" aria-label="閉じる"><i data-lucide="x"></i></button>
+      </header>
+      <div id="behavior-dialog-body" class="behavior-dialog-body"></div>
+    </form>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
-  <script src="app.js?v=35"></script>
+  <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
+  <script src="app.js?v=36"></script>
 </body>
 </html>

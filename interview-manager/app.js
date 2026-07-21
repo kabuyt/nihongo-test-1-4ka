@@ -1,6 +1,15 @@
 const ACTIVE_KEY = 'interviewManager.activeId.v2';
 const AUTH_EMAIL_DOMAIN = 'nihongo-test.local';
 const SENDERS = ['BARAEN', 'AKANE', 'VJC'];
+const BEHAVIOR_TEST_BASE_URL = 'https://kabuyt.github.io/behavior-test/';
+const TEST_DEFINITIONS = [
+  { key: 'kraepelin', label: 'クレペリン', ranked: true, online: true },
+  { key: 'math', label: '数学', ranked: true },
+  { key: 'vietnamese', label: 'ベトナム国語', ranked: true, online: true },
+  { key: 'japanese', label: '日本語単語', ranked: true },
+  { key: 'pinboard', label: 'ピンボード', ranked: true },
+  { key: 'behavior', label: '行動選択テスト', ranked: false, online: true },
+];
 const PIN_GRADES = [
   { value: 3, symbol: '◎', label: '正確に完了' },
   { value: 2, symbol: '○', label: '自力で修正' },
@@ -13,6 +22,7 @@ const state = {
   interviews: [],
   activeId: '',
   kraepelinRecords: [],
+  behaviorRecords: [],
   dbReady: false,
   loading: false,
   error: '',
@@ -104,6 +114,7 @@ async function logout() {
   state.interviews = [];
   state.activeId = '';
   state.kraepelinRecords = [];
+  state.behaviorRecords = [];
   state.dbReady = false;
   state.loading = false;
   state.error = '';
@@ -139,6 +150,19 @@ function escapeHtml(value) {
 
 function activeInterview() {
   return state.interviews.find(item => item.id === state.activeId) || null;
+}
+
+function normalizeTestSettings(value) {
+  const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(TEST_DEFINITIONS.map(test => [test.key, raw[test.key] !== false]));
+}
+
+function isTestEnabled(interview, key) {
+  return normalizeTestSettings(interview?.testSettings)[key] !== false;
+}
+
+function enabledTests(interview, predicate = () => true) {
+  return TEST_DEFINITIONS.filter(test => isTestEnabled(interview, test.key) && predicate(test));
 }
 
 function formatInterviewName(interview) {
@@ -206,6 +230,13 @@ function kraepelinUrl(interview, candidate) {
 
 function vietnameseTestUrl(interview, candidate) {
   const url = new URL('../vietnamese-language-test/index.html', window.location.href);
+  url.searchParams.set('session', interview.id);
+  url.searchParams.set('no', candidate.no);
+  return url.href;
+}
+
+function behaviorTestUrl(interview, candidate) {
+  const url = new URL(BEHAVIOR_TEST_BASE_URL);
   url.searchParams.set('session', interview.id);
   url.searchParams.set('no', candidate.no);
   return url.href;
@@ -355,11 +386,11 @@ function vietnameseComment(score) {
   return '基礎語彙・文法の理解に課題があり、文章理解を含めた継続的な学習が必要です。';
 }
 
-function overallComment(row) {
+function overallComment(row, interview) {
   const comments = [];
   const kraepelin = kraepelinComment(row.kSummary, row.kraepelinEval);
-  if (kraepelin) comments.push(`【クレペリン】${kraepelin}`);
-  comments.push(`【ベトナム国語】${vietnameseComment(row.vietnamese)}`);
+  if (isTestEnabled(interview, 'kraepelin') && kraepelin) comments.push(`【クレペリン】${kraepelin}`);
+  if (isTestEnabled(interview, 'vietnamese')) comments.push(`【ベトナム国語】${vietnameseComment(row.vietnamese)}`);
   return comments.join(' ');
 }
 
@@ -388,6 +419,7 @@ function interviewFromDb(row, candidatesByInterview) {
     company: row.company,
     senderOrg: row.sender_org || 'BARAEN',
     notes: row.notes || '',
+    testSettings: normalizeTestSettings(row.test_settings),
     createdAt: row.created_at,
     candidates: (candidatesByInterview.get(row.id) || []).map(candidateFromDb),
   };
@@ -416,6 +448,7 @@ async function loadData() {
 
   const sessionsResp = await sessionsQuery;
   let candidatesResp = { data: [], error: null };
+  let behaviorResp = { data: [], error: null };
   const interviewIds = (sessionsResp.data || []).map(row => row.id);
   if (interviewIds.length) {
     candidatesResp = await supabase
@@ -423,12 +456,17 @@ async function loadData() {
       .select('*')
       .in('interview_id', interviewIds)
       .order('candidate_no', { ascending: true });
+    behaviorResp = await supabase
+      .from('behavior_test_results')
+      .select('id,interview_id,candidate_id,candidate_number,candidate_name,q1,q2,q3,q4,q5,q6,duration_seconds,submitted_at,notes')
+      .in('interview_id', interviewIds)
+      .order('submitted_at', { ascending: false });
   }
 
-  if (sessionsResp.error || candidatesResp.error) {
+  if (sessionsResp.error || candidatesResp.error || behaviorResp.error) {
     state.loading = false;
     state.dbReady = false;
-    const message = sessionsResp.error?.message || candidatesResp.error?.message || 'Supabase読み込みエラー';
+    const message = sessionsResp.error?.message || candidatesResp.error?.message || behaviorResp.error?.message || 'Supabase読み込みエラー';
     state.error = `面接管理テーブルが未作成の可能性があります。interview-manager/supabase-schema.sql をSupabase SQL Editorで実行してください。詳細: ${message}`;
     render();
     return;
@@ -441,6 +479,7 @@ async function loadData() {
   });
 
   state.interviews = (sessionsResp.data || []).map(row => interviewFromDb(row, candidatesByInterview));
+  state.behaviorRecords = behaviorResp.data || [];
   state.activeId = localStorage.getItem(ACTIVE_KEY) || state.interviews[0]?.id || '';
   if (!state.interviews.some(item => item.id === state.activeId)) state.activeId = state.interviews[0]?.id || '';
   state.dbReady = true;
@@ -480,6 +519,34 @@ function getKraepelinFor(candidate, interview) {
     const parsed = parseKraepelinName(record.name);
     return !parsed.sessionId && !parsed.interviewName && parsed.candidateNo === String(candidate.no);
   }) || null;
+}
+
+function getBehaviorFor(candidate, interview) {
+  return state.behaviorRecords.find(record => (
+    record.interview_id === interview.id
+    && (record.candidate_id === candidate.id || String(record.candidate_number) === String(candidate.no))
+  )) || null;
+}
+
+function behaviorAnswerItems(record) {
+  if (!record || typeof QUESTIONS === 'undefined') return [];
+  return QUESTIONS.map(question => {
+    const selectedId = numeric(record[`q${question.n}`]);
+    const selected = question.choices.find(choice => choice.id === selectedId);
+    return selected ? {
+      number: question.n,
+      question: question.ja,
+      choice: selected.ja,
+      analysis: selected.analysis,
+    } : null;
+  }).filter(Boolean);
+}
+
+function behaviorSummary(record) {
+  if (!record) return '未受験';
+  const count = behaviorAnswerItems(record).length;
+  const seconds = numeric(record.duration_seconds);
+  return `受験済み（${count}/6問${seconds == null ? '' : `・${Math.floor(seconds / 60)}分${seconds % 60}秒`}）`;
 }
 
 function pinSummary(score) {
@@ -545,6 +612,7 @@ function buildRows(interview) {
       ...candidate,
       score,
       kraepelin,
+      behavior: getBehaviorFor(candidate, interview),
       kSummary,
       kraepelinTotal: kSummary?.total ?? null,
       math: numeric(score.math),
@@ -558,19 +626,38 @@ function buildRows(interview) {
     row.kraepelinEval = kraepelinEvaluation(row.kSummary, maxKraepelinTotal);
   });
 
-  const kRank = rankValues(enriched, row => row.kraepelinEval?.total ?? null, 'desc');
-  const mathRank = rankValues(enriched, row => row.math, 'desc');
-  const vietnameseRank = rankValues(enriched, row => row.vietnamese, 'desc');
-  const japaneseRank = rankValues(enriched, row => row.japanese, 'desc');
-  const pinRank = pinRanks(enriched);
+  const kRank = isTestEnabled(interview, 'kraepelin') ? rankValues(enriched, row => row.kraepelinEval?.total ?? null, 'desc') : new Map();
+  const mathRank = isTestEnabled(interview, 'math') ? rankValues(enriched, row => row.math, 'desc') : new Map();
+  const vietnameseRank = isTestEnabled(interview, 'vietnamese') ? rankValues(enriched, row => row.vietnamese, 'desc') : new Map();
+  const japaneseRank = isTestEnabled(interview, 'japanese') ? rankValues(enriched, row => row.japanese, 'desc') : new Map();
+  const pinRank = isTestEnabled(interview, 'pinboard') ? pinRanks(enriched) : new Map();
+  const rankedTests = enabledTests(interview, test => test.ranked);
+  const allResultsComplete = enriched.length > 0 && enriched.every(row => rankedTests.every(test => {
+    if (test.key === 'kraepelin') return row.kraepelinEval != null;
+    if (test.key === 'math') return row.math != null;
+    if (test.key === 'vietnamese') return row.vietnamese != null;
+    if (test.key === 'japanese') return row.japanese != null;
+    if (test.key === 'pinboard') return pinSummary(row.score).complete;
+    return true;
+  }));
 
   const ranked = enriched.map(row => {
-    const rankSum = kRank.get(row.no) + mathRank.get(row.no) + vietnameseRank.get(row.no) + japaneseRank.get(row.no) + pinRank.get(row.no);
-    return { ...row, ranks: { k: kRank.get(row.no), math: mathRank.get(row.no), vietnamese: vietnameseRank.get(row.no), japanese: japaneseRank.get(row.no), pin: pinRank.get(row.no) }, rankSum };
+    const ranks = {
+      k: kRank.get(row.no) ?? null,
+      math: mathRank.get(row.no) ?? null,
+      vietnamese: vietnameseRank.get(row.no) ?? null,
+      japanese: japaneseRank.get(row.no) ?? null,
+      pin: pinRank.get(row.no) ?? null,
+    };
+    const rankByTest = { kraepelin: ranks.k, math: ranks.math, vietnamese: ranks.vietnamese, japanese: ranks.japanese, pinboard: ranks.pin };
+    const rankSum = rankedTests.reduce((sum, test) => sum + (rankByTest[test.key] ?? 0), 0);
+    return { ...row, ranks, rankSum, rankingComplete: allResultsComplete && rankedTests.length > 0 };
   });
 
   const finalRank = rankValues(ranked, row => -row.rankSum, 'desc');
-  return ranked.map(row => ({ ...row, finalRank: finalRank.get(row.no) })).sort((a, b) => a.finalRank - b.finalRank || Number(a.no) - Number(b.no));
+  return ranked
+    .map(row => ({ ...row, finalRank: row.rankingComplete ? finalRank.get(row.no) : null }))
+    .sort((a, b) => (a.finalRank ?? Number.MAX_SAFE_INTEGER) - (b.finalRank ?? Number.MAX_SAFE_INTEGER) || Number(a.no) - Number(b.no));
 }
 
 function renderStatus() {
@@ -603,11 +690,32 @@ function renderInterviews() {
   });
 }
 
+function renderTestSettings(interview) {
+  const host = $('#active-test-settings');
+  if (!host || !interview) return;
+  const editable = isAdminUser();
+  host.innerHTML = TEST_DEFINITIONS.map(test => `
+    <label class="${editable ? '' : 'readonly'}">
+      <input type="checkbox" data-test-key="${test.key}" ${isTestEnabled(interview, test.key) ? 'checked' : ''} ${editable ? '' : 'disabled'}>
+      ${escapeHtml(test.label)}${test.ranked ? '' : '<small>順位対象外</small>'}
+    </label>
+  `).join('');
+  host.querySelectorAll('[data-test-key]').forEach(input => {
+    input.addEventListener('change', () => updateInterviewTestSetting(input.dataset.testKey, input.checked));
+  });
+
+  TEST_DEFINITIONS.forEach(test => {
+    document.querySelectorAll(`[data-test-col="${test.key}"], [data-test-card="${test.key}"], [data-test-section="${test.key}"]`)
+      .forEach(element => element.classList.toggle('hidden', !isTestEnabled(interview, test.key)));
+  });
+}
+
 function renderMetrics(interview, rows) {
   $('#metric-candidates').textContent = interview.candidates.length;
   $('#metric-kraepelin').textContent = rows.filter(row => row.kraepelin).length;
   $('#metric-math').textContent = rows.filter(row => row.math != null).length;
   $('#metric-pinboard').textContent = rows.filter(row => pinSummary(row.score).complete).length;
+  $('#metric-behavior').textContent = rows.filter(row => row.behavior).length;
 }
 
 function subjectScoreCell(row, field, value, rank, options = {}) {
@@ -621,7 +729,7 @@ function subjectScoreCell(row, field, value, rank, options = {}) {
   return `
     <div class="score-cell">
       <input class="score-input ${doneClass}" data-id="${row.id}" data-field="${field}" type="number" min="0" max="${max}" step="1" placeholder="${placeholder}" value="${String(rawValue).replace(/"/g, '&quot;')}">
-      <div class="score-meta">${note} / 順位 ${rank}</div>
+      <div class="score-meta">${note} / 順位 ${value == null ? '-' : rank}</div>
       <div class="score-link-slot">
         ${options.link ? `<a class="mini-link" href="${options.link}" target="_blank" rel="noopener">受験</a>` : ''}
       </div>
@@ -684,23 +792,24 @@ function pinTimeInput(row, round) {
   `;
 }
 
-function rankSummaryItems(row) {
-  return [
-    ['クレペリン', row.ranks.k],
-    ['数学', row.ranks.math],
-    ['ベトナム国語', row.ranks.vietnamese],
-    ['日本語単語', row.ranks.japanese],
-    ['ピンボード', row.ranks.pin],
-  ];
+function rankSummaryItems(row, interview) {
+  const items = {
+    kraepelin: ['クレペリン', row.ranks.k],
+    math: ['数学', row.ranks.math],
+    vietnamese: ['ベトナム国語', row.ranks.vietnamese],
+    japanese: ['日本語単語', row.ranks.japanese],
+    pinboard: ['ピンボード', row.ranks.pin],
+  };
+  return enabledTests(interview, test => test.ranked).map(test => items[test.key]).filter(Boolean);
 }
 
-function rankSummary(row) {
-  return rankSummaryItems(row).map(([label, rank]) => `${label}：${rank}位`).join(' / ');
+function rankSummary(row, interview) {
+  return rankSummaryItems(row, interview).map(([label, rank]) => `${label}：${rank ?? '-'}位`).join(' / ');
 }
 
-function rankSummaryHtml(row) {
-  return rankSummaryItems(row)
-    .map(([label, rank]) => `<span><b>${escapeHtml(label)}</b>${rank}位</span>`)
+function rankSummaryHtml(row, interview) {
+  return rankSummaryItems(row, interview)
+    .map(([label, rank]) => `<span><b>${escapeHtml(label)}</b>${rank ?? '-'}位</span>`)
     .join('');
 }
 
@@ -711,6 +820,22 @@ function renderPrintReport(interview, rows) {
   const interviewDate = interview.date
     ? new Date(`${interview.date}T00:00:00`).toLocaleDateString('ja-JP')
     : '-';
+  const rankedTests = enabledTests(interview, test => test.ranked);
+  const behaviorAppendix = isTestEnabled(interview, 'behavior') ? `
+    <section class="print-behavior-section">
+      <h2>行動選択テスト結果</h2>
+      <p class="print-behavior-note">回答から見られる行動傾向を面接時の参考資料として記載しています。総合順位には反映していません。</p>
+      <div class="print-behavior-grid">
+        ${rows.map(row => {
+          const items = behaviorAnswerItems(row.behavior);
+          return `<article class="print-behavior-card">
+            <h3>${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '氏名未入力')} — ${escapeHtml(behaviorSummary(row.behavior))}</h3>
+            ${items.map(item => `<p><strong>設問${item.number}：</strong>${escapeHtml(item.analysis)}</p>`).join('') || '<p>未受験</p>'}
+          </article>`;
+        }).join('')}
+      </div>
+    </section>
+  ` : '';
   report.innerHTML = `
     <header class="print-header">
       <div class="print-brand">
@@ -718,13 +843,13 @@ function renderPrintReport(interview, rows) {
         <div class="print-title-block">
           <div class="print-label">PRE-INTERVIEW TEST RESULTS</div>
           <h1>事前テスト結果</h1>
-          <div class="print-pin-legend" aria-label="ピンボード評価基準">
+          ${isTestEnabled(interview, 'pinboard') ? `<div class="print-pin-legend" aria-label="ピンボード評価基準">
             <b>ピンボード評価</b>
             <span><strong>◎</strong> 正確に完了</span>
             <span><strong>○</strong> 自力で修正</span>
             <span><strong>△</strong> 一部ミス</span>
             <span><strong>×</strong> 継続困難</span>
-          </div>
+          </div>` : ''}
         </div>
       </div>
       <div class="print-document-meta">
@@ -742,11 +867,7 @@ function renderPrintReport(interview, rows) {
       <colgroup>
         <col class="print-col-rank">
         <col class="print-col-candidate">
-        <col class="print-col-kraepelin">
-        <col class="print-col-score">
-        <col class="print-col-score">
-        <col class="print-col-score">
-        <col class="print-col-pin">
+        ${rankedTests.map(test => `<col class="${test.key === 'kraepelin' ? 'print-col-kraepelin' : test.key === 'pinboard' ? 'print-col-pin' : 'print-col-score'}">`).join('')}
         <col class="print-col-subject-rank">
         <col class="print-col-note">
       </colgroup>
@@ -754,11 +875,7 @@ function renderPrintReport(interview, rows) {
         <tr>
           <th>総合結果</th>
           <th>候補者</th>
-          <th>クレペリン</th>
-          <th>数学</th>
-          <th>ベトナム国語</th>
-          <th>日本語単語</th>
-          <th>ピンボード</th>
+          ${rankedTests.map(test => `<th>${escapeHtml(test.label)}</th>`).join('')}
           <th>科目順位</th>
           <th>総合所見</th>
         </tr>
@@ -768,7 +885,7 @@ function renderPrintReport(interview, rows) {
           const pin = pinSummary(row.score);
           return `
             <tr>
-              <td class="print-rank"><strong>第${row.finalRank}位</strong></td>
+              <td class="print-rank"><strong>${row.finalRank == null ? '集計中' : `第${row.finalRank}位`}</strong></td>
               <td class="print-candidate">
                 <div class="print-candidate-inner">
                   ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
@@ -778,23 +895,24 @@ function renderPrintReport(interview, rows) {
                   </div>
                 </div>
               </td>
-              <td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong><span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>
-              <td class="print-score">${row.math == null ? '<span>-</span>' : `<strong>${formatScore(row.math)}</strong><span>点</span>`}</td>
-              <td class="print-score">${row.vietnamese == null ? '<span>-</span>' : `<strong>${formatScore(row.vietnamese)}</strong><span>点</span>`}</td>
-              <td class="print-score">${row.japanese == null ? '<span>-</span>' : `<strong>${formatScore(row.japanese)}</strong><span>点（${row.japaneseRaw}/30）</span>`}</td>
-              <td class="print-pin">
+              ${isTestEnabled(interview, 'kraepelin') ? `<td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong><span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>` : ''}
+              ${isTestEnabled(interview, 'math') ? `<td class="print-score">${row.math == null ? '<span>-</span>' : `<strong>${formatScore(row.math)}</strong><span>点</span>`}</td>` : ''}
+              ${isTestEnabled(interview, 'vietnamese') ? `<td class="print-score">${row.vietnamese == null ? '<span>-</span>' : `<strong>${formatScore(row.vietnamese)}</strong><span>点</span>`}</td>` : ''}
+              ${isTestEnabled(interview, 'japanese') ? `<td class="print-score">${row.japanese == null ? '<span>-</span>' : `<strong>${formatScore(row.japanese)}</strong><span>点（${row.japaneseRaw}/30）</span>`}</td>` : ''}
+              ${isTestEnabled(interview, 'pinboard') ? `<td class="print-pin">
                 <span>1回目　${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}</span>
                 <span>2回目　${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}</span>
-              </td>
-              <td class="print-subject-rank">${rankSummaryHtml(row)}</td>
-              <td class="print-note">${escapeHtml(overallComment(row))}</td>
+              </td>` : ''}
+              <td class="print-subject-rank">${rankSummaryHtml(row, interview)}</td>
+              <td class="print-note">${escapeHtml(overallComment(row, interview))}</td>
             </tr>
           `;
         }).join('')}
       </tbody>
     </table>
+    ${behaviorAppendix}
     <footer class="print-footer">
-      <span>評価基準：各科目およびピンボードの順位をもとに総合順位を算出</span>
+      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の順位をもとに総合順位を算出</span>
       <span>${escapeHtml(formatInterviewName(interview))}</span>
     </footer>
   `;
@@ -805,9 +923,13 @@ function renderLinkSheet(interview) {
   if (!sheet || !interview) return;
   $('#link-sheet-title').textContent = formatInterviewName(interview);
   const candidates = [...(interview.candidates || [])].sort((a, b) => Number(a.no) - Number(b.no));
+  const onlineTests = enabledTests(interview, test => test.online);
   $('#link-sheet-body').innerHTML = candidates.map(candidate => {
-    const kUrl = kraepelinUrl(interview, candidate);
-    const vUrl = vietnameseTestUrl(interview, candidate);
+    const urls = {
+      kraepelin: kraepelinUrl(interview, candidate),
+      vietnamese: vietnameseTestUrl(interview, candidate),
+      behavior: behaviorTestUrl(interview, candidate),
+    };
     return `
       <article class="link-card" data-candidate-id="${escapeHtml(candidate.id)}">
         <div class="link-card-head">
@@ -822,22 +944,17 @@ function renderLinkSheet(interview) {
         </div>
         <p class="link-card-guide">上記の番号と氏名が本人のものか確認してから受験してください。</p>
         <div class="qr-pair">
-          <div class="qr-box">
-            <div class="qr-step"><span>1</span>クレペリン</div>
-            <img src="${escapeHtml(qrImageUrl(kUrl))}" alt="クレペリンQR">
-            <div class="qr-actions">
-              <button class="qr-action copy-test-url" type="button" data-url="${escapeHtml(kUrl)}"><i data-lucide="copy"></i>URLコピー</button>
-              <a class="qr-action" href="${escapeHtml(kUrl)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>開く</a>
-            </div>
-          </div>
-          <div class="qr-box">
-            <div class="qr-step"><span>2</span>ベトナム国語</div>
-            <img src="${escapeHtml(qrImageUrl(vUrl))}" alt="ベトナム国語QR">
-            <div class="qr-actions">
-              <button class="qr-action copy-test-url" type="button" data-url="${escapeHtml(vUrl)}"><i data-lucide="copy"></i>URLコピー</button>
-              <a class="qr-action" href="${escapeHtml(vUrl)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>開く</a>
-            </div>
-          </div>
+          ${onlineTests.map((test, index) => {
+            const targetUrl = urls[test.key];
+            return `<div class="qr-box">
+              <div class="qr-step"><span>${index + 1}</span>${escapeHtml(test.label)}</div>
+              <img src="${escapeHtml(qrImageUrl(targetUrl))}" alt="${escapeHtml(test.label)}QR">
+              <div class="qr-actions">
+                <button class="qr-action copy-test-url" type="button" data-url="${escapeHtml(targetUrl)}"><i data-lucide="copy"></i>URLコピー</button>
+                <a class="qr-action" href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>開く</a>
+              </div>
+            </div>`;
+          }).join('') || '<p>オンライン受験テストはありません。</p>'}
         </div>
         <div class="link-card-footer">
           <span>この受験票は本人だけが使用してください。</span>
@@ -854,13 +971,36 @@ function renderLinkSheet(interview) {
   });
 }
 
+function openBehaviorDetail(candidateId) {
+  const interview = activeInterview();
+  const candidate = interview?.candidates.find(item => item.id === candidateId);
+  const record = candidate ? getBehaviorFor(candidate, interview) : null;
+  if (!candidate || !record) return;
+  const items = behaviorAnswerItems(record);
+  $('#behavior-dialog-title').textContent = `${candidateLabel(candidate)} ${candidate.name || '氏名未入力'}`;
+  $('#behavior-dialog-body').innerHTML = `
+    <p class="pin-ranking-rule">${escapeHtml(behaviorSummary(record))}。この結果は総合順位には反映しません。</p>
+    ${items.map(item => `
+      <section class="behavior-answer">
+        <h3>設問${item.number}</h3>
+        <p><strong>選択：</strong>${escapeHtml(item.choice)}</p>
+        <p class="analysis"><strong>行動傾向：</strong>${escapeHtml(item.analysis)}</p>
+      </section>
+    `).join('') || '<p>回答データがありません。</p>'}
+  `;
+  const dialog = $('#behavior-dialog');
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+  if (window.lucide) lucide.createIcons();
+}
+
 function renderTable(interview) {
   const rows = buildRows(interview);
   const body = $('#score-body');
   const canDeleteCandidates = isAdminUser();
   body.innerHTML = rows.map(row => {
     const pin = pinSummary(row.score);
-    const rankClass = row.finalRank <= 3 ? 'rank top' : 'rank';
+    const rankClass = row.finalRank != null && row.finalRank <= 3 ? 'rank top' : 'rank';
     const kraepelinCell = row.kraepelinEval == null
       ? '<span class="status-pill missing">未取得</span>'
       : `<span class="status-pill ok">${row.kraepelinEval.total}</span>
@@ -870,7 +1010,7 @@ function renderTable(interview) {
     const nameParts = splitCandidateName(row.name);
     return `
       <tr>
-        <td><span class="${rankClass}">${row.finalRank}</span></td>
+        <td><span class="${rankClass}">${row.finalRank == null ? '集計中' : row.finalRank}</span></td>
         <td>${candidateLabel(row)}</td>
         <td class="photo-cell">
           ${row.photo ? `<img class="candidate-photo" src="${escapeHtml(row.photo)}" alt="">` : '<span class="photo-empty">未登録</span>'}
@@ -885,12 +1025,12 @@ function renderTable(interview) {
             <input class="candidate-name-input candidate-name-latin" data-id="${row.id}" data-field="latin" value="${escapeHtml(nameParts.latin)}" placeholder="LATIN NAME" aria-label="${escapeHtml(candidateLabel(row))} ラテン氏名">
           </div>
         </td>
-        <td class="kraepelin-cell">${kraepelinCell}</td>
-        <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>
-        <td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>
-        <td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>
-        <td>${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>
-        <td>${pinGradeControl(row, 1)}</td>
+        ${isTestEnabled(interview, 'kraepelin') ? `<td class="kraepelin-cell">${kraepelinCell}</td>
+        <td><a class="link-btn" href="${kraepelinUrl(interview, row)}" target="_blank" rel="noopener">開く</a></td>` : ''}
+        ${isTestEnabled(interview, 'math') ? `<td>${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>` : ''}
+        ${isTestEnabled(interview, 'vietnamese') ? `<td>${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>` : ''}
+        ${isTestEnabled(interview, 'japanese') ? `<td>${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>` : ''}
+        ${isTestEnabled(interview, 'pinboard') ? `<td>${pinGradeControl(row, 1)}</td>
         <td>${pinTimeInput(row, 1)}</td>
         <td>${pinGradeControl(row, 2)}</td>
         <td>${pinTimeInput(row, 2)}</td>
@@ -900,8 +1040,13 @@ function renderTable(interview) {
             ${pin.enteredCount}/2回入力
             ${pin.complete && pin.time > 0 ? ` / ${pin.time.toFixed(2)}秒` : ''}
           </div>
-        </td>
-        <td><span class="rank-list">${rankSummaryHtml(row)}</span></td>
+        </td>` : ''}
+        ${isTestEnabled(interview, 'behavior') ? `<td class="behavior-cell">
+          <span class="status-pill ${row.behavior ? 'ok' : 'missing'}">${row.behavior ? '受験済み' : '未受験'}</span>
+          <div class="mini">${escapeHtml(behaviorSummary(row.behavior))}</div>
+          ${row.behavior ? `<button type="button" class="btn behavior-detail-btn" data-id="${row.id}">回答傾向を見る</button>` : `<a class="mini-link" href="${escapeHtml(behaviorTestUrl(interview, row))}" target="_blank" rel="noopener">受験</a>`}
+        </td>` : ''}
+        <td><span class="rank-list">${rankSummaryHtml(row, interview)}</span></td>
         <td>${canDeleteCandidates ? `<button class="icon-btn danger remove-candidate" data-id="${row.id}" title="候補者を削除" aria-label="${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '')}を削除"><i data-lucide="trash-2"></i></button>` : ''}</td>
       </tr>
     `;
@@ -921,6 +1066,9 @@ function renderTable(interview) {
   });
   body.querySelectorAll('.remove-candidate').forEach(button => {
     button.addEventListener('click', () => removeCandidate(button.dataset.id));
+  });
+  body.querySelectorAll('.behavior-detail-btn').forEach(button => {
+    button.addEventListener('click', () => openBehaviorDetail(button.dataset.id));
   });
 
   renderMetrics(interview, rows);
@@ -951,15 +1099,20 @@ function render() {
   }
   $('#delete-interview').classList.toggle('hidden', !isAdmin);
   $('#delete-interview').disabled = !hasInterview || !state.dbReady || !isAdmin;
-  $('#open-kraepelin').disabled = !hasInterview;
-  $('#refresh-kraepelin').disabled = !hasInterview;
+  $('#open-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
+  $('#refresh-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
+  $('#open-kraepelin').disabled = !hasInterview || !isTestEnabled(interview, 'kraepelin');
+  $('#refresh-kraepelin').disabled = !hasInterview || !isTestEnabled(interview, 'kraepelin');
   $('#open-link-sheet').disabled = !hasInterview;
   $('#print-pdf').classList.toggle('hidden', !isAdmin);
   $('#export-csv').classList.toggle('hidden', !isAdmin);
   $('#print-pdf').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
   $('#interview-form button[type="submit"]').disabled = !state.dbReady || !isAdmin;
-  if (hasInterview) renderTable(interview);
+  if (hasInterview) {
+    renderTestSettings(interview);
+    renderTable(interview);
+  }
   else if ($('#print-report')) $('#print-report').innerHTML = '';
   if (window.lucide) lucide.createIcons();
 }
@@ -975,10 +1128,16 @@ async function createInterview(event) {
   const count = Math.max(1, Number($('#candidate-count').value || 1));
   const user = currentUser();
   const senderOrg = user?.role === 'sender' ? user.sender : $('#interview-sender').value;
+  const selectedTestKeys = [...document.querySelectorAll('input[name="create-test"]:checked')].map(input => input.value);
+  if (!selectedTestKeys.length) {
+    alert('実施するテストを1つ以上選んでください。');
+    return;
+  }
+  const testSettings = Object.fromEntries(TEST_DEFINITIONS.map(test => [test.key, selectedTestKeys.includes(test.key)]));
 
   const { data, error } = await supabase
     .from('interview_sessions')
-    .insert({ interview_date: date, company, sender_org: senderOrg })
+    .insert({ interview_date: date, company, sender_org: senderOrg, test_settings: testSettings })
     .select('*')
     .single();
   if (error) {
@@ -997,6 +1156,7 @@ async function createInterview(event) {
   event.target.reset();
   $('#candidate-count').value = 8;
   $('#interview-sender').value = user?.role === 'sender' ? user.sender : 'BARAEN';
+  document.querySelectorAll('input[name="create-test"]').forEach(input => { input.checked = true; });
   render();
 }
 
@@ -1117,6 +1277,28 @@ async function updateInterviewSender(value) {
     return;
   }
   interview.senderOrg = value;
+  render();
+}
+
+async function updateInterviewTestSetting(key, enabled) {
+  const interview = activeInterview();
+  if (!interview || !isAdminUser() || !TEST_DEFINITIONS.some(test => test.key === key)) return;
+  const nextSettings = { ...normalizeTestSettings(interview.testSettings), [key]: !!enabled };
+  if (!Object.values(nextSettings).some(Boolean)) {
+    alert('実施するテストを1つ以上選んでください。');
+    renderTestSettings(interview);
+    return;
+  }
+  const { error } = await supabase
+    .from('interview_sessions')
+    .update({ test_settings: nextSettings })
+    .eq('id', interview.id);
+  if (error) {
+    alert('テスト設定の保存に失敗しました: ' + error.message);
+    renderTestSettings(interview);
+    return;
+  }
+  interview.testSettings = nextSettings;
   render();
 }
 
@@ -1340,32 +1522,43 @@ async function copyTestUrl(button) {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合結果', '候補者番号', '氏名・メモ', 'クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考', '数学', '数学順位', 'ベトナム国語', 'ベトナム国語順位', '日本語単語正答数', '日本語単語100点換算', '日本語単語順位', 'ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位', '科目順位'];
+  const headers = ['総合結果', '候補者番号', '氏名・メモ'];
+  if (isTestEnabled(interview, 'kraepelin')) headers.push('クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考');
+  if (isTestEnabled(interview, 'math')) headers.push('数学', '数学順位');
+  if (isTestEnabled(interview, 'vietnamese')) headers.push('ベトナム国語', 'ベトナム国語順位');
+  if (isTestEnabled(interview, 'japanese')) headers.push('日本語単語正答数', '日本語単語100点換算', '日本語単語順位');
+  if (isTestEnabled(interview, 'pinboard')) headers.push('ピン1評価', 'ピン1時間', 'ピン2評価', 'ピン2時間', 'ピン順位');
+  if (isTestEnabled(interview, 'behavior')) headers.push('行動選択受験状況', '行動選択所要秒', '行動選択回答傾向');
+  headers.push('科目順位');
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
-    return [
-      `第${row.finalRank}位`,
+    const values = [
+      row.finalRank == null ? '集計中' : `第${row.finalRank}位`,
       row.no,
       row.name || '',
-      row.kraepelinEval?.total ?? '',
-      row.kraepelinTotal ?? '',
+    ];
+    if (isTestEnabled(interview, 'kraepelin')) values.push(
+      row.kraepelinEval?.total ?? '', row.kraepelinTotal ?? '',
       row.kSummary?.errorRate == null ? '' : formatPercent(row.kSummary.errorRate),
-      judgmentLabel(row.kSummary?.judgment),
-      overallComment(row),
-      row.math ?? '',
-      row.ranks.math,
-      row.vietnamese ?? '',
-      row.ranks.vietnamese,
-      row.japaneseRaw ?? '',
-      row.japanese ?? '',
-      row.ranks.japanese,
+      judgmentLabel(row.kSummary?.judgment), overallComment(row, interview)
+    );
+    if (isTestEnabled(interview, 'math')) values.push(row.math ?? '', row.ranks.math ?? '');
+    if (isTestEnabled(interview, 'vietnamese')) values.push(row.vietnamese ?? '', row.ranks.vietnamese ?? '');
+    if (isTestEnabled(interview, 'japanese')) values.push(row.japaneseRaw ?? '', row.japanese ?? '', row.ranks.japanese ?? '');
+    if (isTestEnabled(interview, 'pinboard')) values.push(
       pinAttemptText(pin.grades[0], null),
       pin.grades[0] != null && pin.times[0] != null ? pin.times[0].toFixed(2) : '',
       pinAttemptText(pin.grades[1], null),
       pin.grades[1] != null && pin.times[1] != null ? pin.times[1].toFixed(2) : '',
-      row.ranks.pin,
-      rankSummary(row),
-    ];
+      row.ranks.pin ?? ''
+    );
+    if (isTestEnabled(interview, 'behavior')) values.push(
+      row.behavior ? '受験済み' : '未受験',
+      row.behavior?.duration_seconds ?? '',
+      behaviorAnswerItems(row.behavior).map(item => `設問${item.number}: ${item.analysis}`).join(' / ')
+    );
+    values.push(rankSummary(row, interview));
+    return values;
   });
   const csv = [headers, ...rows].map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
