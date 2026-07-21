@@ -551,18 +551,54 @@ function behaviorSummary(record) {
 
 function behaviorTendencyComment(record) {
   if (!record || typeof QUESTIONS === 'undefined') return '未受験のため、行動傾向は未評価です。';
-  const labels = {
-    1: { strength: '早めの連絡', review: '遅れそうな場合の事前連絡' },
-    2: { strength: 'ミスの報告', review: 'ミス発生時の報告' },
-    3: { strength: '礼儀の継続', review: '相手の反応に左右されず挨拶を続ける姿勢' },
-    4: { strength: 'ルールに沿った確認', review: '共有物を使う前の確認' },
-    5: { strength: '余裕を持った時間管理', review: '移動時間を逆算した行動' },
-    6: { strength: '当事者との話し合い', review: '共同生活での適切な意思表示' },
+  const strengthComments = {
+    1: { 3: '遅れた場合に理由を説明する', 4: '遅れる可能性を早めに連絡する' },
+    2: { 2: 'ミスを会社へ報告する' },
+    3: { 1: '相手の反応に左右されず挨拶を続ける', 2: '関係を悪化させず翌日から挨拶を再開する' },
+    4: { 3: '他人の物を使う前に確認する' },
+    5: { 2: '必要な移動時間を計算する', 3: '余裕を持って出発する', 4: '早めに行動する' },
+    6: { 3: '当事者へ直接伝えて話し合う' },
+  };
+  const reviewComments = {
+    1: {
+      1: '悪天候でも通常どおり出発する判断があり、遅れる可能性を事前に連絡する意識に注意が必要です。',
+      2: '自分の出社準備より友人への連絡を優先する判断があり、仕事上の優先順位に注意が必要です。',
+    },
+    2: {
+      1: 'ミスを一人で直そうとする判断があり、早めの報告・相談に注意が必要です。',
+      3: '小さなミスは問題ないとして報告しない判断があり、注意が必要です。',
+      4: '他の人が報告しなかった例を理由に、ミスを報告しない判断があり、注意が必要です。',
+    },
+    3: {
+      3: '挨拶が返らない理由をすぐ本人に確認する判断があり、相手への聞き方やタイミングに注意が必要です。',
+      4: '一度挨拶が返らないと今後は挨拶をしない判断があり、対人姿勢に注意が必要です。',
+    },
+    4: {
+      1: '他人の物を無断で使う判断があったため、注意が必要です。',
+      2: '名前がない物は自由に使ってよいという判断があったため、注意が必要です。',
+      4: '事実を確認せず自分への贈り物と判断する傾向があり、注意が必要です。',
+    },
+    5: {
+      1: '移動に15分必要な状況で10分前に出発する判断があり、時間管理に注意が必要です。',
+    },
+    6: {
+      1: '自分の利用時間を過ぎても何も伝えず我慢する判断があり、必要な意思表示ができるか確認が必要です。',
+      2: '決められた順番より相手を優先して待つ判断があり、共同生活でのルール意識に注意が必要です。',
+      4: '当事者ではなく別の友人へ相談する判断があり、問題の伝え方に注意が必要です。',
+    },
+  };
+  const reviewPriority = {
+    1: { 1: 30, 2: 50 },
+    2: { 1: 55, 3: 90, 4: 90 },
+    3: { 3: 25, 4: 65 },
+    4: { 1: 100, 2: 100, 4: 100 },
+    5: { 1: 50 },
+    6: { 1: 20, 2: 40, 4: 35 },
   };
   const responses = QUESTIONS.map(question => {
     const selectedId = numeric(record[`q${question.n}`]);
     const selected = question.choices.find(choice => choice.id === selectedId);
-    return selected ? { number: question.n, score: numeric(selected.score) ?? 0 } : null;
+    return selected ? { number: question.n, selectedId, score: numeric(selected.score) ?? 0 } : null;
   }).filter(Boolean);
   if (!responses.length) return '回答不足のため、行動傾向は未評価です。';
 
@@ -570,18 +606,20 @@ function behaviorTendencyComment(record) {
     .filter(item => item.score >= 2)
     .sort((a, b) => b.score - a.score || a.number - b.number)
     .slice(0, 2)
-    .map(item => labels[item.number].strength);
+    .map(item => strengthComments[item.number]?.[item.selectedId])
+    .filter(Boolean);
   const reviews = responses
     .filter(item => item.score <= 1)
-    .sort((a, b) => a.score - b.score || a.number - b.number)
+    .sort((a, b) => (reviewPriority[b.number]?.[b.selectedId] ?? 0) - (reviewPriority[a.number]?.[a.selectedId] ?? 0) || a.number - b.number)
     .slice(0, 1)
-    .map(item => labels[item.number].review);
+    .map(item => reviewComments[item.number]?.[item.selectedId])
+    .filter(Boolean);
 
   if (strengths.length && reviews.length) {
-    return `${strengths.join('と')}を意識する傾向があります。${reviews[0]}は面接で確認するとよいでしょう。`;
+    return `「${strengths.join('」「')}」といった行動を選ぶ傾向があります。${reviews[0]}`;
   }
-  if (strengths.length) return `${strengths.join('と')}を意識して行動する傾向があります。`;
-  return `${reviews[0]}について、面接で具体的に確認するとよいでしょう。`;
+  if (strengths.length) return `「${strengths.join('」「')}」といった行動を選ぶ傾向があります。`;
+  return reviews[0] || '回答内容について、面接で具体的に確認するとよいでしょう。';
 }
 
 function pinSummary(score) {
