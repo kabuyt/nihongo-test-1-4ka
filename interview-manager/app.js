@@ -485,6 +485,9 @@ async function loadData() {
   state.dbReady = true;
   state.loading = false;
   render();
+  if (activeInterview() && isTestEnabled(activeInterview(), 'kraepelin')) {
+    await fetchKraepelin({ automatic: true });
+  }
 }
 
 function saveActiveId() {
@@ -755,10 +758,14 @@ function renderInterviews() {
   `).join('');
 
   list.querySelectorAll('.interview-item').forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       state.activeId = button.dataset.id;
       saveActiveId();
       render();
+      const interview = activeInterview();
+      if (interview && isTestEnabled(interview, 'kraepelin')) {
+        await fetchKraepelin({ automatic: true });
+      }
     });
   });
 }
@@ -1459,9 +1466,10 @@ async function deleteInterview() {
   render();
 }
 
-async function fetchKraepelin() {
+async function fetchKraepelin(options = {}) {
+  const automatic = options?.automatic === true;
   if (typeof supabase === 'undefined') {
-    alert('Supabase設定を読み込めません');
+    if (!automatic) alert('Supabase設定を読み込めません');
     return;
   }
   const interview = activeInterview();
@@ -1493,15 +1501,22 @@ async function fetchKraepelin() {
   ]);
   const error = sessionResp.error || legacyResp.error || unassignedResp.error;
   if (error) {
-    alert('クレペリン結果の取得に失敗しました: ' + error.message);
+    if (automatic) {
+      state.error = 'クレペリン結果の自動取得に失敗しました。再読込ボタンを押してください。';
+      render();
+    } else {
+      alert('クレペリン結果の取得に失敗しました: ' + error.message);
+    }
     return;
   }
+  if (activeInterview()?.id !== interview.id) return;
   const byId = new Map();
   [...(sessionResp.data || []), ...(legacyResp.data || []), ...(unassignedResp.data || [])].forEach(record => {
     byId.set(record.id, record);
   });
   state.kraepelinRecords = [...byId.values()];
   await attachUnassignedKraepelin();
+  if (state.error.startsWith('クレペリン結果の自動取得')) state.error = '';
   render();
 }
 
