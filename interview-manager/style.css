@@ -1064,12 +1064,38 @@ td input { min-height: 34px; padding: 5px 7px; }
     background: #fff;
   }
   body.printing-links .link-sheet-inner { width: 100%; margin: 0; padding: 0; box-shadow: none; }
-  body.printing-links .link-sheet-actions { display: none; }
-  body.printing-links .link-sheet-description { font-size: 9px; }
-  body.printing-links .link-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  body.printing-links .link-card { padding: 8px; }
-  body.printing-links .link-card-guide { margin: 5px 0 7px; padding: 5px 7px; font-size: 8px; }
-  body.printing-links .qr-box img { width: 120px; height: 120px; }
+  body.printing-links .link-sheet-head { display: none; }
+  /* 全員分の印刷は 1人 = 1ページ に収める */
+  body.printing-links .link-grid { display: block; }
+  body.printing-links .link-card {
+    display: block;
+    width: 100%;
+    min-height: 178mm;
+    margin: 0;
+    padding: 8mm 10mm;
+    border: none;
+    border-radius: 0;
+    break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+  }
+  body.printing-links .link-card:last-child { break-after: auto; page-break-after: auto; }
+  body.printing-links .link-card-head { align-items: center; }
+  body.printing-links .link-photo { width: 30mm; height: 34mm; }
+  body.printing-links .link-no { font-size: 12px; }
+  body.printing-links .link-card-head h2 { font-size: 21px; }
+  body.printing-links .candidate-ticket-label { font-size: 11px; }
+  body.printing-links .link-card-guide { margin: 6mm 0; padding: 4mm; font-size: 11px; }
+  body.printing-links .qr-pair {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 6mm;
+    margin-top: 4mm;
+  }
+  body.printing-links .qr-box { padding: 4mm; gap: 4mm; }
+  body.printing-links .qr-step { font-size: 12px; }
+  body.printing-links .qr-box img { width: 44mm; height: 44mm; }
   body.printing-links .qr-actions, body.printing-links .link-card-footer { display: none; }
   body.printing-single-link .link-grid { display: block; }
   body.printing-single-link .link-card { display: none; }
