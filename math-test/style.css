@@ -1,0 +1,248 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --text: #172033;
+  --muted: #5f6c7f;
+  --line: #d8dee8;
+  --blue: #2563eb;
+  --blue-soft: #e8efff;
+  --green: #12805c;
+  --red: #b42318;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background: var(--bg);
+  font-family: "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+button, input {
+  font: inherit;
+}
+
+.app {
+  width: min(920px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+.panel, .topbar, .question-card, .submit-bar {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
+}
+
+.panel {
+  display: grid;
+  gap: 18px;
+  max-width: 560px;
+  margin: 80px auto 0;
+  padding: 24px;
+}
+
+.header h1, h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 11px;
+  color: var(--text);
+  background: #fff;
+}
+
+input:focus {
+  outline: 3px solid rgba(37, 99, 235, 0.16);
+  border-color: var(--blue);
+}
+
+.btn {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 16px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.btn.primary {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.error {
+  color: var(--red);
+  font-weight: 800;
+}
+
+.hidden { display: none !important; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 16px 18px;
+}
+
+#progress {
+  min-width: 76px;
+  border-radius: 999px;
+  padding: 8px 12px;
+  text-align: center;
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.question-list {
+  display: grid;
+  gap: 12px;
+}
+
+.question-card {
+  padding: 16px;
+}
+
+.question-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.55;
+}
+
+.section-title {
+  margin: 18px 4px 0;
+  color: var(--blue);
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+.question-list > .section-title:first-child {
+  margin-top: 4px;
+}
+
+.question-math {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fbfcff;
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 700;
+  font-family: "SF Mono", "Consolas", "Menlo", monospace, "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.02em;
+  overflow-wrap: break-word;
+}
+
+.question-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 14px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fbfcff;
+}
+
+.options {
+  display: grid;
+  gap: 8px;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fbfcff;
+  cursor: pointer;
+}
+
+.option input {
+  margin-top: 4px;
+}
+
+.submit-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+#score-title {
+  color: var(--green);
+  font-size: 44px;
+}
+
+@media (max-width: 640px) {
+  .app {
+    width: min(100% - 18px, 920px);
+    padding-top: 12px;
+  }
+
+  .panel {
+    margin-top: 26px;
+    padding: 18px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .question-math {
+    font-size: 17px;
+  }
+}

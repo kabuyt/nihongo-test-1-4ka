@@ -4,7 +4,7 @@ const SENDERS = ['BARAEN', 'AKANE', 'VJC'];
 const BEHAVIOR_TEST_BASE_URL = 'https://kabuyt.github.io/behavior-test/';
 const TEST_DEFINITIONS = [
   { key: 'kraepelin', label: 'クレペリン', ranked: true, online: true },
-  { key: 'math', label: '数学', ranked: true },
+  { key: 'math', label: '数学', ranked: true, online: true },
   { key: 'vietnamese', label: 'ベトナム国語', ranked: true, online: true },
   { key: 'japanese', label: '日本語単語', ranked: true },
   { key: 'pinboard', label: 'ピンボード', ranked: true },
@@ -233,6 +233,13 @@ function kraepelinUrl(interview, candidate) {
 
 function vietnameseTestUrl(interview, candidate) {
   const url = new URL('../vietnamese-language-test/index.html', window.location.href);
+  url.searchParams.set('session', interview.id);
+  url.searchParams.set('no', candidate.no);
+  return url.href;
+}
+
+function mathTestUrl(interview, candidate) {
+  const url = new URL('../math-test/index.html', window.location.href);
   url.searchParams.set('session', interview.id);
   url.searchParams.set('no', candidate.no);
   return url.href;
@@ -1026,6 +1033,7 @@ function renderLinkSheet(interview) {
   $('#link-sheet-body').innerHTML = candidates.map(candidate => {
     const urls = {
       kraepelin: kraepelinUrl(interview, candidate),
+      math: mathTestUrl(interview, candidate),
       vietnamese: vietnameseTestUrl(interview, candidate),
       behavior: behaviorTestUrl(interview, candidate),
     };
@@ -1136,7 +1144,7 @@ function renderTable(interview) {
           </div>
         </td>
         ${isTestEnabled(interview, 'kraepelin') ? `<td class="kraepelin-cell kraepelin-col">${kraepelinCell}</td>` : ''}
-        ${isTestEnabled(interview, 'math') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'math', row.math, row.ranks.math)}</td>` : ''}
+        ${isTestEnabled(interview, 'math') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'math', row.math, row.ranks.math, { link: mathTestUrl(interview, row) })}</td>` : ''}
         ${isTestEnabled(interview, 'vietnamese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>` : ''}
         ${isTestEnabled(interview, 'japanese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>` : ''}
         ${isTestEnabled(interview, 'pinboard') ? `<td class="score-entry-table-cell pin-grade-col">${pinGradeControl(row, 1)}</td>
