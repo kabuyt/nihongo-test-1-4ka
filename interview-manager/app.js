@@ -731,7 +731,7 @@ function buildRows(interview) {
     return true;
   }));
 
-  const maxScore = rankedTests.length * 100;
+  const rankedCount = rankedTests.length;
   const ranked = enriched.map(row => {
     const ranks = {
       k: kRank.get(row.no) ?? null,
@@ -747,16 +747,27 @@ function buildRows(interview) {
       japanese: row.japanese,
       pinboard: row.pinScoreValue,
     };
-    const rankedScores = rankedTests.map(test => scoreByTest[test.key]);
-    const totalScore = rankedScores.length === 0 || rankedScores.some(value => value == null)
-      ? null
-      : Number(rankedScores.reduce((sum, value) => sum + value, 0).toFixed(1));
-    return { ...row, ranks, totalScore, maxScore, rankingComplete: allResultsComplete && rankedTests.length > 0 };
+    // 入力済みの採点科目だけを合計。ピンボードが翌日実施などで未入力でも、
+    // 揃っている科目だけで暫定順位を出せるようにする。
+    const enteredScores = rankedTests.map(test => scoreByTest[test.key]).filter(value => value != null);
+    const enteredCount = enteredScores.length;
+    const rankScore = enteredCount > 0
+      ? Number(enteredScores.reduce((sum, value) => sum + value, 0).toFixed(1))
+      : null;
+    return {
+      ...row,
+      ranks,
+      rankScore,
+      rankMax: enteredCount * 100,
+      enteredCount,
+      rankedCount,
+      provisional: !(allResultsComplete && rankedCount > 0),
+    };
   });
 
-  const finalRank = rankValues(ranked, row => row.totalScore, 'desc');
+  const finalRank = rankValues(ranked, row => row.rankScore, 'desc');
   return ranked
-    .map(row => ({ ...row, finalRank: row.rankingComplete ? finalRank.get(row.no) : null }))
+    .map(row => ({ ...row, finalRank: finalRank.get(row.no) ?? null }))
     .sort((a, b) => (a.finalRank ?? Number.MAX_SAFE_INTEGER) - (b.finalRank ?? Number.MAX_SAFE_INTEGER) || Number(a.no) - Number(b.no));
 }
 
@@ -896,6 +907,21 @@ function pinTimeInput(row, round) {
   `;
 }
 
+// 総合順位のラベル。全科目そろう前は「仮 第N位」、そろえば「第N位」。
+// bare=true のときは接頭・接尾なしの数字だけ（管理画面のバッジ用）に「仮N」。
+function rankLabel(row, { bare = false } = {}) {
+  if (row.finalRank == null) return bare ? '—' : '未集計';
+  if (bare) return row.provisional ? `仮${row.finalRank}` : `${row.finalRank}`;
+  return row.provisional ? `仮 第${row.finalRank}位` : `第${row.finalRank}位`;
+}
+
+// 「320 / 400点（4/5科目）」の得点行。未入力なら空文字。
+function rankScoreText(row) {
+  if (row.rankScore == null) return '';
+  const suffix = row.provisional ? `（${row.enteredCount}/${row.rankedCount}科目）` : '';
+  return `${formatScore(row.rankScore)} / ${row.rankMax}点${suffix}`;
+}
+
 function rankSummaryItems(row, interview) {
   const items = {
     kraepelin: ['クレペリン', row.ranks.k],
@@ -988,8 +1014,8 @@ function renderPrintReport(interview, rows) {
           return `
             <tr>
               <td class="print-rank">
-                <strong>${row.finalRank == null ? '集計中' : `第${row.finalRank}位`}</strong>
-                ${row.totalScore != null ? `<span>${formatScore(row.totalScore)} / ${row.maxScore}点</span>` : ''}
+                <strong>${escapeHtml(rankLabel(row))}</strong>
+                ${rankScoreText(row) ? `<span>${escapeHtml(rankScoreText(row))}</span>` : ''}
               </td>
               <td class="print-candidate">
                 <div class="print-candidate-inner">
@@ -1017,7 +1043,7 @@ function renderPrintReport(interview, rows) {
       </tbody>
     </table>
     <footer class="print-footer">
-      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の各100点満点、合計${rankedTests.length * 100}点で総合順位を算出</span>
+      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の各100点満点、合計${rankedTests.length * 100}点で総合順位を算出${rows.some(row => row.provisional && row.finalRank != null) ? '（現在は暫定順位：未入力の科目を除いて算出）' : ''}</span>
       <span>${escapeHtml(formatInterviewName(interview))}</span>
     </footer>
     ${behaviorAppendix}
@@ -1126,8 +1152,8 @@ function renderTable(interview) {
     return `
       <tr>
         <td>
-          <span class="${rankClass}">${row.finalRank == null ? '集計中' : row.finalRank}</span>
-          ${row.totalScore != null ? `<div class="mini">${formatScore(row.totalScore)} / ${row.maxScore}点</div>` : ''}
+          <span class="${rankClass}">${escapeHtml(rankLabel(row, { bare: true }))}</span>
+          ${rankScoreText(row) ? `<div class="mini">${escapeHtml(rankScoreText(row))}</div>` : ''}
         </td>
         <td>${candidateLabel(row)}</td>
         <td class="photo-cell">
@@ -1697,9 +1723,9 @@ function exportCsv() {
   const rows = buildRows(interview).map(row => {
     const pin = pinSummary(row.score);
     const values = [
-      row.finalRank == null ? '集計中' : `第${row.finalRank}位`,
-      row.totalScore == null ? '' : formatScore(row.totalScore),
-      row.maxScore,
+      rankLabel(row),
+      row.rankScore == null ? '' : formatScore(row.rankScore),
+      row.rankMax,
       row.no,
       row.name || '',
     ];
