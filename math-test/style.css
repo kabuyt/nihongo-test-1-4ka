@@ -191,25 +191,68 @@ input:focus {
   background: #fbfcff;
 }
 
-.options {
-  display: grid;
-  gap: 8px;
-}
-
-.option {
-  display: grid;
-  grid-template-columns: auto 1fr;
+/* ---- 回答入力欄 ---- */
+.answer-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
-  align-items: start;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #fbfcff;
-  cursor: pointer;
+  padding: 4px 2px 2px;
 }
 
-.option input {
-  margin-top: 4px;
+.answer-input {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  background: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  font-family: "SF Mono", "Consolas", "Menlo", monospace, "Segoe UI", Arial, sans-serif;
+}
+
+.answer-input.num-cell { width: 116px; }
+.answer-row .answer-input { width: 116px; }
+
+.answer-fix,
+.answer-op {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* 分数 □/□ */
+.frac {
+  display: inline-grid;
+  justify-items: center;
+  gap: 4px;
+}
+.frac .frac-cell { width: 108px; }
+.frac-bar {
+  width: 116px;
+  height: 2px;
+  background: var(--text);
+}
+
+.answer-select {
+  min-height: 48px;
+  min-width: 180px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  background: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.answer-input:focus,
+.answer-select:focus {
+  outline: 3px solid rgba(37, 99, 235, 0.16);
+  border-color: var(--blue);
 }
 
 .submit-bar {

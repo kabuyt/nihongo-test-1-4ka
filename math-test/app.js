@@ -24,6 +24,53 @@ function setScreen(name) {
   $('#result-screen').classList.toggle('hidden', name !== 'result');
 }
 
+// 半角テキスト入力の共通属性
+const NUM_ATTRS = 'type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"';
+
+function answerFieldHtml(question) {
+  const id = question.id;
+  switch (question.type) {
+    case 'fraction':
+      return `
+        <div class="answer-row">
+          <span class="frac">
+            <input class="answer-input frac-cell" ${NUM_ATTRS} name="q${id}_n" aria-label="tử số">
+            <span class="frac-bar"></span>
+            <input class="answer-input frac-cell" ${NUM_ATTRS} name="q${id}_d" aria-label="mẫu số">
+          </span>
+        </div>`;
+    case 'ratio':
+      return `
+        <div class="answer-row">
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_a" aria-label="tỉ số vế trái">
+          <span class="answer-op">:</span>
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_b" aria-label="tỉ số vế phải">
+        </div>`;
+    case 'expr':
+      return `
+        <div class="answer-row">
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_coef" aria-label="hệ số của x">
+          <span class="answer-op">x +</span>
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_cons" aria-label="hằng số">
+        </div>`;
+    case 'select':
+      return `
+        <div class="answer-row">
+          <select class="answer-select" name="q${id}">
+            <option value="">— chọn —</option>
+            ${question.options.map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('')}
+          </select>
+        </div>`;
+    default: // number
+      return `
+        <div class="answer-row">
+          ${question.prefix ? `<span class="answer-fix">${escapeHtml(question.prefix)}</span>` : ''}
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}" aria-label="đáp án">
+          ${question.suffix ? `<span class="answer-fix">${escapeHtml(question.suffix)}</span>` : ''}
+        </div>`;
+  }
+}
+
 function renderQuestions() {
   $('#test-form').innerHTML = QUESTIONS.map(question => {
     const sectionHtml = question.sectionTitle
@@ -38,33 +85,43 @@ function renderQuestions() {
     const imageHtml = question.image
       ? `<img class="question-image" src="${question.image}" alt="">`
       : '';
-    const optionsHtml = `
-      <div class="options">
-        ${question.options.map((option, index) => {
-          const letter = String.fromCharCode(65 + index);
-          return `
-            <label class="option">
-              <input type="radio" name="q${question.id}" value="${index}" required>
-              <span><strong>${letter}.</strong> ${escapeHtml(option)}</span>
-            </label>
-          `;
-        }).join('')}
-      </div>
-    `;
     return `
       ${sectionHtml}
       <section class="question-card" data-question="${question.id}">
         ${promptHtml}
         ${mathHtml}
         ${imageHtml}
-        ${optionsHtml}
+        ${answerFieldHtml(question)}
       </section>
     `;
   }).join('');
 }
 
+// DOM から1問分の回答を、questions.js の判定関数が期待する形で取り出す
+function collectAnswer(question) {
+  const val = name => (document.querySelector(`[name="${name}"]`)?.value ?? '');
+  const id = question.id;
+  switch (question.type) {
+    case 'fraction': return { n: val(`q${id}_n`), d: val(`q${id}_d`) };
+    case 'ratio': return { a: val(`q${id}_a`), b: val(`q${id}_b`) };
+    case 'expr': return { coef: val(`q${id}_coef`), cons: val(`q${id}_cons`) };
+    default: return { value: val(`q${id}`) }; // number / select
+  }
+}
+
+// 記録用の読みやすい回答文字列
+function formatGiven(question, ans) {
+  if (!mtIsAnswered(question, ans)) return '';
+  switch (question.type) {
+    case 'fraction': return `${ans.n}/${ans.d}`;
+    case 'ratio': return `${ans.a}:${ans.b}`;
+    case 'expr': return `${ans.coef}x + ${ans.cons}`;
+    default: return String(ans.value);
+  }
+}
+
 function answeredCount() {
-  return QUESTIONS.filter(question => !!document.querySelector(`[name="q${question.id}"]:checked`)).length;
+  return QUESTIONS.filter(question => mtIsAnswered(question, collectAnswer(question))).length;
 }
 
 function updateProgress() {
@@ -74,11 +131,10 @@ function updateProgress() {
 function grade() {
   let correct = 0;
   const answers = QUESTIONS.map(question => {
-    const checked = document.querySelector(`[name="q${question.id}"]:checked`)?.value;
-    const given = checked === undefined ? null : Number(checked);
-    const isCorrect = given === question.answer;
+    const ans = collectAnswer(question);
+    const isCorrect = mtIsCorrect(question, ans);
     if (isCorrect) correct += 1;
-    return { id: question.id, given, correct: question.answer, isCorrect };
+    return { id: question.id, given: formatGiven(question, ans), isCorrect };
   });
   return {
     correct,
@@ -112,6 +168,7 @@ function startTest() {
   $('#display-no').textContent = no;
   renderQuestions();
   updateProgress();
+  $('#test-form').addEventListener('input', updateProgress);
   $('#test-form').addEventListener('change', updateProgress);
   setScreen('test');
 }
