@@ -961,7 +961,11 @@ function renderPrintReport(interview, rows) {
           return `<article class="print-behavior-card">
             <h3>${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '氏名未入力')} — ${escapeHtml(behaviorSummary(row.behavior))}</h3>
             <p class="print-behavior-summary"><strong>一言コメント：</strong>${escapeHtml(behaviorTendencyComment(row.behavior))}</p>
-            ${items.map(item => `<p><strong>設問${item.number}：</strong>${escapeHtml(item.analysis)}</p>`).join('') || '<p>未受験</p>'}
+            ${items.map(item => `<div class="pb-item">
+              <p class="pb-q"><strong>設問${item.number}</strong>　${escapeHtml(item.question)}</p>
+              <p class="pb-choice"><strong>選んだ回答：</strong>${escapeHtml(item.choice)}</p>
+              <p class="pb-analysis">${escapeHtml(item.analysis)}</p>
+            </div>`).join('') || '<p>未受験</p>'}
           </article>`;
         }).join('')}
       </div>
