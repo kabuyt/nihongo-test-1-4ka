@@ -338,7 +338,12 @@ function renderMatrix() {
       const result = _resultMap[k];
 
       let cls = 'locked', label = '🔒';
-      if (result) {
+      if (result && access && access.is_retake) {
+        cls = 'retake';
+        const total = (result.score_vocab||0) + (result.score_grammar||0) + (result.score_listening||0);
+        const max = (test.sections||['goii','bunpo','chokkai']).length * 100;
+        label = `🔁<span class="score-mini">${total}/${max}</span>`;
+      } else if (result) {
         cls = 'submitted';
         const total = (result.score_vocab||0) + (result.score_grammar||0) + (result.score_listening||0);
         const max = (test.sections||['goii','bunpo','chokkai']).length * 100;
@@ -366,7 +371,9 @@ async function onCellClick(traineeId, testId, studentId, testIdLabel) {
   const result = _resultMap[k];
 
   let action;
-  if (result && access && !access.is_retake) {
+  if (result && !access) {
+    action = confirm(`${studentId} の ${testIdLabel}: 提出済みですが、再受験用の解放データがありません。\n\n[OK] 再受験を許可する\n[キャンセル] 何もしない`) ? 'retake' : null;
+  } else if (result && access && !access.is_retake) {
     action = confirm(`${studentId} の ${testIdLabel}: 提出済みです。\n\n[OK] 再受験を許可する\n[キャンセル] 何もしない`) ? 'retake' : null;
   } else if (result && access && access.is_retake) {
     action = confirm(`${studentId} の ${testIdLabel}: 再受験許可中。\n\n[OK] 再受験許可を取り消す\n[キャンセル] 何もしない`) ? 'cancel-retake' : null;
@@ -384,7 +391,9 @@ async function onCellClick(traineeId, testId, studentId, testIdLabel) {
     const { error } = await supabase.from('test_access').delete().eq('trainee_id', traineeId).eq('test_id', testId);
     if (error) { alert('エラー: ' + error.message); return; }
   } else if (action === 'retake') {
-    const { error } = await supabase.from('test_access').update({ is_retake: true }).eq('trainee_id', traineeId).eq('test_id', testId);
+    const { error } = access
+      ? await supabase.from('test_access').update({ is_retake: true }).eq('trainee_id', traineeId).eq('test_id', testId)
+      : await supabase.from('test_access').insert({ trainee_id: traineeId, test_id: testId, is_retake: true });
     if (error) { alert('エラー: ' + error.message); return; }
   } else if (action === 'cancel-retake') {
     const { error } = await supabase.from('test_access').update({ is_retake: false }).eq('trainee_id', traineeId).eq('test_id', testId);
