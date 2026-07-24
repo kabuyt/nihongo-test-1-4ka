@@ -744,6 +744,103 @@ autoTests.forEach(([name, td]) => {
 });
 
 // ============================================================
+//  test5（第26-33課）: 2026-07 原文Wordから全面作り直し版
+//  - goii/bunpo/chokkai の3セクション
+//  - 手動採点: bunpo b2 (5点×4=20点), chokkai c1_text (3点×3=9点)
+//    → 自動採点部分の満点は goii=100 / bunpo=80 / chokkai=91
+// ============================================================
+
+const t5 = loadAnswerKeys(5);
+
+if (t5) {
+  // 自動部分の満点 + 手動部分 = 100 になっているか
+  eq('test5 goii scoring_rules 合計 = 100', getSectionMaxPoints(t5.goii.scoring_rules), 100);
+  eq('test5 bunpo 自動採点部分 = 80', getSectionMaxPoints(t5.bunpo.scoring_rules), 80);
+  eq('test5 chokkai 自動採点部分 = 91', getSectionMaxPoints(t5.chokkai.scoring_rules), 91);
+
+  function manualMaxPoints(scoringRules) {
+    let total = 0;
+    for (const blockId in scoringRules) {
+      const rule = scoringRules[blockId];
+      if (rule.method !== 'manual') continue;
+      total += (rule.points_each || 0) * (rule.field_ids || []).length;
+    }
+    return total;
+  }
+  eq('test5 bunpo 自動80+手動20 = 100', getSectionMaxPoints(t5.bunpo.scoring_rules) + manualMaxPoints(t5.bunpo.scoring_rules), 100);
+  eq('test5 chokkai 自動91+手動9 = 100', getSectionMaxPoints(t5.chokkai.scoring_rules) + manualMaxPoints(t5.chokkai.scoring_rules), 100);
+
+  // 自動生成した満点解答 → 100/80/91
+  const t5Perfect = generatePerfectAnswers(t5);
+  deepEq('test5 gradeTest 自動部分満点 = 100/80/91', TG.gradeTest(t5, t5Perfect), { score_vocab: 100, score_grammar: 80, score_listening: 91 });
+
+  // 全空 → 0/0/0
+  deepEq('test5 gradeTest 全空 = 0/0/0', TG.gradeTest(t5, {}), { score_vocab: 0, score_grammar: 0, score_listening: 0 });
+
+  // 各ブロック単独満点
+  for (const sec of ['goii', 'bunpo', 'chokkai']) {
+    for (const blockId in t5[sec].scoring_rules) {
+      const rule = t5[sec].scoring_rules[blockId];
+      if (rule.method === 'manual') continue;
+      const blockPerfect = generatePerfectAnswersForBlock(rule, t5[sec].answer_key && t5[sec].answer_key[blockId]);
+      const blockScore = TG.gradeSection(t5[sec].answer_key, { [blockId]: rule }, blockPerfect);
+      const blockMax = getBlockMaxPoints(rule);
+      eq(`test5 ${sec} ${blockId} 単独満点 = ${blockMax}`, blockScore, blockMax);
+    }
+  }
+
+  // --- 個別回帰 ---
+
+  // goii g1: 読みの複数許容（九時十七分 = ななふん/しちふん）
+  eq('test5 g1 じゅうしちふん も正解', TG.gradeSection(t5.goii.answer_key, { g1: t5.goii.scoring_rules.g1 }, { g1_2: 'くじじゅうしちふん' }), 2);
+  // goii g1: えらび／えらびます どちらも正解
+  eq('test5 g1 えらびます も正解', TG.gradeSection(t5.goii.answer_key, { g1: t5.goii.scoring_rules.g1 }, { g1_8: 'えらびます' }), 2);
+  // goii g2: ベトナム語アクセント無視 (hư hỏng → hu hong)
+  eq('test5 g2 アクセント無し正解', TG.gradeSection(t5.goii.answer_key, { g2: t5.goii.scoring_rules.g2 }, { g2_1: 'hu hong' }), 2);
+  eq('test5 g2 大文字も正解', TG.gradeSection(t5.goii.answer_key, { g2: t5.goii.scoring_rules.g2 }, { g2_16: 'Thông báo' }), 2);
+
+  // bunpo b1: 15フィールド（原文の空欄数）
+  eq('test5 b1 フィールド数 = 15', t5.bunpo.scoring_rules.b1.field_ids.length, 15);
+  // b1_5: に／へ どちらも正解
+  eq('test5 b1_5 に', TG.gradeSection(t5.bunpo.answer_key, { b1: t5.bunpo.scoring_rules.b1 }, { b1_5: 'に' }), 1);
+  eq('test5 b1_5 へ', TG.gradeSection(t5.bunpo.answer_key, { b1: t5.bunpo.scoring_rules.b1 }, { b1_5: 'へ' }), 1);
+
+  // b5: 句読点付きでも正解（じゅんびしろ。）
+  eq('test5 b5 句点付き正解', TG.gradeSection(t5.bunpo.answer_key, { b5: t5.bunpo.scoring_rules.b5 }, { b5_3: 'じゅんびしろ。' }), 2);
+  // b5: 漢字表記も正解
+  eq('test5 b5 漢字表記', TG.gradeSection(t5.bunpo.answer_key, { b5: t5.bunpo.scoring_rules.b5 }, { b5_1: '入れ' }), 2);
+
+  // b8: 原文の丸付け解答 ×○○×（旧キー ×○×○ は誤りだった）
+  eq('test5 b8 原文キー ×○○×', TG.gradeSection(t5.bunpo.answer_key, { b8: t5.bunpo.scoring_rules.b8 },
+    { b8_1: '×', b8_2: '○', b8_3: '○', b8_4: '×' }), 12);
+  eq('test5 b8 旧誤キーの解答は8点止まり', TG.gradeSection(t5.bunpo.answer_key, { b8: t5.bunpo.scoring_rules.b8 },
+    { b8_1: '×', b8_2: '○', b8_3: '×', b8_4: '○' }), 6);
+
+  // chokkai c1: ○×部分のみ自動（6点）、記述は手動
+  eq('test5 c1 ○×自動部分満点 = 6', TG.gradeSection(t5.chokkai.answer_key, { c1_ox: t5.chokkai.scoring_rules.c1_ox },
+    { c1_1a: '×', c1_2a: '×', c1_3a: '○' }), 6);
+
+  // c3: 記述の表記ゆれ（雨が降る／あめがふる）
+  eq('test5 c3 雨が降る(漢字)も正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: '雨が降る' }), 3);
+  eq('test5 c3 あめがふる(かな)も正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: 'あめがふる' }), 3);
+  eq('test5 c3 「きっと雨がふる」も部分一致で正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: 'きっと雨がふる' }), 3);
+
+  // c7: 数字は exact_only（「1」だけで正解、無関係な文字列は不正解）
+  eq('test5 c7 数字 全角１も正解', TG.gradeSection(t5.chokkai.answer_key, { c7_num: t5.chokkai.scoring_rules.c7_num }, { c7_1a: '１' }), 2);
+  eq('test5 c7 数字 10 は不正解', TG.gradeSection(t5.chokkai.answer_key, { c7_num: t5.chokkai.scoring_rules.c7_num }, { c7_1a: '10' }), 0);
+  // c7: 動詞の表記ゆれ
+  eq('test5 c7 おぼえた(かな)も正解', TG.gradeSection(t5.chokkai.answer_key, { c7_verb: t5.chokkai.scoring_rules.c7_verb }, { c7_1c: 'おぼえた' }), 2);
+  // c7: 名詞は部分一致（富士山についてレポート ⊃ レポート）
+  eq('test5 c7 レポートを含む解答も正解', TG.gradeSection(t5.chokkai.answer_key, { c7_noun: t5.chokkai.scoring_rules.c7_noun }, { c7_2b: '富士山についてレポート' }), 1);
+
+  // c10: ×✕同一視
+  eq('test5 c10 ✕表記も正解', TG.gradeSection(t5.chokkai.answer_key, { c10: t5.chokkai.scoring_rules.c10 },
+    { c10_1: '✕', c10_2: '○', c10_3: '✕', c10_4: '○', c10_5: '○' }), 5);
+} else {
+  console.log('  (test5 answer_keys 見つからず、test5 テストをスキップ)');
+}
+
+// ============================================================
 //  Result
 // ============================================================
 
