@@ -268,7 +268,7 @@ input:focus {
 
 .answer-input:focus { background: #fff; }
 
-/* 小数の区切り（□,□ の中点） */
+/* 小数の区切り（□.□ の小数点）。問題文が 0.28 のようにピリオド表記なので揃える */
 .answer-dot {
   font-size: 26px;
   font-weight: 800;

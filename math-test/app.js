@@ -35,7 +35,7 @@ function answerFieldHtml(question) {
       return `
         <div class="answer-row">
           <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_int" aria-label="phần nguyên">
-          <span class="answer-dot">,</span>
+          <span class="answer-dot">.</span>
           <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_dec" aria-label="phần thập phân">
         </div>`;
     case 'fraction':
