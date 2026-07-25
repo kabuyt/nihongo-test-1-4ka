@@ -293,40 +293,43 @@ input:focus, select:focus {
 
 .interview-empty { margin: 0; padding: 10px 2px; color: #9fb1c9; font-size: 11px; line-height: 1.6; }
 
-.interview-item.archived { opacity: 0.62; }
-.interview-item.archived.active { opacity: 1; }
+/* アーカイブ済みは白地のまま、少しくすませて区別する（読めなくはしない） */
+.interview-item.archived { border-style: dashed; background: #f1f4f8; }
+.interview-item.archived strong { color: #4a5a70; }
 
 .archived-badge {
   display: inline-block;
   margin-left: 6px;
   padding: 1px 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #e6eefb;
+  background: #e3e9f2;
+  color: #52627a;
   font-size: 9px;
   font-weight: 800;
   vertical-align: middle;
 }
 
-.interview-item.active .archived-badge { background: #eaf1fb; color: #3a5a86; }
-
+/* 濃紺のサイドバー上でも読めるよう、面接カードは常に白地にする。
+   選択中は青枠と影で区別する（以前は選択中だけ白で、他は暗くて読めなかった）。 */
 .interview-item {
   min-width: 0;
   padding: 12px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid #cdd6e2;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.045);
-  cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease;
-}
-
-.interview-item:hover { background: rgba(255, 255, 255, 0.09); }
-
-.interview-item.active {
-  border-color: #fff;
   color: var(--text);
   background: #fff;
-  box-shadow: 0 8px 20px rgba(5, 15, 30, 0.18);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.interview-item:hover { border-color: #9db3d0; background: #f6f9fd; }
+
+.interview-item.active {
+  border-color: var(--blue);
+  border-left-width: 4px;
+  color: var(--text);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(5, 15, 30, 0.22);
 }
 
 .interview-item strong,
@@ -338,7 +341,7 @@ input:focus, select:focus {
 }
 
 .interview-item strong { margin-bottom: 4px; font-size: 13px; }
-.interview-item span { opacity: 0.72; font-size: 11px; }
+.interview-item span { color: var(--muted); font-size: 11px; }
 
 .main {
   min-width: 0;
