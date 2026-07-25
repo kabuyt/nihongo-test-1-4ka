@@ -1758,10 +1758,21 @@ function openKraepelin() {
   window.open('../kraepelin/interview.html', '_blank', 'noopener');
 }
 
+// CSSでA4横を指定しても、印刷ダイアログ側の「用紙の向き」が優先される。
+// 一度「縦」になっていると記憶され、縦のままだと列が潰れて氏名と写真が重なるため案内する。
+const LANDSCAPE_HINT_KEY = 'interviewManager.landscapeHintShown';
+
+function warnLandscapeIfNeeded() {
+  if (localStorage.getItem(LANDSCAPE_HINT_KEY)) return;
+  alert('印刷ダイアログで用紙の向きが「横（横長）」になっているか確認してください。\n縦のままだと表が潰れて、氏名と写真が重なります。\n\n（この案内は初回のみ表示します）');
+  localStorage.setItem(LANDSCAPE_HINT_KEY, '1');
+}
+
 function printPdf() {
   const interview = activeInterview();
   if (!interview) return;
   renderPrintReport(interview, buildRows(interview));
+  warnLandscapeIfNeeded();
   window.print();
 }
 

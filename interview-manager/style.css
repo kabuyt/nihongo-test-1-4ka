@@ -270,13 +270,14 @@ input:focus, select:focus {
 .sidebar-head-actions .icon-btn:hover { background: rgba(255, 255, 255, 0.1); }
 .sidebar-head-actions .icon-btn.is-archived { color: #ffd79a; border-color: rgba(255, 205, 130, 0.5); }
 
-/* サイドバー下部の「アーカイブ一覧」を開くリンク */
+/* サイドバー下部の「アーカイブ一覧」を開くリンク（面接一覧の下に置く） */
 .archive-link {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  margin: -12px 0 -6px;
-  padding: 7px 9px;
+  margin-top: auto;
+  padding: 9px;
   border: 1px dashed rgba(255, 255, 255, 0.24);
   border-radius: 8px;
   color: #c3d3e8;
@@ -291,6 +292,8 @@ input:focus, select:focus {
 .archive-link svg { width: 14px; height: 14px; }
 
 .interview-list {
+  flex: 1;
+  min-height: 0;
   display: grid;
   align-content: start;
   gap: 8px;
@@ -334,13 +337,29 @@ input:focus, select:focus {
 
 .interview-item:hover { border-color: #9db3d0; background: #f6f9fd; }
 
+/* 選択中は一目で分かるように、青い面＋左の太バー＋外周リングで強調する */
 .interview-item.active {
+  position: relative;
+  padding-left: 20px;
   border-color: var(--blue);
-  border-left-width: 4px;
   color: var(--text);
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(5, 15, 30, 0.22);
+  background: var(--blue-soft);
+  box-shadow: 0 0 0 3px rgba(36, 93, 168, 0.45), 0 10px 22px rgba(5, 15, 30, 0.3);
 }
+
+.interview-item.active::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.interview-item.active strong { color: var(--blue-hover); }
+.interview-item.active span { color: #4b6180; }
 
 .interview-item strong,
 .interview-item span {
@@ -1096,7 +1115,8 @@ td input { min-height: 34px; padding: 5px 7px; }
 }
 
 @media print {
-  @page { size: A4 landscape; margin: 10mm; }
+  /* A4横。Safariは "A4 landscape" キーワードを解釈しないことがあるため実寸で指定する */
+  @page { size: 297mm 210mm; margin: 10mm; }
 
   body {
     color: #162033;
@@ -1138,6 +1158,8 @@ td input { min-height: 34px; padding: 5px 7px; }
   }
   body.printing-links .link-card:last-child { break-after: auto; page-break-after: auto; }
   body.printing-links .link-card-head { align-items: center; }
+  /* 写真を拡大するときは、写真列の幅も必ず同じだけ広げる（狭いままだと氏名に重なる） */
+  body.printing-links .link-candidate { grid-template-columns: 30mm minmax(0, 1fr); gap: 6mm; }
   body.printing-links .link-photo { width: 30mm; height: 34mm; }
   body.printing-links .link-no { font-size: 12px; }
   body.printing-links .link-card-head h2 { font-size: 21px; }
@@ -1340,7 +1362,8 @@ td input { min-height: 34px; padding: 5px 7px; }
     gap: 6px;
   }
 
-  .print-candidate-copy { min-width: 0; }
+  /* 用紙が縦のまま印刷されて列幅が足りない場合でも、氏名が写真側へはみ出さないようにする */
+  .print-candidate-copy { min-width: 0; overflow: hidden; }
   .print-candidate-no { display: block; margin-bottom: 1px; color: #52647c; font-size: 8.5px; font-weight: 700; white-space: nowrap; }
   .print-candidate strong {
     display: block;
