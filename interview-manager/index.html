@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=37">
+  <link rel="stylesheet" href="style.css?v=38">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -79,10 +79,9 @@
           <button id="delete-interview" class="icon-btn danger" title="面接を削除"><i data-lucide="trash-2"></i></button>
         </div>
       </div>
-      <label id="archived-toggle" class="archived-toggle hidden">
-        <input id="archived-toggle-input" type="checkbox">
-        アーカイブ済みも表示（<span id="archived-count">0</span>件）
-      </label>
+      <button id="open-archive-sheet" class="archive-link hidden" type="button">
+        <i data-lucide="archive"></i>アーカイブ一覧（<span id="archived-count">0</span>件）
+      </button>
       <div id="interview-list" class="interview-list"></div>
     </aside>
 
@@ -225,6 +224,24 @@
 
   <section id="print-report" class="print-report"></section>
 
+  <section id="archive-sheet" class="link-sheet hidden" aria-label="アーカイブ一覧">
+    <div class="link-sheet-inner">
+      <header class="link-sheet-head">
+        <div>
+          <p class="eyebrow">終了した面接</p>
+          <h1>アーカイブ一覧</h1>
+          <p class="link-sheet-description">
+            アーカイブした面接はここに保管されます。データは消えていないので、いつでも元の一覧に戻せます。
+          </p>
+        </div>
+        <div class="link-sheet-actions">
+          <button id="close-archive-sheet" class="btn"><i data-lucide="x"></i>閉じる</button>
+        </div>
+      </header>
+      <div id="archive-sheet-body" class="archive-list"></div>
+    </div>
+  </section>
+
   <section id="link-sheet" class="link-sheet hidden" aria-label="候補者別QR受験票">
     <div class="link-sheet-inner">
       <header class="link-sheet-head">
@@ -261,6 +278,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
   <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
-  <script src="app.js?v=54"></script>
+  <script src="app.js?v=55"></script>
 </body>
 </html>

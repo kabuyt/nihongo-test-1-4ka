@@ -27,7 +27,6 @@ const state = {
   loading: false,
   error: '',
   kraepelinLastFetchedAt: null,
-  showArchived: false,
 };
 
 let kraepelinFetchInFlight = false;
@@ -499,12 +498,9 @@ async function loadData() {
 
   state.interviews = (sessionsResp.data || []).map(row => interviewFromDb(row, candidatesByInterview));
   state.behaviorRecords = behaviorResp.data || [];
-  // 初期選択はアーカイブされていない面接を優先する
-  const firstActive = state.interviews.find(item => !item.archived) || state.interviews[0];
-  state.activeId = localStorage.getItem(ACTIVE_KEY) || firstActive?.id || '';
-  if (!state.interviews.some(item => item.id === state.activeId)) state.activeId = firstActive?.id || '';
-  const selected = state.interviews.find(item => item.id === state.activeId);
-  if (selected?.archived) state.showArchived = true;
+  // アーカイブ済みは面接一覧に出ないので、選択もアーカイブされていないものに限る
+  const saved = state.interviews.find(item => item.id === localStorage.getItem(ACTIVE_KEY));
+  state.activeId = (saved && !saved.archived ? saved : visibleInterviews()[0])?.id || '';
   state.dbReady = true;
   state.loading = false;
   render();
@@ -794,8 +790,13 @@ function renderStatus() {
   document.querySelector('.main').prepend(banner);
 }
 
+// 面接一覧にはアーカイブ済みを出さない。アーカイブ済みは専用の一覧画面で見る。
 function visibleInterviews() {
-  return state.interviews.filter(interview => state.showArchived || !interview.archived);
+  return state.interviews.filter(interview => !interview.archived);
+}
+
+function archivedInterviews() {
+  return state.interviews.filter(interview => interview.archived);
 }
 
 function renderInterviews() {
@@ -803,19 +804,18 @@ function renderInterviews() {
   const user = currentUser();
   $('#interview-list-title').textContent = user?.role === 'admin' ? '面接一覧' : '担当面接';
 
-  const archivedCount = state.interviews.filter(interview => interview.archived).length;
-  const toggle = $('#archived-toggle');
-  if (toggle) {
-    toggle.classList.toggle('hidden', archivedCount === 0);
-    $('#archived-toggle-input').checked = state.showArchived;
+  const archivedCount = archivedInterviews().length;
+  const openArchive = $('#open-archive-sheet');
+  if (openArchive) {
+    openArchive.classList.toggle('hidden', archivedCount === 0);
     $('#archived-count').textContent = archivedCount;
   }
 
   const items = visibleInterviews();
   list.innerHTML = items.length
     ? items.map(interview => `
-      <button class="interview-item ${interview.id === state.activeId ? 'active' : ''} ${interview.archived ? 'archived' : ''}" data-id="${interview.id}">
-        <strong>${formatInterviewName(interview)}${interview.archived ? '<span class="archived-badge">アーカイブ済み</span>' : ''}</strong>
+      <button class="interview-item ${interview.id === state.activeId ? 'active' : ''}" data-id="${interview.id}">
+        <strong>${formatInterviewName(interview)}</strong>
         <span>${formatSender(interview.senderOrg)} / ${interview.candidates.length}人</span>
       </button>
     `).join('')
@@ -1055,7 +1055,13 @@ function renderPrintReport(interview, rows) {
                   ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
                   <div class="print-candidate-copy">
                     <span class="print-candidate-no">${escapeHtml(candidateLabel(row))}</span>
-                    <strong>${escapeHtml(row.name || '氏名未入力')}</strong>
+                    ${(() => {
+                      // 「カタカナ / LATIN」を1行に詰めると変な位置で折り返すので2段に分ける
+                      const parts = splitCandidateName(row.name);
+                      if (!parts.kana && !parts.latin) return '<strong>氏名未入力</strong>';
+                      return `${parts.kana ? `<strong>${escapeHtml(parts.kana)}</strong>` : ''}
+                        ${parts.latin ? `<span class="print-candidate-latin">${escapeHtml(parts.latin)}</span>` : ''}`;
+                    })()}
                   </div>
                 </div>
               </td>
@@ -1280,10 +1286,6 @@ function render() {
   if (archiveBtn) {
     archiveBtn.classList.toggle('hidden', !isAdmin);
     archiveBtn.disabled = !hasInterview || !state.dbReady || !isAdmin;
-    const isArchived = interview?.archived === true;
-    archiveBtn.title = isArchived ? '面接を一覧に戻す' : '面接をアーカイブ';
-    archiveBtn.classList.toggle('is-archived', isArchived);
-    archiveBtn.innerHTML = `<i data-lucide="${isArchived ? 'archive-restore' : 'archive'}"></i>`;
   }
   $('#open-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
   $('#refresh-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
@@ -1566,35 +1568,81 @@ async function deleteInterview() {
 }
 
 // 終わった面接を一覧から隠す。データは消さないので、いつでも戻せる。
-async function toggleArchiveInterview() {
-  const interview = activeInterview();
+async function setInterviewArchived(interview, next) {
   if (!isAdminUser()) {
     alert('面接をアーカイブできるのはGROP管理者だけです。');
-    return;
+    return false;
   }
-  if (!interview) return;
-  const next = !interview.archived;
-  const label = formatInterviewName(interview);
-  if (next && !confirm(`${label}をアーカイブしますか。\n一覧から隠れますが、データは消えません。あとで戻せます。`)) return;
+  if (!interview) return false;
 
   const { error } = await supabase
     .from('interview_sessions')
     .update({ archived: next })
     .eq('id', interview.id);
   if (error) {
-    const hint = /archived/i.test(error.message)
+    const hint = /archived|column/i.test(error.message)
       ? '\n\ninterview-manager/add-archive.sql をSupabaseで実行してください。'
       : '';
     alert((next ? 'アーカイブ' : '復元') + 'に失敗しました: ' + error.message + hint);
-    return;
+    return false;
   }
   interview.archived = next;
-  // アーカイブして一覧から消えるときは、表示中の別の面接へ移す
-  if (next && !state.showArchived) {
-    state.activeId = state.interviews.find(item => !item.archived)?.id || '';
-    saveActiveId();
-  }
+  return true;
+}
+
+async function archiveActiveInterview() {
+  const interview = activeInterview();
+  if (!interview) return;
+  if (!confirm(`${formatInterviewName(interview)}をアーカイブしますか。\n面接一覧から外れますが、データは消えません。アーカイブ一覧からいつでも戻せます。`)) return;
+  if (!await setInterviewArchived(interview, true)) return;
+  // 一覧から消えるので、残っている面接へ切り替える
+  state.activeId = visibleInterviews()[0]?.id || '';
+  saveActiveId();
   render();
+}
+
+async function restoreInterview(id) {
+  const interview = state.interviews.find(item => item.id === id);
+  if (!interview) return;
+  if (!await setInterviewArchived(interview, false)) return;
+  state.activeId = interview.id;
+  saveActiveId();
+  if (!archivedInterviews().length) closeArchiveSheet();
+  render();
+  renderArchiveSheet();
+}
+
+function renderArchiveSheet() {
+  const body = $('#archive-sheet-body');
+  if (!body) return;
+  const items = archivedInterviews();
+  body.innerHTML = items.length
+    ? items.map(interview => `
+      <article class="archive-card">
+        <div class="archive-card-copy">
+          <strong>${escapeHtml(formatInterviewName(interview))}</strong>
+          <span>${escapeHtml(formatSender(interview.senderOrg))} / ${interview.candidates.length}人</span>
+        </div>
+        <button class="btn restore-interview" type="button" data-id="${escapeHtml(interview.id)}">
+          <i data-lucide="archive-restore"></i>面接一覧に戻す
+        </button>
+      </article>
+    `).join('')
+    : '<p class="archive-empty">アーカイブした面接はまだありません。</p>';
+
+  body.querySelectorAll('.restore-interview').forEach(button => {
+    button.addEventListener('click', () => restoreInterview(button.dataset.id));
+  });
+  if (window.lucide) lucide.createIcons();
+}
+
+function openArchiveSheet() {
+  renderArchiveSheet();
+  $('#archive-sheet').classList.remove('hidden');
+}
+
+function closeArchiveSheet() {
+  $('#archive-sheet').classList.add('hidden');
 }
 
 async function fetchKraepelin(options = {}) {
@@ -1844,11 +1892,9 @@ function bindEvents() {
   $('#active-sender').addEventListener('change', event => updateInterviewSender(event.target.value));
   $('#renumber-candidates').addEventListener('click', renumberCandidates);
   $('#delete-interview').addEventListener('click', deleteInterview);
-  $('#archive-interview').addEventListener('click', toggleArchiveInterview);
-  $('#archived-toggle-input').addEventListener('change', event => {
-    state.showArchived = event.target.checked;
-    render();
-  });
+  $('#archive-interview').addEventListener('click', archiveActiveInterview);
+  $('#open-archive-sheet').addEventListener('click', openArchiveSheet);
+  $('#close-archive-sheet').addEventListener('click', closeArchiveSheet);
   $('#refresh-kraepelin').addEventListener('click', fetchKraepelin);
   $('#open-kraepelin').addEventListener('click', openKraepelin);
   $('#open-link-sheet').addEventListener('click', openLinkSheet);
