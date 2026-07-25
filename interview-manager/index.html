@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -74,8 +74,15 @@
 
       <div class="sidebar-head">
         <span id="interview-list-title">面接一覧</span>
-        <button id="delete-interview" class="icon-btn danger" title="面接を削除"><i data-lucide="trash-2"></i></button>
+        <div class="sidebar-head-actions">
+          <button id="archive-interview" class="icon-btn" title="面接をアーカイブ"><i data-lucide="archive"></i></button>
+          <button id="delete-interview" class="icon-btn danger" title="面接を削除"><i data-lucide="trash-2"></i></button>
+        </div>
       </div>
+      <label id="archived-toggle" class="archived-toggle hidden">
+        <input id="archived-toggle-input" type="checkbox">
+        アーカイブ済みも表示（<span id="archived-count">0</span>件）
+      </label>
       <div id="interview-list" class="interview-list"></div>
     </aside>
 
@@ -254,6 +261,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
   <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
-  <script src="app.js?v=53"></script>
+  <script src="app.js?v=54"></script>
 </body>
 </html>

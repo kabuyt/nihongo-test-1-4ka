@@ -27,6 +27,7 @@ const state = {
   loading: false,
   error: '',
   kraepelinLastFetchedAt: null,
+  showArchived: false,
 };
 
 let kraepelinFetchInFlight = false;
@@ -437,6 +438,7 @@ function interviewFromDb(row, candidatesByInterview) {
     senderOrg: row.sender_org || 'BARAEN',
     notes: row.notes || '',
     testSettings: normalizeTestSettings(row.test_settings),
+    archived: row.archived === true,
     createdAt: row.created_at,
     candidates: (candidatesByInterview.get(row.id) || []).map(candidateFromDb),
   };
@@ -497,8 +499,12 @@ async function loadData() {
 
   state.interviews = (sessionsResp.data || []).map(row => interviewFromDb(row, candidatesByInterview));
   state.behaviorRecords = behaviorResp.data || [];
-  state.activeId = localStorage.getItem(ACTIVE_KEY) || state.interviews[0]?.id || '';
-  if (!state.interviews.some(item => item.id === state.activeId)) state.activeId = state.interviews[0]?.id || '';
+  // 初期選択はアーカイブされていない面接を優先する
+  const firstActive = state.interviews.find(item => !item.archived) || state.interviews[0];
+  state.activeId = localStorage.getItem(ACTIVE_KEY) || firstActive?.id || '';
+  if (!state.interviews.some(item => item.id === state.activeId)) state.activeId = firstActive?.id || '';
+  const selected = state.interviews.find(item => item.id === state.activeId);
+  if (selected?.archived) state.showArchived = true;
   state.dbReady = true;
   state.loading = false;
   render();
@@ -788,16 +794,32 @@ function renderStatus() {
   document.querySelector('.main').prepend(banner);
 }
 
+function visibleInterviews() {
+  return state.interviews.filter(interview => state.showArchived || !interview.archived);
+}
+
 function renderInterviews() {
   const list = $('#interview-list');
   const user = currentUser();
   $('#interview-list-title').textContent = user?.role === 'admin' ? '面接一覧' : '担当面接';
-  list.innerHTML = state.interviews.map(interview => `
-    <button class="interview-item ${interview.id === state.activeId ? 'active' : ''}" data-id="${interview.id}">
-      <strong>${formatInterviewName(interview)}</strong>
-      <span>${formatSender(interview.senderOrg)} / ${interview.candidates.length}人</span>
-    </button>
-  `).join('');
+
+  const archivedCount = state.interviews.filter(interview => interview.archived).length;
+  const toggle = $('#archived-toggle');
+  if (toggle) {
+    toggle.classList.toggle('hidden', archivedCount === 0);
+    $('#archived-toggle-input').checked = state.showArchived;
+    $('#archived-count').textContent = archivedCount;
+  }
+
+  const items = visibleInterviews();
+  list.innerHTML = items.length
+    ? items.map(interview => `
+      <button class="interview-item ${interview.id === state.activeId ? 'active' : ''} ${interview.archived ? 'archived' : ''}" data-id="${interview.id}">
+        <strong>${formatInterviewName(interview)}${interview.archived ? '<span class="archived-badge">アーカイブ済み</span>' : ''}</strong>
+        <span>${formatSender(interview.senderOrg)} / ${interview.candidates.length}人</span>
+      </button>
+    `).join('')
+    : '<p class="interview-empty">表示できる面接がありません。</p>';
 
   list.querySelectorAll('.interview-item').forEach(button => {
     button.addEventListener('click', async () => {
@@ -1254,6 +1276,15 @@ function render() {
   }
   $('#delete-interview').classList.toggle('hidden', !isAdmin);
   $('#delete-interview').disabled = !hasInterview || !state.dbReady || !isAdmin;
+  const archiveBtn = $('#archive-interview');
+  if (archiveBtn) {
+    archiveBtn.classList.toggle('hidden', !isAdmin);
+    archiveBtn.disabled = !hasInterview || !state.dbReady || !isAdmin;
+    const isArchived = interview?.archived === true;
+    archiveBtn.title = isArchived ? '面接を一覧に戻す' : '面接をアーカイブ';
+    archiveBtn.classList.toggle('is-archived', isArchived);
+    archiveBtn.innerHTML = `<i data-lucide="${isArchived ? 'archive-restore' : 'archive'}"></i>`;
+  }
   $('#open-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
   $('#refresh-kraepelin').classList.toggle('hidden', hasInterview && !isTestEnabled(interview, 'kraepelin'));
   $('#open-kraepelin').disabled = !hasInterview || !isTestEnabled(interview, 'kraepelin');
@@ -1534,6 +1565,38 @@ async function deleteInterview() {
   render();
 }
 
+// 終わった面接を一覧から隠す。データは消さないので、いつでも戻せる。
+async function toggleArchiveInterview() {
+  const interview = activeInterview();
+  if (!isAdminUser()) {
+    alert('面接をアーカイブできるのはGROP管理者だけです。');
+    return;
+  }
+  if (!interview) return;
+  const next = !interview.archived;
+  const label = formatInterviewName(interview);
+  if (next && !confirm(`${label}をアーカイブしますか。\n一覧から隠れますが、データは消えません。あとで戻せます。`)) return;
+
+  const { error } = await supabase
+    .from('interview_sessions')
+    .update({ archived: next })
+    .eq('id', interview.id);
+  if (error) {
+    const hint = /archived/i.test(error.message)
+      ? '\n\ninterview-manager/add-archive.sql をSupabaseで実行してください。'
+      : '';
+    alert((next ? 'アーカイブ' : '復元') + 'に失敗しました: ' + error.message + hint);
+    return;
+  }
+  interview.archived = next;
+  // アーカイブして一覧から消えるときは、表示中の別の面接へ移す
+  if (next && !state.showArchived) {
+    state.activeId = state.interviews.find(item => !item.archived)?.id || '';
+    saveActiveId();
+  }
+  render();
+}
+
 async function fetchKraepelin(options = {}) {
   const automatic = options?.automatic === true;
   if (kraepelinFetchInFlight) return;
@@ -1781,6 +1844,11 @@ function bindEvents() {
   $('#active-sender').addEventListener('change', event => updateInterviewSender(event.target.value));
   $('#renumber-candidates').addEventListener('click', renumberCandidates);
   $('#delete-interview').addEventListener('click', deleteInterview);
+  $('#archive-interview').addEventListener('click', toggleArchiveInterview);
+  $('#archived-toggle-input').addEventListener('change', event => {
+    state.showArchived = event.target.checked;
+    render();
+  });
   $('#refresh-kraepelin').addEventListener('click', fetchKraepelin);
   $('#open-kraepelin').addEventListener('click', openKraepelin);
   $('#open-link-sheet').addEventListener('click', openLinkSheet);
