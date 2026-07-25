@@ -2,6 +2,7 @@
 // 受験者はベトナム人技能実習生のため設問文はベトナム語。数式は言語非依存でそのまま表示。
 // 入力タイプ:
 //   number   … 数字1つ。answer は文字列。prefix/suffix で "y = □ x" のような装飾。
+//   decimal  … □.□（整数部・小数部の2枠）。小数点を打たせない（ベトナムではカンマを使うため）。answer は '1.904' の文字列。
 //   fraction … □/□（分子・分母の2枠）。answer {n, d}。約分違い(13/15 と 39/45)も自動で正解。
 //   ratio    … □ : □。answer {a, b}。比が等しければ正解(7:4 と 14:8)。
 //   expr     … □x + □（一次式の係数・定数の2枠）。answer {coef, cons}。
@@ -9,8 +10,8 @@
 // 注意: (28) は原本の解答冊子が y=-9x と誤植。x=-6・y=-54 → k=-54/-6=9 なので正解は y=9x。
 const QUESTIONS = [
   // 1. 計算
-  { id: 1, sectionTitle: '1. Hãy làm các phép tính sau', math: '0.28 × 6.8', type: 'number', answer: '1.904' },
-  { id: 2, math: '9.01 ÷ 5.3', type: 'number', answer: '1.7' },
+  { id: 1, sectionTitle: '1. Hãy làm các phép tính sau', math: '0.28 × 6.8', type: 'decimal', answer: '1.904' },
+  { id: 2, math: '9.01 ÷ 5.3', type: 'decimal', answer: '1.7' },
   { id: 3, math: '2/3 + 1/5', type: 'fraction', answer: { n: 13, d: 15 } },
   { id: 4, math: '5/6 − 1/12', type: 'fraction', answer: { n: 3, d: 4 } },
   { id: 5, math: '3 3/20 × 2/15', type: 'fraction', answer: { n: 21, d: 50 } },
@@ -68,6 +69,9 @@ function mtNormNum(v) {
     .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
     .replace(/[．。]/g, '.')
     .replace(/[－ー―‐]/g, '-')
+    // ベトナムでは小数点にカンマを使うため、カンマは小数点として扱う。
+    // 本テストの答えは全て3桁以下なので、桁区切りと誤認する心配はない。
+    .replace(/[,、，]/g, '.')
     .replace(/\s+/g, '');
 }
 function mtToNumber(v) {
@@ -79,6 +83,7 @@ function mtToNumber(v) {
 // 回答が空でないか
 function mtIsAnswered(q, ans) {
   ans = ans || {};
+  if (q.type === 'decimal') return mtToNumber(ans.int) != null && mtNormNum(ans.dec) !== '';
   if (q.type === 'fraction') return mtToNumber(ans.n) != null && mtToNumber(ans.d) != null;
   if (q.type === 'ratio') return mtToNumber(ans.a) != null && mtToNumber(ans.b) != null;
   if (q.type === 'expr') return mtToNumber(ans.coef) != null && mtToNumber(ans.cons) != null;
@@ -90,6 +95,13 @@ function mtIsCorrect(q, ans) {
   ans = ans || {};
   if (!mtIsAnswered(q, ans)) return false;
   if (q.type === 'number') return mtToNumber(ans.value) === Number(q.answer);
+  if (q.type === 'decimal') {
+    // 整数部と小数部を別枠で受け取り、こちらで小数点をつないで比較する
+    const int = mtNormNum(ans.int);
+    const dec = mtNormNum(ans.dec);
+    const joined = Number(`${int}.${dec}`);
+    return Number.isFinite(joined) && joined === Number(q.answer);
+  }
   if (q.type === 'fraction') {
     const n = mtToNumber(ans.n), d = mtToNumber(ans.d);
     if (d === 0) return false;

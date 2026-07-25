@@ -30,6 +30,14 @@ const NUM_ATTRS = 'type="text" inputmode="text" autocomplete="off" autocapitaliz
 function answerFieldHtml(question) {
   const id = question.id;
   switch (question.type) {
+    case 'decimal':
+      // 小数点は打たせず、整数部と小数部を別の枠で受け取る（カンマ表記の混在を防ぐ）
+      return `
+        <div class="answer-row">
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_int" aria-label="phần nguyên">
+          <span class="answer-dot">,</span>
+          <input class="answer-input num-cell" ${NUM_ATTRS} name="q${id}_dec" aria-label="phần thập phân">
+        </div>`;
     case 'fraction':
       return `
         <div class="answer-row">
@@ -102,6 +110,7 @@ function collectAnswer(question) {
   const val = name => (document.querySelector(`[name="${name}"]`)?.value ?? '');
   const id = question.id;
   switch (question.type) {
+    case 'decimal': return { int: val(`q${id}_int`), dec: val(`q${id}_dec`) };
     case 'fraction': return { n: val(`q${id}_n`), d: val(`q${id}_d`) };
     case 'ratio': return { a: val(`q${id}_a`), b: val(`q${id}_b`) };
     case 'expr': return { coef: val(`q${id}_coef`), cons: val(`q${id}_cons`) };
@@ -113,6 +122,7 @@ function collectAnswer(question) {
 function formatGiven(question, ans) {
   if (!mtIsAnswered(question, ans)) return '';
   switch (question.type) {
+    case 'decimal': return `${ans.int}.${ans.dec}`;
     case 'fraction': return `${ans.n}/${ans.d}`;
     case 'ratio': return `${ans.a}:${ans.b}`;
     case 'expr': return `${ans.coef}x + ${ans.cons}`;
@@ -157,6 +167,45 @@ async function saveScore(candidateNo, result) {
   return data ? 'Điểm đã được lưu tự động.' : 'Không tìm thấy số báo danh trong buổi phỏng vấn này.';
 }
 
+// ---- 制限時間 ----
+const TIME_LIMIT_SEC = 50 * 60;
+let remainingSec = TIME_LIMIT_SEC;
+let timerId = null;
+
+function formatClock(sec) {
+  const m = Math.floor(Math.max(0, sec) / 60);
+  const s = Math.max(0, sec) % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function renderTimer() {
+  const el = $('#timer');
+  if (!el) return;
+  el.textContent = formatClock(remainingSec);
+  el.classList.toggle('warning', remainingSec <= 300 && remainingSec > 60);
+  el.classList.toggle('danger', remainingSec <= 60);
+}
+
+function stopTimer() {
+  if (timerId != null) clearInterval(timerId);
+  timerId = null;
+}
+
+function startTimer() {
+  remainingSec = TIME_LIMIT_SEC;
+  renderTimer();
+  stopTimer();
+  timerId = setInterval(() => {
+    remainingSec -= 1;
+    renderTimer();
+    if (remainingSec <= 0) {
+      stopTimer();
+      // 時間切れ。その時点の回答で自動提出する。
+      submitTest(null, { timeUp: true });
+    }
+  }, 1000);
+}
+
 function startTest() {
   const no = normalizeNo($('#candidate-no').value);
   if (!no) {
@@ -171,19 +220,23 @@ function startTest() {
   $('#test-form').addEventListener('input', updateProgress);
   $('#test-form').addEventListener('change', updateProgress);
   setScreen('test');
+  startTimer();
 }
 
-async function submitTest(event) {
-  event.preventDefault();
-  if (answeredCount() < QUESTIONS.length) {
-    alert('Vui lòng trả lời tất cả các câu.');
-    return;
+async function submitTest(event, options = {}) {
+  if (event) event.preventDefault();
+  const timeUp = options.timeUp === true;
+  if (!timeUp && answeredCount() < QUESTIONS.length) {
+    const rest = QUESTIONS.length - answeredCount();
+    if (!confirm(`Còn ${rest} câu chưa trả lời. Bạn vẫn muốn nộp bài?`)) return;
   }
+  stopTimer();
   $('#submit-btn').disabled = true;
   const no = normalizeNo($('#candidate-no').value);
   const result = grade();
   $('#score-title').textContent = `${result.score} điểm`;
   $('#score-detail').textContent = `${result.correct}/${result.total} câu đúng`;
+  $('#time-up-note').classList.toggle('hidden', !timeUp);
   $('#save-status').textContent = await saveScore(no, result);
   setScreen('result');
 }

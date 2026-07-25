@@ -138,6 +138,57 @@ input:focus {
   background: var(--blue-soft);
 }
 
+.topbar-meta { display: flex; align-items: center; gap: 12px; }
+
+.timer-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 104px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.timer-wrap span { color: var(--muted); font-size: 11px; font-weight: 700; }
+
+#timer {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  font-family: "SF Mono", "Consolas", "Menlo", monospace, "Segoe UI", Arial, sans-serif;
+}
+
+#timer.warning { color: #b45309; }
+#timer.danger { color: var(--red); }
+
+/* 開始画面の制限時間の案内 */
+.start-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.start-info-item {
+  display: grid;
+  gap: 3px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.start-info-item span { color: var(--muted); font-size: 12px; font-weight: 700; }
+.start-info-item strong { font-size: 21px; }
+
+.note.warn {
+  padding: 10px 12px;
+  border: 1px solid #f0d38a;
+  border-radius: 8px;
+  background: #fdf6e3;
+  color: #7a5b10;
+  font-size: 13px;
+}
+
 .question-list {
   display: grid;
   gap: 12px;
@@ -202,15 +253,28 @@ input:focus {
 
 .answer-input {
   min-height: 48px;
-  border: 1px solid var(--line);
+  border: 1.5px solid #b9c6da;
   border-radius: 6px;
   padding: 8px 12px;
   color: var(--text);
-  background: #fff;
+  /* 入力欄だと一目で分かるよう背景を付ける */
+  background: #eef3fc;
+  box-shadow: inset 0 1px 2px rgba(23, 32, 51, 0.06);
   font-size: 20px;
   font-weight: 700;
   text-align: center;
   font-family: "SF Mono", "Consolas", "Menlo", monospace, "Segoe UI", Arial, sans-serif;
+}
+
+.answer-input:focus { background: #fff; }
+
+/* 小数の区切り（□,□ の中点） */
+.answer-dot {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  padding-bottom: 6px;
+  color: var(--text);
 }
 
 .answer-input.num-cell { width: 116px; }
@@ -240,11 +304,11 @@ input:focus {
 .answer-select {
   min-height: 48px;
   min-width: 180px;
-  border: 1px solid var(--line);
+  border: 1.5px solid #b9c6da;
   border-radius: 6px;
   padding: 8px 12px;
   color: var(--text);
-  background: #fff;
+  background: #eef3fc;
   font-size: 18px;
   font-weight: 700;
 }

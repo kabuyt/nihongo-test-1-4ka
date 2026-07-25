@@ -177,6 +177,13 @@ function formatSender(value) {
   return SENDERS.includes(value) ? value : '未設定';
 }
 
+// 報告書に出す企業名・組合名に敬称をつける。未設定や既に敬称付きのものはそのまま。
+function withHonorific(name) {
+  const value = String(name ?? '').trim();
+  if (!value || value === '-' || value === '未設定') return value || '-';
+  return /(様|御中)$/.test(value) ? value : `${value} 様`;
+}
+
 function normalizeNo(value) {
   return String(value || '').trim().replace(/^No\.?\s*/i, '');
 }
@@ -991,8 +998,8 @@ function renderPrintReport(interview, rows) {
     </div>` : ''}
     <section class="print-overview" aria-label="面接情報">
       <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
-      <div><span>受入企業</span><strong>${escapeHtml(interview.company || '-')}</strong></div>
-      <div><span>送り出し機関</span><strong>${escapeHtml(formatSender(interview.senderOrg) || '-')}</strong></div>
+      <div><span>受入企業</span><strong>${escapeHtml(withHonorific(interview.company))}</strong></div>
+      <div><span>送り出し機関</span><strong>${escapeHtml(withHonorific(formatSender(interview.senderOrg)))}</strong></div>
       <div><span>候補者数</span><strong>${rows.length}名</strong></div>
     </section>
     <table class="print-table">
