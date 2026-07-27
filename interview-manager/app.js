@@ -10,6 +10,52 @@ const TEST_DEFINITIONS = [
   { key: 'pinboard', label: 'ピンボード', ranked: true },
   { key: 'behavior', label: '行動選択テスト', ranked: false, online: true },
 ];
+// 受入企業へ渡す「テスト説明書」の中身。実施した科目だけを1枚にまとめて印刷する。
+const TEST_GUIDE = {
+  kraepelin: {
+    title: 'クレペリン検査',
+    subtitle: '作業の安定性・集中力・性格傾向',
+    outline: '隣り合う一桁の数字をひたすら足し続ける作業検査です。1行1分で5行、休憩をはさんでさらに5行を行います。',
+    measure: '正答数の多さだけでなく、1行ごとの作業量の推移を見ます。標準的な形（始めに多く、中盤に落ち、終盤で持ち直す）にどれだけ近いかで、集中力の持続、疲れの出方、作業の安定性を判断します。',
+    note: '評価は「作業量」「正確さ」「安定性」の3要素を100点満点に換算しています。',
+  },
+  math: {
+    title: '数学テスト',
+    subtitle: '基礎計算力・論理的思考力',
+    outline: '日本の実用数学技能検定（数検）5級に相当する30問です。正負の数、分数・小数の計算、最大公約数と最小公倍数、比、一次方程式、比例と反比例、図形の基礎を扱います。',
+    measure: '5級は日本の中学1年生程度の内容です。特別な知識ではなく、四則計算を正確にこなす力と、筋道を立てて考える力を測ります。',
+    note: '出題はベトナム語で行い、解答は数字で入力する方式です（選択式ではありません）。',
+  },
+  vietnamese: {
+    title: 'ベトナム国語テスト',
+    subtitle: '母語の理解力・日本語学習の土台',
+    outline: 'ベトナムの小学校の国語に相当する20問です。主語・述語・名詞・動詞といった基本的な文法用語の理解を確認します。',
+    measure: '日本語の授業では、文法の説明をベトナム語で行います。母語の文法用語が分からないと説明そのものが理解できないため、日本語を学ぶ土台があるかを判断する材料になります。',
+    note: '',
+  },
+  japanese: {
+    title: '日本語単語テスト',
+    subtitle: '暗記力・課題に取り組む姿勢',
+    outline: '日本語能力試験N3程度の単語30問です。面接の3日前に単語リストを配布し、当日どれだけ覚えられたかを確認します。',
+    measure: '現時点の日本語力そのものよりも、与えられた課題にきちんと取り組んだか、短期間で覚えきる力があるかを測ります。学習意欲を見るためのテストです。',
+    note: '',
+  },
+  pinboard: {
+    title: 'ピンボード検査',
+    subtitle: '手先の器用さ・指示の理解・ミスへの対応',
+    outline: '指示どおりにピンを並べる手作業の検査を2回行い、1回ごとに評価と所要時間を記録します。',
+    measure: '速さよりも正確さを優先して評価します。指示を正しく理解できるか、ミスに自分で気づいて直せるかを重視します。',
+    note: '評価は◎正確に完了／○自力で修正／△一部ミス／×継続困難の4段階です。',
+  },
+  behavior: {
+    title: '行動選択テスト',
+    subtitle: '働く上での基本的な感覚',
+    outline: '日常のよくある場面を6つ提示し、そのときどう行動するかを選んでもらいます。正解のないテストです。',
+    measure: '例えば「雨の日に何分前に家を出るか」「仕事でミスをしたときどうするか」といった場面から、時間に余裕を持って動けるか、報告・相談ができるかを確認します。極端な行動を選ぶ方がいないかを見るための参考資料です。',
+    note: '総合順位には反映していません。',
+  },
+};
+
 const PIN_GRADES = [
   { value: 3, symbol: '◎', label: '正確に完了', detail: '間違いなく最後まで完成した' },
   { value: 2, symbol: '○', label: '自力で修正', detail: '途中で間違えたが、指示なしで気づいて直し完成した' },
@@ -1005,6 +1051,73 @@ function rankSummaryHtml(row, interview) {
     .join('');
 }
 
+// 受入企業向けのテスト説明書。実施した科目だけをA4横1枚にまとめる。
+function renderTestGuide(interview) {
+  const guide = $('#print-guide');
+  if (!guide || !interview) return;
+  const today = new Date().toLocaleDateString('ja-JP');
+  const interviewDate = interview.date
+    ? new Date(`${interview.date}T00:00:00`).toLocaleDateString('ja-JP')
+    : '-';
+  const tests = enabledTests(interview).filter(test => TEST_GUIDE[test.key]);
+
+  guide.innerHTML = `
+    <header class="print-header">
+      <div class="print-brand">
+        <img src="assets/grop-vietnam-logo.png" alt="GROP VIETNAM">
+        <div class="print-title-block">
+          <div class="print-label">PRE-INTERVIEW TEST OVERVIEW</div>
+          <h1>事前テストのご説明</h1>
+        </div>
+      </div>
+      <div class="print-document-meta">
+        <span>社内資料</span>
+        <strong>作成日 ${today}</strong>
+      </div>
+    </header>
+    <section class="print-overview" aria-label="面接情報">
+      <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
+      <div><span>受入企業</span><strong>${escapeHtml(withHonorific(interview.company))}</strong></div>
+      <div><span>送り出し機関</span><strong>${escapeHtml(formatSender(interview.senderOrg) || '-')}</strong></div>
+      <div><span>実施テスト</span><strong>${tests.length}種類</strong></div>
+    </section>
+    <p class="print-guide-lead">本面接では以下のテストを実施しました。各テストの内容と、何を見るためのものかをご説明します。</p>
+    <div class="print-guide-grid">
+      ${tests.map((test, index) => {
+        const g = TEST_GUIDE[test.key];
+        return `
+          <article class="print-guide-card">
+            <div class="print-guide-head">
+              <span class="print-guide-no">${index + 1}</span>
+              <div>
+                <h2>${escapeHtml(g.title)}</h2>
+                <p class="print-guide-sub">${escapeHtml(g.subtitle)}</p>
+              </div>
+            </div>
+            <p class="print-guide-outline">${escapeHtml(g.outline)}</p>
+            <p class="print-guide-measure"><b>見ているところ</b>${escapeHtml(g.measure)}</p>
+            ${g.note ? `<p class="print-guide-note">${escapeHtml(g.note)}</p>` : ''}
+          </article>
+        `;
+      }).join('')}
+    </div>
+    <footer class="print-footer">
+      <span>採点する${enabledTests(interview, test => test.ranked).length}科目は各100点満点に換算し、合計点で総合順位を算出しています。</span>
+      <span>${escapeHtml(formatInterviewName(interview))}</span>
+    </footer>
+  `;
+}
+
+function printTestGuide() {
+  const interview = activeInterview();
+  if (!interview) return;
+  renderTestGuide(interview);
+  document.body.classList.add('printing-guide');
+  warnLandscapeIfNeeded();
+  window.print();
+  setTimeout(() => document.body.classList.remove('printing-guide'), 500);
+}
+
 function renderPrintReport(interview, rows) {
   const report = $('#print-report');
   if (!report || !interview) return;
@@ -1329,6 +1442,8 @@ function render() {
   renderKraepelinSyncStatus();
   $('#open-link-sheet').disabled = !hasInterview;
   $('#print-pdf').classList.toggle('hidden', !isAdmin);
+  $('#print-guide-btn').classList.toggle('hidden', !isAdmin);
+  $('#print-guide-btn').disabled = !hasInterview;
   $('#export-csv').classList.toggle('hidden', !isAdmin);
   $('#print-pdf').disabled = !hasInterview;
   $('#export-csv').disabled = !hasInterview;
@@ -1948,6 +2063,7 @@ function bindEvents() {
   $('#close-link-sheet').addEventListener('click', closeLinkSheet);
   $('#print-link-sheet').addEventListener('click', printLinkSheet);
   $('#print-pdf').addEventListener('click', printPdf);
+  $('#print-guide-btn').addEventListener('click', printTestGuide);
   $('#export-csv').addEventListener('click', exportCsv);
   $('#logout').addEventListener('click', logout);
   window.addEventListener('focus', () => {

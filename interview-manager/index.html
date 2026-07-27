@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=44">
+  <link rel="stylesheet" href="style.css?v=45">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -112,6 +112,7 @@
           <span id="kraepelin-sync-status" class="sync-status"></span>
           <button id="open-link-sheet" class="btn"><i data-lucide="qr-code"></i>QR受験票</button>
           <button id="print-pdf" class="btn"><i data-lucide="printer"></i>PDF</button>
+          <button id="print-guide-btn" class="btn"><i data-lucide="file-text"></i>テスト説明</button>
           <button id="export-csv" class="btn"><i data-lucide="download"></i>CSV</button>
           <button id="logout" class="btn"><i data-lucide="log-out"></i>退出</button>
         </div>
@@ -223,6 +224,7 @@
   </div>
 
   <section id="print-report" class="print-report"></section>
+  <section id="print-guide" class="print-report print-guide"></section>
 
   <section id="archive-sheet" class="link-sheet hidden" aria-label="アーカイブ一覧">
     <div class="link-sheet-inner">
@@ -278,6 +280,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
   <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
-  <script src="app.js?v=60"></script>
+  <script src="app.js?v=61"></script>
 </body>
 </html>

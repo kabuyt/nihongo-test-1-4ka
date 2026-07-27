@@ -1138,6 +1138,64 @@ td input { min-height: 34px; padding: 5px 7px; }
     overflow-wrap: break-word;
   }
 
+  /* テスト説明書はA4縦。結果表（A4横）とは別ページ設定にする */
+  @page guide { size: 210mm 297mm; margin: 12mm; }
+  .print-guide { display: none; }
+  body.printing-guide .print-report { display: none; }
+  body.printing-guide .print-guide { display: block; page: guide; }
+
+  body.printing-guide .print-guide-lead {
+    margin: 0 0 8px;
+    color: #40506a;
+    font-size: 10px;
+    line-height: 1.6;
+  }
+
+  body.printing-guide .print-guide-grid { display: grid; gap: 7px; }
+
+  body.printing-guide .print-guide-card {
+    padding: 9px 11px;
+    border: 1px solid #cfd7e2;
+    border-left: 3px solid #245da8;
+    border-radius: 5px;
+    background: #fdfdfe;
+    break-inside: avoid;
+  }
+
+  body.printing-guide .print-guide-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  body.printing-guide .print-guide-no {
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 999px;
+    background: #243b5a;
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+  }
+
+  body.printing-guide .print-guide-card h2 { margin: 0; font-size: 13px; line-height: 1.3; }
+  body.printing-guide .print-guide-sub { margin: 1px 0 0; color: #5f6e82; font-size: 9.5px; font-weight: 700; }
+  body.printing-guide .print-guide-card p { margin: 3px 0; font-size: 10px; line-height: 1.6; }
+  body.printing-guide .print-guide-measure b {
+    display: inline-block;
+    margin-right: 5px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #eaf1fb;
+    color: #245da8;
+    font-size: 9px;
+  }
+  body.printing-guide .print-guide-note { color: #5f6e82; font-size: 9px; }
+
   body.printing-links .print-report { display: none; }
   body.printing-links .link-sheet {
     display: block !important;
