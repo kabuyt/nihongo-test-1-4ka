@@ -1132,6 +1132,10 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-report {
     display: block;
     font-family: "Yu Gothic", "Meiryo", sans-serif;
+    /* 日本語は既定だとどこでも改行するため「判断」が「判／断」のように割れる。
+       keep-all で句読点・記号でのみ改行し、それでも収まらない時だけ分割を許す。 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   body.printing-links .print-report { display: none; }
