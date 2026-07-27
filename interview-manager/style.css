@@ -1162,10 +1162,11 @@ td input { min-height: 34px; padding: 5px 7px; }
     break-inside: avoid;
   }
 
+  /* 番号は見出し（h2）の行に揃える。centerだと見出しと副題の中間に来てずれる */
   body.printing-guide .print-guide-head {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
+    align-items: start;
     gap: 8px;
     margin-bottom: 5px;
   }
