@@ -731,16 +731,24 @@ function buildRows(interview) {
   const japaneseRank = isTestEnabled(interview, 'japanese') ? rankValues(enriched, row => row.japanese, 'desc') : new Map();
   const pinRank = isTestEnabled(interview, 'pinboard') ? rankValues(enriched, row => row.pinScoreValue, 'desc') : new Map();
   const rankedTests = enabledTests(interview, test => test.ranked);
-  const allResultsComplete = enriched.length > 0 && enriched.every(row => rankedTests.every(test => {
-    if (test.key === 'kraepelin') return row.kraepelinEval != null;
-    if (test.key === 'math') return row.math != null;
-    if (test.key === 'vietnamese') return row.vietnamese != null;
-    if (test.key === 'japanese') return row.japanese != null;
-    if (test.key === 'pinboard') return row.pinScoreValue != null;
-    return true;
-  }));
 
   const rankedCount = rankedTests.length;
+  const scoreOfTest = (row, key) => ({
+    kraepelin: row.kraepelinEval?.total ?? null,
+    math: row.math,
+    vietnamese: row.vietnamese,
+    japanese: row.japanese,
+    pinboard: row.pinScoreValue,
+  })[key];
+  // 「まだ実施していない／入力途中の科目」と「その人だけ計測できなかった科目」を区別する。
+  // ほぼ全員に点が入っているのに一部だけ空いている場合を欠測とみなす。
+  // 誰も受けていない科目（翌日実施など）や、入力し始めたばかりの科目では欠測判定をしない。
+  const totalCandidates = enriched.length;
+  const missingAllowance = Math.max(1, Math.floor(totalCandidates * 0.2));
+  const startedTests = rankedTests.filter(test => {
+    const missing = enriched.filter(row => scoreOfTest(row, test.key) == null).length;
+    return missing > 0 && missing <= missingAllowance;
+  });
   const ranked = enriched.map(row => {
     const ranks = {
       k: kRank.get(row.no) ?? null,
@@ -760,29 +768,42 @@ function buildRows(interview) {
     // 揃っている科目だけで暫定順位を出せるようにする。
     const enteredScores = rankedTests.map(test => scoreByTest[test.key]).filter(value => value != null);
     const enteredCount = enteredScores.length;
+    // 順位は実施科目の得点の合計で決める（方針）。
     const rankScore = enteredCount > 0
       ? Number(enteredScores.reduce((sum, value) => sum + value, 0).toFixed(1))
       : null;
-    // 順位は平均点で決める。受験できなかった科目がある候補者が、
-    // 科目数が少ないというだけで不利にならないようにするため。
-    // 全員の科目数が同じときは合計順と一致する。
-    const rankAverage = enteredCount > 0 ? rankScore / enteredCount : null;
+    // 他の人は受けているのに本人だけ計測できなかった科目
+    const missingTests = startedTests.filter(test => scoreByTest[test.key] == null);
     return {
       ...row,
       ranks,
       rankScore,
-      rankAverage,
       rankMax: enteredCount * 100,
       enteredCount,
       rankedCount,
-      provisional: !(allResultsComplete && rankedCount > 0),
+      missingTests,
+      // 計測できなかった科目がある人は同じ土俵で比べられないため、順位をつけず参考扱いにする
+      reference: missingTests.length > 0,
     };
   });
 
-  const finalRank = rankValues(ranked, row => row.rankAverage, 'desc');
+  // 参考扱いの人を除いて順位をつけ、参考の人は末尾へ回す
+  const rankable = ranked.filter(row => !row.reference);
+  // 参考の人を除いた全員が全科目そろっていれば確定。まだなら「仮」。
+  const settled = rankedCount > 0 && rankable.length > 0
+    && rankable.every(row => row.enteredCount === rankedCount);
+  const finalRank = rankValues(rankable, row => row.rankScore, 'desc');
   return ranked
-    .map(row => ({ ...row, finalRank: finalRank.get(row.no) ?? null }))
-    .sort((a, b) => (a.finalRank ?? Number.MAX_SAFE_INTEGER) - (b.finalRank ?? Number.MAX_SAFE_INTEGER) || Number(a.no) - Number(b.no));
+    .map(row => ({
+      ...row,
+      provisional: !settled,
+      finalRank: row.reference ? null : (finalRank.get(row.no) ?? null),
+    }))
+    .sort((a, b) => {
+      if (a.reference !== b.reference) return a.reference ? 1 : -1;
+      return (a.finalRank ?? Number.MAX_SAFE_INTEGER) - (b.finalRank ?? Number.MAX_SAFE_INTEGER)
+        || Number(a.no) - Number(b.no);
+    });
 }
 
 function renderStatus() {
@@ -944,9 +965,16 @@ function pinTimeInput(row, round) {
 // 総合順位のラベル。全科目そろう前は「仮 第N位」、そろえば「第N位」。
 // bare=true のときは接頭・接尾なしの数字だけ（管理画面のバッジ用）に「仮N」。
 function rankLabel(row, { bare = false } = {}) {
+  if (row.reference) return '参考';
   if (row.finalRank == null) return bare ? '—' : '未集計';
   if (bare) return row.provisional ? `仮${row.finalRank}` : `${row.finalRank}`;
   return row.provisional ? `仮 第${row.finalRank}位` : `第${row.finalRank}位`;
+}
+
+// 参考扱いの理由（例：「クレペリン未受験」）
+function referenceReason(row) {
+  if (!row.reference) return '';
+  return `${row.missingTests.map(test => test.label).join('・')}未受験のため参考`;
 }
 
 // 「320 / 400点（4/5科目）」の得点行。未入力なら空文字。
@@ -1054,6 +1082,7 @@ function renderPrintReport(interview, rows) {
               <td class="print-rank">
                 <strong>${escapeHtml(rankLabel(row))}</strong>
                 ${rankScoreText(row) ? `<span>${escapeHtml(rankScoreText(row))}</span>` : ''}
+                ${row.reference ? `<span class="print-reference-note">${escapeHtml(referenceReason(row))}</span>` : ''}
               </td>
               <td class="print-candidate">
                 <div class="print-candidate-inner">
@@ -1198,6 +1227,7 @@ function renderTable(interview) {
         <td>
           <span class="${rankClass}">${escapeHtml(rankLabel(row, { bare: true }))}</span>
           ${rankScoreText(row) ? `<div class="mini">${escapeHtml(rankScoreText(row))}</div>` : ''}
+          ${row.reference ? `<div class="mini reference-note">${escapeHtml(referenceReason(row))}</div>` : ''}
         </td>
         <td>${candidateLabel(row)}</td>
         <td class="photo-cell">
@@ -1850,7 +1880,7 @@ async function copyTestUrl(button) {
 function exportCsv() {
   const interview = activeInterview();
   if (!interview) return;
-  const headers = ['総合結果', '総合得点', '満点', '候補者番号', '氏名・メモ'];
+  const headers = ['総合結果', '備考', '総合得点', '満点', '候補者番号', '氏名・メモ'];
   if (isTestEnabled(interview, 'kraepelin')) headers.push('クレペリン評価点', 'クレペリン正答数', 'クレペリン誤答率', 'クレペリン判定', 'クレペリン備考');
   if (isTestEnabled(interview, 'math')) headers.push('数学', '数学順位');
   if (isTestEnabled(interview, 'vietnamese')) headers.push('ベトナム国語', 'ベトナム国語順位');
@@ -1862,6 +1892,7 @@ function exportCsv() {
     const pin = pinSummary(row.score);
     const values = [
       rankLabel(row),
+      referenceReason(row),
       row.rankScore == null ? '' : formatScore(row.rankScore),
       row.rankMax,
       row.no,
