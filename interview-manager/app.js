@@ -763,10 +763,15 @@ function buildRows(interview) {
     const rankScore = enteredCount > 0
       ? Number(enteredScores.reduce((sum, value) => sum + value, 0).toFixed(1))
       : null;
+    // 順位は平均点で決める。受験できなかった科目がある候補者が、
+    // 科目数が少ないというだけで不利にならないようにするため。
+    // 全員の科目数が同じときは合計順と一致する。
+    const rankAverage = enteredCount > 0 ? rankScore / enteredCount : null;
     return {
       ...row,
       ranks,
       rankScore,
+      rankAverage,
       rankMax: enteredCount * 100,
       enteredCount,
       rankedCount,
@@ -774,7 +779,7 @@ function buildRows(interview) {
     };
   });
 
-  const finalRank = rankValues(ranked, row => row.rankScore, 'desc');
+  const finalRank = rankValues(ranked, row => row.rankAverage, 'desc');
   return ranked
     .map(row => ({ ...row, finalRank: finalRank.get(row.no) ?? null }))
     .sort((a, b) => (a.finalRank ?? Number.MAX_SAFE_INTEGER) - (b.finalRank ?? Number.MAX_SAFE_INTEGER) || Number(a.no) - Number(b.no));

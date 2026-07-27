@@ -295,25 +295,48 @@ const App = (() => {
   }
 
   // ============ クラウド保存 ============
+  // 保存に失敗すると結果が丸ごと消えるので、受験者が必ず気づくようベトナム語で警告し、
+  // その場で再送できるようにする（実際に1名分が失われた事故があったため）。
   async function saveResultToCloud(results, meta) {
     const statusEl = document.getElementById('save-status');
     if (!statusEl) return;
-    statusEl.textContent = '☁ Supabase に保存中...';
+    statusEl.textContent = '☁ Đang lưu kết quả... / 保存中...';
     statusEl.className = 'save-status no-print saving';
+
+    const showFailure = (message) => {
+      statusEl.className = 'save-status no-print error';
+      statusEl.innerHTML = `
+        <div class="save-failed-title">⚠ CHƯA LƯU ĐƯỢC KẾT QUẢ / 保存できませんでした</div>
+        <div class="save-failed-body">
+          Kết quả của bạn <b>chưa được gửi</b>. Hãy nhấn nút bên dưới để gửi lại.<br>
+          Nếu vẫn lỗi, hãy báo ngay cho người phụ trách. <b>Đừng đóng màn hình này.</b>
+        </div>
+        <button type="button" id="retry-save" class="retry-save-btn">Gửi lại / 再送信</button>
+        <div class="save-failed-detail">${message || ''}</div>
+      `;
+      const retry = document.getElementById('retry-save');
+      if (retry) retry.addEventListener('click', () => saveResultToCloud(results, meta));
+      alert(
+        '⚠ CHƯA LƯU ĐƯỢC KẾT QUẢ!\n\n' +
+        'Kết quả bài kiểm tra của bạn chưa được gửi đi.\n' +
+        'Vui lòng nhấn nút "Gửi lại" trên màn hình.\n' +
+        'Nếu vẫn không được, hãy báo ngay cho người phụ trách.\n\n' +
+        '（結果が保存されていません。画面の「再送信」を押してください）'
+      );
+    };
+
     try {
       const { error } = await Results.saveToCloud(results, meta);
       if (error) {
-        statusEl.textContent = '⚠ 保存失敗: ' + error.message + '（PDFは保存できます）';
-        statusEl.className = 'save-status no-print error';
         console.error('Supabase save error:', error);
+        showFailure(error.message);
       } else {
-        statusEl.textContent = '✓ クラウドに保存しました';
         statusEl.className = 'save-status no-print success';
+        statusEl.textContent = '✓ Đã lưu kết quả thành công / 保存しました';
       }
     } catch (e) {
-      statusEl.textContent = '⚠ 保存失敗: ' + e.message;
-      statusEl.className = 'save-status no-print error';
       console.error(e);
+      showFailure(e && e.message);
     }
   }
 

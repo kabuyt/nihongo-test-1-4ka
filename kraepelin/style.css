@@ -648,7 +648,31 @@ html, body {
 .save-status:empty { display: none; }
 .save-status.saving { background: #eff6ff; color: #1d4ed8; }
 .save-status.success { background: #f0fdf4; color: #15803d; }
-.save-status.error { background: #fef2f2; color: #b91c1c; }
+
+/* 保存失敗は見逃されると結果が消えるので、はっきり目立たせる */
+.save-status.error {
+  border: 2px solid #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  text-align: left;
+  padding: 14px 16px;
+}
+.save-failed-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
+.save-failed-body { font-size: 0.9rem; line-height: 1.6; }
+.save-failed-detail { margin-top: 8px; color: #b45309; font-size: 0.75rem; word-break: break-all; }
+
+.retry-save-btn {
+  margin-top: 10px;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.retry-save-btn:hover { background: #b91c1c; }
 
 .break-note {
   font-size: 0.85rem;
