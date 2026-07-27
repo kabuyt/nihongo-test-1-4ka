@@ -1054,7 +1054,7 @@ function renderPrintReport(interview, rows) {
     <section class="print-overview" aria-label="面接情報">
       <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
       <div><span>受入企業</span><strong>${escapeHtml(withHonorific(interview.company))}</strong></div>
-      <div><span>送り出し機関</span><strong>${escapeHtml(withHonorific(formatSender(interview.senderOrg)))}</strong></div>
+      <div><span>送り出し機関</span><strong>${escapeHtml(formatSender(interview.senderOrg) || '-')}</strong></div>
       <div><span>候補者数</span><strong>${rows.length}名</strong></div>
     </section>
     <table class="print-table">
