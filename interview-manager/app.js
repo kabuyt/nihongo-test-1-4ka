@@ -17,7 +17,7 @@ const TEST_GUIDE = {
     subtitle: '作業の安定性・集中力・性格傾向',
     outline: '隣り合う一桁の数字をひたすら足し続ける作業検査です。1行1分で5行、休憩をはさんでさらに5行を行います。',
     measure: '正答数の多さだけでなく、1行ごとの作業量の推移を見ます。標準的な形（始めに多く、中盤に落ち、終盤で持ち直す）にどれだけ近いかで、集中力の持続、疲れの出方、作業の安定性を判断します。',
-    note: '評価は「作業量」「正確さ」「安定性」の3要素を100点満点に換算しています。',
+    note: '評価は「作業量45点（解いた量）」「正確さ35点（誤答の少なさ・誤答20%以上は0点）」「安定性20点（作業量の推移が標準的な形にどれだけ近いか）」の合計100点です。作業量はその面接で最も多く解いた方を満点とした相対評価です。',
   },
   math: {
     title: '数学テスト',
@@ -1212,7 +1212,11 @@ function renderPrintReport(interview, rows) {
                   </div>
                 </div>
               </td>
-              ${isTestEnabled(interview, 'kraepelin') ? `<td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong><span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>` : ''}
+              ${isTestEnabled(interview, 'kraepelin') ? `<td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong>
+                <span class="print-kraepelin-breakdown"><b>作業</b><em>${row.kraepelinEval.work}<i>/45</i></em></span>
+                <span class="print-kraepelin-breakdown"><b>正確</b><em>${row.kraepelinEval.accuracy}<i>/35</i></em></span>
+                <span class="print-kraepelin-breakdown"><b>安定</b><em>${row.kraepelinEval.stability}<i>/20</i></em></span>
+                <span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>` : ''}
               ${isTestEnabled(interview, 'math') ? `<td class="print-score">${row.math == null ? '<span>-</span>' : `<strong>${formatScore(row.math)}</strong><span>点</span>`}</td>` : ''}
               ${isTestEnabled(interview, 'vietnamese') ? `<td class="print-score">${row.vietnamese == null ? '<span>-</span>' : `<strong>${formatScore(row.vietnamese)}</strong><span>点</span>`}</td>` : ''}
               ${isTestEnabled(interview, 'japanese') ? `<td class="print-score">${row.japanese == null ? '<span>-</span>' : `<strong>${formatScore(row.japanese)}</strong><span>点（${row.japaneseRaw}/30）</span>`}</td>` : ''}
