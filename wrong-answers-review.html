@@ -736,15 +736,17 @@ function renderTable() {
 
   tbody.innerHTML = rows.map(r => {
     const isDismissed = _dismissed.has(r.key);
-    const action = isDismissed
+    const action = r.added
+      ? `<span class="added-mark">✓ 追加済み</span>`
+      : isDismissed
       ? `<button class="btn-restore" onclick="restoreDismissed('${escapeHtml(r.key)}', this)">↩ 表示に戻す</button>`
       : `<div class="action-btns">
            <button class="btn-add" onclick="addAsCorrect('${escapeHtml(r.key)}', this)">正解にする</button>
            <button class="btn-dismiss" onclick="dismissWrong('${escapeHtml(r.key)}', this)">不正解にする</button>
-         </div>
-         <span class="added-mark" style="display:none">✓ 追加済み</span>`;
+         </div>`;
+    const rowClass = r.added ? ' class="row-added"' : (isDismissed ? ' class="row-dismissed"' : '');
     return `
-    <tr data-key="${escapeHtml(r.key)}"${isDismissed ? ' class="row-dismissed"' : ''}>
+    <tr data-key="${escapeHtml(r.key)}"${rowClass}>
       <td class="col-test">${escapeHtml(r.test_id)}</td>
       <td>${escapeHtml(r.section)}</td>
       <td class="col-block">${escapeHtml(r.block_id)}<br>${escapeHtml(r.field_id)}</td>
@@ -834,22 +836,14 @@ async function addAsCorrect(key, btn) {
       msg = '正解は追加しましたが加点に失敗: ' + (re.message || re);
     }
 
-    // 成功 → ローカル _sections も更新
+    // 成功 → ローカル _sections も更新し、「追加済み」をデータ側に記録
+    // （DOMだけに持たせると、別の行の操作で再描画されたときに消えてしまう）
     sec.answer_key = newAk;
+    item.added = true;
+    item.current_correct = formatExpected(newAk[item.block_id], item.field_id, item.idx);
     showToast(msg, ok ? 'success' : 'error');
-
-    // 行を「追加済み」表示に
-    const tr = document.querySelector(`tr[data-key="${key}"]`);
-    if (tr) {
-      tr.classList.add('row-added');
-      tr.querySelector('.btn-add').style.display = 'none';
-      tr.querySelector('.added-mark').style.display = 'inline';
-      const curCell = tr.querySelector('.col-current');
-      if (curCell) {
-        const sec2 = _sections.find(s => s.test_id === item.test_id && s.section_type === item.section);
-        curCell.textContent = formatExpected(sec2.answer_key[item.block_id], item.field_id, item.idx);
-      }
-    }
+    renderStats();
+    renderTable();
   } catch (e) {
     console.error(e);
     showToast('エラー: ' + (e.message || e), 'error');
