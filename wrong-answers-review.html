@@ -380,6 +380,25 @@ function buildQuestionIndex(questions) {
   return map;
 }
 
+// 表の穴埋め行（headers / fixed_value セル）から、その空欄の前後が分かるHTMLを作る
+function buildFillTableRowHtml(row, fid) {
+  const headers = row.headers || [];
+  return (row.items || []).map(it => {
+    if (!it || typeof it !== 'object') return '';
+    const head = (it.col != null && headers[it.col] != null) ? `<b>${headers[it.col]}</b>：` : '';
+    let cell;
+    if (it.field_id === fid) cell = '<span class="review-blank">answer</span>';
+    else if (it.field_id) cell = '<span class="review-blank" style="opacity:.4">…</span>';
+    else cell = it.fixed_value != null ? String(it.fixed_value) : '';
+    return head + cell;
+  }).filter(Boolean).join('　');
+}
+
+function isFillTableRow(value) {
+  return Array.isArray(value.items) && value.items.some(it =>
+    it && typeof it === 'object' && ('fixed_value' in it || 'col' in it));
+}
+
 function registerFieldContexts(testId, parentBlock, node, contexts) {
   function visit(value, nearest) {
     if (!value) return;
@@ -388,6 +407,17 @@ function registerFieldContexts(testId, parentBlock, node, contexts) {
       return;
     }
     if (typeof value !== 'object') return;
+
+    // 表の穴埋め行（test2 g3 の月・曜日表など）: 行全体を問題文として登録
+    if (isFillTableRow(value)) {
+      value.items.forEach(it => {
+        if (it && it.field_id && typeof it.field_id === 'string') {
+          contexts[it.field_id] = makeQuestionContext(testId, parentBlock, node,
+            { question: buildFillTableRowHtml(value, it.field_id) });
+        }
+      });
+      return;  // 行の中はこれ以上潜らない（instruction へのフォールバック上書きを防ぐ）
+    }
 
     const nextNearest = hasQuestionContext(value) ? value : nearest;
     if (value.field_id && typeof value.field_id === 'string') {
@@ -408,15 +438,22 @@ function registerFieldContexts(testId, parentBlock, node, contexts) {
 
 function hasQuestionContext(value) {
   return !!(value.question || value.prompt || value.prompt_html || value.dialogue_html
-    || value.sentence_html || value.text || value.label || value.words || value.image_src || value.src);
+    || value.sentence_html || value.template_html || value.text || value.label || value.prefix
+    || value.words || value.image_src || value.src);
 }
 
 function makeQuestionContext(testId, parentBlock, block, source) {
+  // 1) フィールドに一番近い問題文（キーは問題タイプにより多様）
   let questionHtml = source.question || source.prompt || source.prompt_html || source.dialogue_html
-    || source.sentence_html || source.text || source.label || block.sub_title || parentBlock.instruction || '';
+    || source.sentence_html || source.template_html || source.text || source.label || source.prefix || '';
+  // 2) 並べ替えパズルは語のリストを問題として表示
+  if (!questionHtml && Array.isArray(source.words)) {
+    questionHtml = '<span class="review-blank">並べ替え</span>：' + source.words.map(w => `〔${w}〕`).join(' ');
+  }
+  // 3) それでも無ければブロックの指示文にフォールバック
+  if (!questionHtml) questionHtml = block.sub_title || parentBlock.instruction || '';
   // {field_id} プレースホルダは空欄表示に置き換え
   questionHtml = String(questionHtml).replace(/\{[^}]+\}/g, '<span class="review-blank">answer</span>');
-  if (!questionHtml && Array.isArray(source.words)) questionHtml = source.words.join(' / ');
   const imageSrc = source.image_src || source.src || block.image_src || block.src || '';
   return {
     title: stripHtml(parentBlock.title_html || block.sub_title || parentBlock.id || ''),
