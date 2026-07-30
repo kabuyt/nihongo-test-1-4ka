@@ -121,7 +121,7 @@
         <input type="text" id="filter-search" placeholder="block_id / 回答" oninput="renderTable()" style="width:160px">
       </label>
       <label style="display:inline-flex;align-items:center;gap:4px">
-        <input type="checkbox" id="filter-show-dismissed" onchange="renderTable()">非表示も表示
+        <input type="checkbox" id="filter-show-dismissed" onchange="renderTable()">処理済みも表示（✓追加済み・不正解）
       </label>
       <span style="margin-left:auto">
         <button class="btn-action" onclick="reload()">🔄 再読込</button>
@@ -153,8 +153,9 @@
 
     <p style="font-size:12px;color:#777;margin-top:10px">
       💡 自由入力系の問題（exact_match / flex_match / normalized_match 等）のみ表示。選択式は対象外。<br>
-      💡 <b style="color:#27ae60">正解にする</b>: その問題の answer_key に追加し、同じ回答をした既存提出にもその問題の配点だけ加点します。<br>
-      💡 <b style="color:#e74c3c">不正解にする</b>: その回答パターンを一覧から非表示にします（<b>採点・点数は一切変更しません</b>）。誤操作は「非表示も表示」にチェック →「↩ 表示に戻す」で戻せます。
+      💡 <b style="color:#27ae60">正解にする</b>: その問題の answer_key に追加し、同じ回答をした既存提出にもその問題の配点だけ加点して、一覧から消えます。<br>
+      💡 <b style="color:#e74c3c">不正解にする</b>: その回答パターンを一覧から消します（<b>採点・点数は一切変更しません</b>）。<br>
+      💡 処理した行は「処理済みも表示」にチェックすると確認できます（✓追加済み＝正解に追加した行、グレー＝不正解のままにした行。不正解は「↩ 表示に戻す」で戻せます）。
     </p>
   </div>
 </div>
@@ -693,15 +694,17 @@ async function restoreDismissed(key, btn) {
 function renderStats() {
   const totalResults = _results.length;
   const totalSections = _sections.length;
-  const visible = _aggregated.filter(a => !_dismissed.has(a.key));
-  const dismissedCount = _aggregated.length - visible.length;
+  const addedCount = _aggregated.filter(a => a.added).length;
+  const dismissedCount = _aggregated.filter(a => !a.added && _dismissed.has(a.key)).length;
+  const visible = _aggregated.filter(a => !a.added && !_dismissed.has(a.key));
   const totalImpactedTrainees = new Set(visible.flatMap(a => [...a.trainees])).size;
 
   document.getElementById('stats-area').innerHTML = `
     <div class="stat-card"><b>${totalResults}</b>提出済み test_results</div>
     <div class="stat-card"><b>${totalSections}</b>セクション</div>
-    <div class="stat-card"><b>${visible.length}</b>ユニーク不正解パターン</div>
-    <div class="stat-card"><b>${dismissedCount}</b>このまま不正解（非表示）</div>
+    <div class="stat-card"><b>${visible.length}</b>未処理の不正解パターン</div>
+    <div class="stat-card"><b>${addedCount}</b>正解に追加</div>
+    <div class="stat-card"><b>${dismissedCount}</b>不正解（非表示）</div>
     <div class="stat-card"><b>${totalImpactedTrainees}</b>影響を受けた学生数</div>
   `;
 }
@@ -712,10 +715,10 @@ function renderTable() {
   const fMin = parseInt(document.getElementById('filter-mincount').value, 10) || 1;
   const fSearch = document.getElementById('filter-search').value.trim().toLowerCase();
 
-  const showDismissed = document.getElementById('filter-show-dismissed').checked;
+  const showProcessed = document.getElementById('filter-show-dismissed').checked;
 
   const rows = _aggregated.filter(a => {
-    if (!showDismissed && _dismissed.has(a.key)) return false;
+    if (!showProcessed && (_dismissed.has(a.key) || a.added)) return false;
     if (fTest && a.test_id !== fTest) return false;
     if (fSec && a.section !== fSec) return false;
     if (a.count < fMin) return false;
