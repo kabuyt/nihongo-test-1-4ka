@@ -24,11 +24,13 @@
   .toolbar select, .toolbar input { padding:6px 10px; border:1px solid #ccc; border-radius:5px; font-size:13px; }
   .btn-action { padding:6px 14px; border:none; border-radius:5px; font-size:13px; cursor:pointer; background:#3498db; color:#fff; }
   .btn-action:hover { background:#2980b9; }
-  .btn-add { background:#27ae60; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+  .action-btns { display:flex; gap:6px; }
+  .action-btns button { flex:1 1 0; min-width:0; padding-left:4px; padding-right:4px; }
+  .btn-add { background:#27ae60; color:#fff; padding:6px 8px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
   .btn-add:hover { background:#219653; }
   .btn-add:disabled { background:#aaa; cursor:not-allowed; }
-  .btn-dismiss { background:#95a5a6; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; margin-top:4px; display:block; }
-  .btn-dismiss:hover { background:#7f8c8d; }
+  .btn-dismiss { background:#e74c3c; color:#fff; padding:6px 8px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+  .btn-dismiss:hover { background:#c0392b; }
   .btn-dismiss:disabled { background:#ccc; cursor:not-allowed; }
   .btn-restore { background:#e67e22; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
   .btn-restore:hover { background:#d35400; }
@@ -140,7 +142,7 @@
             <th>学生の回答</th>
             <th>現在の正解</th>
             <th style="width:60px">件数</th>
-            <th style="width:140px">アクション</th>
+            <th style="width:190px">アクション</th>
           </tr>
         </thead>
         <tbody id="review-body">
@@ -151,8 +153,8 @@
 
     <p style="font-size:12px;color:#777;margin-top:10px">
       💡 自由入力系の問題（exact_match / flex_match / normalized_match 等）のみ表示。選択式は対象外。<br>
-      💡 「これも正解にする」を押すと、その問題の answer_key に追加し、同じ回答をした既存提出にもその問題の配点だけ加点します。<br>
-      💡 「このまま不正解」を押すと、その回答パターンを一覧から非表示にします（<b>採点・点数は一切変更しません</b>）。誤操作は「非表示も表示」にチェック →「↩ 表示に戻す」で戻せます。
+      💡 <b style="color:#27ae60">正解にする</b>: その問題の answer_key に追加し、同じ回答をした既存提出にもその問題の配点だけ加点します。<br>
+      💡 <b style="color:#e74c3c">不正解にする</b>: その回答パターンを一覧から非表示にします（<b>採点・点数は一切変更しません</b>）。誤操作は「非表示も表示」にチェック →「↩ 表示に戻す」で戻せます。
     </p>
   </div>
 </div>
@@ -643,7 +645,7 @@ async function dismissWrong(key, btn) {
       .upsert(row, { onConflict: 'test_id,section_type,block_id,field_id,answer_norm' });
     if (error) {
       showToast('非表示の保存に失敗: ' + error.message, 'error');
-      if (btn) { btn.disabled = false; btn.textContent = 'このまま不正解'; }
+      if (btn) { btn.disabled = false; btn.textContent = '不正解にする'; }
       return;
     }
   } else {
@@ -736,8 +738,10 @@ function renderTable() {
     const isDismissed = _dismissed.has(r.key);
     const action = isDismissed
       ? `<button class="btn-restore" onclick="restoreDismissed('${escapeHtml(r.key)}', this)">↩ 表示に戻す</button>`
-      : `<button class="btn-add" onclick="addAsCorrect('${escapeHtml(r.key)}', this)">＋これも正解にする</button>
-         <button class="btn-dismiss" onclick="dismissWrong('${escapeHtml(r.key)}', this)">このまま不正解</button>
+      : `<div class="action-btns">
+           <button class="btn-add" onclick="addAsCorrect('${escapeHtml(r.key)}', this)">正解にする</button>
+           <button class="btn-dismiss" onclick="dismissWrong('${escapeHtml(r.key)}', this)">不正解にする</button>
+         </div>
          <span class="added-mark" style="display:none">✓ 追加済み</span>`;
     return `
     <tr data-key="${escapeHtml(r.key)}"${isDismissed ? ' class="row-dismissed"' : ''}>
@@ -850,7 +854,7 @@ async function addAsCorrect(key, btn) {
     console.error(e);
     showToast('エラー: ' + (e.message || e), 'error');
     btn.disabled = false;
-    btn.textContent = '＋これも正解にする';
+    btn.textContent = '正解にする';
   }
 }
 
