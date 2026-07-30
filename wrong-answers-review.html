@@ -27,6 +27,13 @@
   .btn-add { background:#27ae60; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
   .btn-add:hover { background:#219653; }
   .btn-add:disabled { background:#aaa; cursor:not-allowed; }
+  .btn-dismiss { background:#95a5a6; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; margin-top:4px; display:block; }
+  .btn-dismiss:hover { background:#7f8c8d; }
+  .btn-dismiss:disabled { background:#ccc; cursor:not-allowed; }
+  .btn-restore { background:#e67e22; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+  .btn-restore:hover { background:#d35400; }
+  .row-dismissed { background:#f4f6f7 !important; opacity:.6; }
+  .dismiss-hint { display:none; background:#fff8e6; border:1px solid #f1d39a; border-radius:6px; padding:8px 12px; font-size:12px; color:#8a5a00; margin-bottom:12px; }
 
   .stats { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
   .stat-card { background:#fff; padding:10px 16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.08); font-size:13px; }
@@ -52,7 +59,7 @@
   .col-count { text-align:center; font-weight:bold; }
   .badge-method { display:inline-block; padding:2px 6px; background:#ecf0f1; color:#555; border-radius:3px; font-size:11px; font-family:monospace; }
   .row-added { background:#e8f5e9 !important; opacity:.65; }
-  .row-added .btn-add { display:none; }
+  .row-added .btn-add, .row-added .btn-dismiss { display:none; }
   .row-added .added-mark { color:#27ae60; font-weight:bold; }
 
   .toast { position:fixed; top:20px; right:20px; padding:12px 20px; border-radius:6px; color:#fff; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.2); display:none; }
@@ -111,10 +118,15 @@
       <label>検索:
         <input type="text" id="filter-search" placeholder="block_id / 回答" oninput="renderTable()" style="width:160px">
       </label>
+      <label style="display:inline-flex;align-items:center;gap:4px">
+        <input type="checkbox" id="filter-show-dismissed" onchange="renderTable()">非表示も表示
+      </label>
       <span style="margin-left:auto">
         <button class="btn-action" onclick="reload()">🔄 再読込</button>
       </span>
     </div>
+
+    <div id="dismiss-mode-hint" class="dismiss-hint"></div>
 
     <div class="table-wrap">
       <table class="review">
@@ -139,7 +151,8 @@
 
     <p style="font-size:12px;color:#777;margin-top:10px">
       💡 自由入力系の問題（exact_match / flex_match / normalized_match 等）のみ表示。選択式は対象外。<br>
-      💡 「これも正解にする」を押すと、その問題の answer_key に追加し、同じ回答をした既存提出にもその問題の配点だけ加点します。
+      💡 「これも正解にする」を押すと、その問題の answer_key に追加し、同じ回答をした既存提出にもその問題の配点だけ加点します。<br>
+      💡 「このまま不正解」を押すと、その回答パターンを一覧から非表示にします（<b>採点・点数は一切変更しません</b>）。誤操作は「非表示も表示」にチェック →「↩ 表示に戻す」で戻せます。
     </p>
   </div>
 </div>
@@ -154,6 +167,9 @@
 let _sections = [];      // test_sections の全行
 let _results = [];        // test_results の全行（answers_jsonあり）
 let _aggregated = [];     // 集計済み不正解一覧
+let _dismissed = new Set();      // 「このまま不正解」で非表示にしたパターンの key 集合
+let _dismissBackend = 'db';      // 'db' = wrong_answer_dismissals テーブル / 'local' = localStorage
+const DISMISS_LS_KEY = 'wrongAnswerDismissals';
 
 // 自由入力系として扱う method
 const TEXT_INPUT_METHODS = new Set([
@@ -207,6 +223,8 @@ async function reload() {
 
   _sections = secRes.data || [];
   _results = resRes.data || [];
+
+  await loadDismissals();
 
   // テストドロップダウン埋める
   const testIds = [...new Set(_sections.map(s => s.test_id))].sort();
@@ -537,17 +555,151 @@ function formatExpected(akBlock, fid, idx) {
   return String(exp);
 }
 
+// ===== 「このまま不正解」（非表示）管理 =====
+// key = test_id|section|block_id|field_id|norm_answer （_aggregated の key と同一形式）
+
+function splitDismissKey(key) {
+  const parts = String(key).split('|');
+  return {
+    test_id: parts[0],
+    section_type: parts[1],
+    block_id: parts[2],
+    field_id: parts[3],
+    answer_norm: parts.slice(4).join('|'),  // 回答に | が含まれても壊れないように
+  };
+}
+
+function loadLocalDismissals() {
+  try { return new Set(JSON.parse(localStorage.getItem(DISMISS_LS_KEY) || '[]')); }
+  catch (e) { return new Set(); }
+}
+function saveLocalDismissals(set) {
+  localStorage.setItem(DISMISS_LS_KEY, JSON.stringify([...set]));
+}
+
+async function loadDismissals() {
+  const { data, error } = await supabase
+    .from('wrong_answer_dismissals')
+    .select('test_id,section_type,block_id,field_id,answer_norm');
+
+  if (error) {
+    // テーブル未作成など → localStorage フォールバック
+    _dismissBackend = 'local';
+    _dismissed = loadLocalDismissals();
+  } else {
+    _dismissBackend = 'db';
+    _dismissed = new Set((data || []).map(r =>
+      [r.test_id, r.section_type, r.block_id, r.field_id, r.answer_norm].join('|')));
+
+    // 以前 localStorage に溜めた分があれば DB に移行
+    const local = loadLocalDismissals();
+    const pending = [...local].filter(k => !_dismissed.has(k));
+    if (pending.length > 0) {
+      const rows = pending.map(splitDismissKey);
+      const { error: upErr } = await supabase
+        .from('wrong_answer_dismissals')
+        .upsert(rows, { onConflict: 'test_id,section_type,block_id,field_id,answer_norm' });
+      if (!upErr) {
+        pending.forEach(k => _dismissed.add(k));
+        localStorage.removeItem(DISMISS_LS_KEY);
+      }
+    } else if (local.size > 0) {
+      localStorage.removeItem(DISMISS_LS_KEY);
+    }
+  }
+  updateDismissHint();
+}
+
+function updateDismissHint() {
+  const el = document.getElementById('dismiss-mode-hint');
+  if (!el) return;
+  if (_dismissBackend === 'local') {
+    el.innerHTML = '⚠ 「このまま不正解」の保存先が <b>このブラウザのみ（localStorage）</b> になっています。'
+      + 'Supabase の SQL Editor で <code>trainee-manager/migrations/2026_07_30_wrong_answer_dismissals.sql</code> を実行すると、'
+      + '全PC共有のDB保存に自動で切り替わります（既存の非表示も引き継がれます）。';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+async function dismissWrong(key, btn) {
+  const item = _aggregated.find(a => a.key === key);
+  if (!item) return;
+  if (btn) { btn.disabled = true; btn.textContent = '保存中...'; }
+
+  if (_dismissBackend === 'db') {
+    const { data: sess } = await supabase.auth.getSession();
+    const row = {
+      test_id: item.test_id,
+      section_type: item.section,
+      block_id: item.block_id,
+      field_id: item.field_id,
+      answer_norm: item.norm_answer,
+      dismissed_by: sess && sess.session ? sess.session.user.id : null,
+    };
+    const { error } = await supabase
+      .from('wrong_answer_dismissals')
+      .upsert(row, { onConflict: 'test_id,section_type,block_id,field_id,answer_norm' });
+    if (error) {
+      showToast('非表示の保存に失敗: ' + error.message, 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'このまま不正解'; }
+      return;
+    }
+  } else {
+    const local = loadLocalDismissals();
+    local.add(key);
+    saveLocalDismissals(local);
+  }
+
+  _dismissed.add(key);
+  showToast('非表示にしました（「非表示も表示」で戻せます）', 'success');
+  renderStats();
+  renderTable();
+}
+
+async function restoreDismissed(key, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '戻し中...'; }
+
+  if (_dismissBackend === 'db') {
+    const p = splitDismissKey(key);
+    const { error } = await supabase
+      .from('wrong_answer_dismissals')
+      .delete()
+      .match({
+        test_id: p.test_id, section_type: p.section_type,
+        block_id: p.block_id, field_id: p.field_id, answer_norm: p.answer_norm,
+      });
+    if (error) {
+      showToast('戻すのに失敗: ' + error.message, 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '↩ 表示に戻す'; }
+      return;
+    }
+  } else {
+    const local = loadLocalDismissals();
+    local.delete(key);
+    saveLocalDismissals(local);
+  }
+
+  _dismissed.delete(key);
+  showToast('一覧に戻しました', 'success');
+  renderStats();
+  renderTable();
+}
+
 // ===== UI 描画 =====
 function renderStats() {
   const totalResults = _results.length;
   const totalSections = _sections.length;
-  const totalWrongAns = _aggregated.length;
-  const totalImpactedTrainees = new Set(_aggregated.flatMap(a => [...a.trainees])).size;
+  const visible = _aggregated.filter(a => !_dismissed.has(a.key));
+  const dismissedCount = _aggregated.length - visible.length;
+  const totalImpactedTrainees = new Set(visible.flatMap(a => [...a.trainees])).size;
 
   document.getElementById('stats-area').innerHTML = `
     <div class="stat-card"><b>${totalResults}</b>提出済み test_results</div>
     <div class="stat-card"><b>${totalSections}</b>セクション</div>
-    <div class="stat-card"><b>${totalWrongAns}</b>ユニーク不正解パターン</div>
+    <div class="stat-card"><b>${visible.length}</b>ユニーク不正解パターン</div>
+    <div class="stat-card"><b>${dismissedCount}</b>このまま不正解（非表示）</div>
     <div class="stat-card"><b>${totalImpactedTrainees}</b>影響を受けた学生数</div>
   `;
 }
@@ -558,7 +710,10 @@ function renderTable() {
   const fMin = parseInt(document.getElementById('filter-mincount').value, 10) || 1;
   const fSearch = document.getElementById('filter-search').value.trim().toLowerCase();
 
+  const showDismissed = document.getElementById('filter-show-dismissed').checked;
+
   const rows = _aggregated.filter(a => {
+    if (!showDismissed && _dismissed.has(a.key)) return false;
     if (fTest && a.test_id !== fTest) return false;
     if (fSec && a.section !== fSec) return false;
     if (a.count < fMin) return false;
@@ -577,8 +732,15 @@ function renderTable() {
     return;
   }
 
-  tbody.innerHTML = rows.map(r => `
-    <tr data-key="${escapeHtml(r.key)}">
+  tbody.innerHTML = rows.map(r => {
+    const isDismissed = _dismissed.has(r.key);
+    const action = isDismissed
+      ? `<button class="btn-restore" onclick="restoreDismissed('${escapeHtml(r.key)}', this)">↩ 表示に戻す</button>`
+      : `<button class="btn-add" onclick="addAsCorrect('${escapeHtml(r.key)}', this)">＋これも正解にする</button>
+         <button class="btn-dismiss" onclick="dismissWrong('${escapeHtml(r.key)}', this)">このまま不正解</button>
+         <span class="added-mark" style="display:none">✓ 追加済み</span>`;
+    return `
+    <tr data-key="${escapeHtml(r.key)}"${isDismissed ? ' class="row-dismissed"' : ''}>
       <td class="col-test">${escapeHtml(r.test_id)}</td>
       <td>${escapeHtml(r.section)}</td>
       <td class="col-block">${escapeHtml(r.block_id)}<br>${escapeHtml(r.field_id)}</td>
@@ -587,12 +749,9 @@ function renderTable() {
       <td class="col-answer">${escapeHtml(r.raw_answer)}</td>
       <td class="col-current">${escapeHtml(r.current_correct)}</td>
       <td class="col-count">${r.count}</td>
-      <td>
-        <button class="btn-add" onclick="addAsCorrect('${escapeHtml(r.key)}', this)">＋これも正解にする</button>
-        <span class="added-mark" style="display:none">✓ 追加済み</span>
-      </td>
-    </tr>
-  `).join('');
+      <td>${action}</td>
+    </tr>`;
+  }).join('');
 }
 
 function escapeHtml(s) {
