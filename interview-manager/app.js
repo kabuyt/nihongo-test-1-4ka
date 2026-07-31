@@ -423,6 +423,9 @@ function kraepelinComment(summary, evaluation) {
     comments.push('安定して作業できています');
   } else if (evaluation.stability <= 6 && total > 0) {
     comments.push('作業の波が大きい傾向があります');
+  } else if (total > 0) {
+    // 中間層（安定性6〜14）がどの条件にも当たらず所見が空になるのを防ぐ
+    comments.push('多少の波はありますが、大きな乱れはありません');
   }
 
   if (errorRate >= 0.3) {
@@ -435,6 +438,9 @@ function kraepelinComment(summary, evaluation) {
     comments.push('慎重ですが、作業量は少なめです');
   } else if (errorRate <= 0.05) {
     comments.push('落ち着いて正確に作業できています');
+  } else if (total > 0) {
+    // 作業量も誤答率も中間の場合の受け皿
+    comments.push('作業量・正確さとも標準的な水準です');
   }
 
   return [...new Set(comments)].slice(0, 2).join('。') + (comments.length ? '。' : '');
