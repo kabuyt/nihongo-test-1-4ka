@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a5276">
+<title>オオタ専門用語 暗記・テスト</title>
+<link rel="stylesheet" href="common/style.css">
+<style>
+.student-bar{background:#fff;border-bottom:2px solid #1a5276;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.student-bar .name{font-size:14px;font-weight:bold;color:#1a5276}
+.student-bar .id{font-size:12px;color:#888}
+.student-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.student-actions a,.btn-logout{padding:7px 12px;border:1px solid #1a5276;border-radius:8px;background:#fff;color:#1a5276;font-size:12px;text-decoration:none;cursor:pointer}
+.btn-logout{border-color:#c0392b;color:#c0392b}
+.term-wrap{max-width:980px;margin:18px auto 40px;padding:0 14px}
+.term-hero{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:14px}
+.term-hero h2{font-size:20px;color:#1a5276;margin-bottom:4px}
+.term-hero p{font-size:13px;color:#666;line-height:1.6}
+.quick-start{background:linear-gradient(135deg,#eaf7ff,#fff7e8);border:1px solid #d5ecf8;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(26,82,118,.08);margin-bottom:12px}
+.quick-start h2{font-size:22px;color:#1a5276;margin:0 0 8px}
+.quick-start p{font-size:15px;color:#475967;line-height:1.6;margin:0 0 12px}
+.study-alert{border:2px solid #e74c3c;background:#fff5f3;border-radius:12px;padding:12px;margin:10px 0;color:#c0392b;font-weight:700;line-height:1.65}
+.study-alert .study-time-red{display:block;margin-top:8px;font-size:18px;color:#c0392b}
+.quick-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.quick-steps span{background:#fff;border:1px solid #dcebf4;border-radius:12px;padding:10px;font-size:13px;font-weight:bold;color:#1a5276;text-align:center}
+.term-hero{display:none}
+.term-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:260px}
+.term-stats div{background:#eef6fb;border:1px solid #d6e8f3;border-radius:10px;padding:10px;text-align:center}
+.term-stats b{display:block;color:#1a5276;font-size:22px}
+.term-stats span{font-size:11px;color:#667}
+.term-toolbar{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:4}
+.term-toolbar select,.term-toolbar input{border:1px solid #ccc;border-radius:8px;padding:10px;font-size:15px;background:#fff}
+.term-toolbar input{flex:1;min-width:220px}
+.mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;flex:1;min-width:240px}
+.mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:13px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
+.mode-tabs button.active{background:#1a5276;color:#fff}
+.learn-type-switch{display:flex;gap:6px;background:#eef3f7;border-radius:14px;padding:5px}
+.learn-type-switch button{border:0;background:transparent;color:#516173;border-radius:11px;padding:10px 13px;font-weight:700;cursor:pointer;font-size:14px}
+.learn-type-switch button.active{background:#fff;color:#1a5276;box-shadow:0 4px 12px rgba(20,55,80,.12)}
+.btn-tools{padding:13px 14px;border:1px solid #ccd7df;border-radius:12px;background:#fff;color:#1a5276;font-weight:bold;cursor:pointer}
+.term-panel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+.term-panel.hidden{display:none}
+.card-box,.term-list-box,.quiz-box,.quiz-result{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.flash-card{min-height:390px;border:2px solid #dbe7ef;border-radius:18px;padding:18px 24px 26px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;background:linear-gradient(180deg,#f6fbff,#fff)}
+.flash-card.flipped{background:linear-gradient(180deg,#f3fff0,#fff)}
+.card-meta{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{display:inline-block;background:#e8f5e9;color:#287b36;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:bold}
+.card-progress{flex:1;min-width:180px}
+.card-progress-head{display:flex;justify-content:space-between;gap:8px;color:#516271;font-size:12px;font-weight:bold;margin-bottom:5px}
+.card-progress-track{height:6px;background:#dce8f0;border-radius:999px;overflow:hidden}
+.card-progress-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,#27ae60,#1a5276);transition:width .2s}
+.term-main{font-size:46px;line-height:1.25;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere;text-align:center}
+.term-kana{font-size:20px;color:#666;margin-top:12px;text-align:center}
+.term-meaning{font-size:30px;line-height:1.4;color:#1a5276;font-weight:bold}
+.card-side-label{font-size:12px;font-weight:bold;color:#6b7b88;margin-bottom:8px;letter-spacing:.04em}
+.flash-card .hint{font-size:15px;color:#697b88;margin-top:26px;text-align:center}
+.card-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.card-actions button,.quiz-actions button{padding:13px 18px;border:0;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px}
+.btn-sub{background:#eef2f7;color:#1a5276}
+.btn-ok{background:#27ae60;color:#fff}
+.btn-review{background:#e67e22;color:#fff}
+.term-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.term-list{max-height:430px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.term-row{border:1px solid #e1e6ec;background:#f8fafc;border-radius:9px;padding:9px;text-align:left;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
+.term-row.active{border-color:#1a5276;background:#eef6fb}
+.term-row strong,.term-row small{display:block}
+.term-row small{color:#666;margin-top:2px}
+.term-row .term-reading{color:#1a5276;font-weight:bold}
+.archive-box{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.archive-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap}
+.archive-head h2{color:#1a5276;font-size:20px}
+.archive-head p{color:#607080;line-height:1.6;margin-top:4px}
+.archive-list{display:grid;gap:8px}
+.archive-row{border:1px solid #e1e6ec;background:#f8fafc;border-radius:10px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.archive-row strong,.archive-row small{display:block}
+.archive-row small{color:#607080;margin-top:3px}
+.status-pill{white-space:nowrap;border-radius:999px;background:#fff;padding:3px 8px;font-size:11px;color:#666}
+.status-learned{color:#27ae60}.status-review{color:#e67e22}
+.quiz-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
+.quiz-head h2{font-size:20px;color:#1a5276;line-height:1.4}
+.quiz-word-prompt{display:block;font-size:34px;line-height:1.25;font-weight:800;color:#1a5276;margin:8px 0 10px;word-break:keep-all;overflow-wrap:anywhere}
+.quiz-help{display:block;font-size:15px;line-height:1.55;color:#516271;font-weight:700}
+.quiz-score{font-size:22px;font-weight:bold;color:#1a5276}
+.quiz-plan{background:#eef6fb;border:1px solid #d6e8f3;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.quiz-plan strong{color:#1a5276}
+.quiz-plan select{border:1px solid #bfd4e0;border-radius:9px;background:#fff;padding:10px;font-size:15px;min-width:180px}
+.quiz-plan span{color:#516271;font-size:14px}
+.test-progress{width:100%;height:12px;background:#dce8f0;border-radius:999px;overflow:hidden}
+.test-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#27ae60,#1a5276)}
+.quiz-question-img{width:100%;max-height:340px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px;margin-bottom:12px}
+.final-test-box{margin-top:14px;border:2px solid #d9ead7;background:linear-gradient(135deg,#f4fff1,#fff);border-radius:16px;padding:16px}
+.final-test-box h3{margin:0 0 6px;color:#1a5276;font-size:18px}
+.final-test-box p{margin:0 0 12px;color:#516271;line-height:1.6}
+.final-test-box.locked{border-color:#e2e8f0;background:#f8fafc}
+.final-test-box.locked h3{color:#7a8792}
+.final-test-status{display:inline-block;margin-bottom:10px;font-weight:bold;color:#287b36}
+.final-test-box.locked .final-test-status{color:#7a8792}
+.image-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
+.image-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
+.image-mode-tabs button.active{background:#1a5276;color:#fff}
+.test-mode-tabs{display:flex;background:#e8edf2;border-radius:12px;padding:4px;gap:4px;margin-bottom:12px}
+.test-mode-tabs button{border:0;background:transparent;color:#666;border-radius:10px;padding:12px 14px;font-weight:bold;cursor:pointer;flex:1;font-size:15px}
+.test-mode-tabs button.active{background:#1a5276;color:#fff}
+.image-card-img{width:100%;max-height:380px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px;margin-bottom:16px}
+.image-card-answer{text-align:center;color:#1a5276}
+.image-card-answer strong{display:block;font-size:34px;line-height:1.25;margin-bottom:8px}
+.image-card-answer span{font-size:18px;color:#667}
+.image-question{display:grid;gap:12px}
+.image-question img{width:100%;max-height:360px;object-fit:contain;background:#f6f8fb;border:1px solid #dce5ec;border-radius:14px}
+.quiz-options{display:grid;gap:9px}
+.quiz-option{border:1px solid #d7dfe7;background:#f8fafc;border-radius:10px;padding:13px;text-align:left;font-size:15px;cursor:pointer}
+.quiz-option.correct{background:#e8f5e9;border-color:#27ae60;color:#1e7b35;font-weight:bold}
+.quiz-option.wrong{background:#fff0ee;border-color:#e9aaa2;color:#c0392b}
+.quiz-feedback{min-height:24px;margin-top:10px;font-weight:bold;color:#1a5276}
+.quiz-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.quiz-result{margin-top:14px;color:#555;line-height:1.7}
+.quiz-result strong{display:block;color:#1a5276;font-size:20px}
+@media(max-width:720px){
+  .quick-steps{grid-template-columns:1fr}
+  .term-hero{flex-direction:column;align-items:stretch}
+  .term-stats{min-width:0}
+  .term-panel{grid-template-columns:1fr}
+  .term-main{font-size:34px}
+  .term-meaning{font-size:24px}
+  .quiz-word-prompt{font-size:28px}
+  .flash-card{min-height:360px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>オオタ専門用語 暗記・確認テスト</h1>
+  <p>Từ vựng chuyên ngành - Oota</p>
+</header>
+
+<div class="student-bar" id="student-bar" style="display:none">
+  <div>
+    <span class="name" id="student-name"></span>
+    <span class="id" id="student-id-display"></span>
+  </div>
+  <div class="student-actions">
+    <button class="btn-logout" onclick="terminologyLogout()">ログアウト</button>
+  </div>
+</div>
+
+<main class="term-wrap">
+  <section class="quick-start">
+    <h2>Học theo 2 bước</h2>
+    <p>Học lần lượt các thẻ từ chuyên ngành → làm kiểm tra. Mỗi bài kiểm tra nhỏ có 20 câu.<br>専門用語カードを順番に覚える → テストを受ける。小テストは20問ずつです。</p>
+    <div class="study-alert">
+      Hãy làm 3 bài kiểm tra nhỏ. Mỗi bài có 20 câu.<br>
+      Tiến độ học tập sẽ được báo cáo cho công ty. Hệ thống cũng ghi lại mỗi ngày bạn đã học bao nhiêu phút.<br>
+      Cố gắng nhé.<br>
+      小テスト3回を受けましょう。1回20問です。学習の進捗は企業に報告します。一日何分学習したかも記録しています。頑張ってください。
+      <span class="study-time-red" id="studyTimeNotice">Tổng thời gian học / 総学習時間: --</span>
+    </div>
+    <div class="quick-steps">
+      <span>1. Học từ<br>覚える</span>
+      <span>2. Mỗi lần 20 câu<br>テスト 20問ずつ</span>
+    </div>
+  </section>
+
+  <section class="term-hero">
+    <div>
+      <h2>オオタ専門用語</h2>
+      <p>Nhấn vào thẻ để lật và kiểm tra nghĩa tiếng Việt.<br>カードをクリックして裏返し、ベトナム語の意味を確認します。</p>
+    </div>
+    <div class="term-stats">
+      <div><b id="statLearned">0 / 47</b><span>Đã nhớ<br>覚えた</span></div>
+      <div><b id="statReview">0</b><span>Chưa nhớ<br>おぼえてない</span></div>
+      <div><b id="statRate">0%</b><span>Tỷ lệ đúng<br>正答率</span></div>
+    </div>
+  </section>
+
+  <section class="term-toolbar">
+    <div class="mode-tabs">
+      <button type="button" class="active" id="learnModeBtn">Học từ<br>覚える</button>
+      <button type="button" id="archiveModeBtn">Thẻ đã nhớ<br>覚えたカード</button>
+      <button type="button" id="testModeBtn">Kiểm tra<br>テスト</button>
+    </div>
+  </section>
+
+  <section id="cardPanel" class="term-panel">
+    <div class="card-box">
+      <div class="flash-card" id="termCard" tabindex="0">
+        <div class="card-meta">
+          <span class="chip" id="cardCategory">-</span>
+          <div class="card-progress">
+            <div class="card-progress-head">
+              <span id="cardProgressLabel">Tiến độ</span>
+              <strong id="cardProgressPercent">0%</strong>
+            </div>
+            <div class="card-progress-track"><span id="cardProgressBar"></span></div>
+          </div>
+        </div>
+        <div class="card-side-label" id="cardSideLabel">表: 日本語 / Mặt trước: Tiếng Nhật</div>
+        <img class="image-card-img" id="cardImage" alt="専門用語の写真" style="display:none">
+        <div class="term-main" id="cardTerm">読み込み中...</div>
+        <div class="term-kana" id="cardKana"></div>
+        <div class="term-meaning" id="cardMeaning" style="display:none"></div>
+        <p class="hint" id="cardHint">クリックするとベトナム語の意味を表示します</p>
+      </div>
+      <div class="card-actions">
+        <button type="button" class="btn-sub" id="prevCardBtn">Trước<br>前へ</button>
+        <button type="button" class="btn-review" id="reviewBtn">Chưa nhớ<br>おぼえてない</button>
+        <button type="button" class="btn-ok" id="learnedBtn">Đã nhớ<br>覚えた</button>
+        <button type="button" class="btn-sub" id="nextCardBtn">Tiếp<br>次へ</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="archivePanel" class="term-panel hidden">
+    <div class="archive-box">
+      <div class="archive-head">
+        <div>
+          <h2>Thẻ đã nhớ<br>覚えたカード</h2>
+          <p>Những thẻ đã bấm “Đã nhớ” sẽ được lưu ở đây.<br>「覚えた」を押したカードはここに入ります。</p>
+        </div>
+        <strong id="archiveCount">0件</strong>
+      </div>
+      <div id="archiveList" class="archive-list"></div>
+    </div>
+  </section>
+
+  <section id="testPanel" class="term-panel hidden">
+    <div class="quiz-box" id="wordQuizBox">
+      <div class="quiz-plan">
+        <strong>テスト / Kiểm tra</strong>
+        <select id="quizSetSelect" aria-label="テストの回"></select>
+        <span id="quizSetSummary">-</span>
+        <div class="test-progress" aria-label="テスト進捗"><span id="testProgressBar"></span></div>
+        <span id="testProgressText">0 / -</span>
+      </div>
+      <div class="quiz-head">
+        <h2 id="quizPrompt">テストを始めてください<br>Bắt đầu kiểm tra</h2>
+        <div class="quiz-score"><span id="quizNow">0</span>/<span id="quizTotal">20</span></div>
+      </div>
+      <img id="quizQuestionImg" class="quiz-question-img" alt="画像問題" style="display:none">
+      <div id="quizOptions" class="quiz-options"></div>
+      <div id="quizFeedback" class="quiz-feedback"></div>
+      <div class="quiz-actions">
+        <button type="button" class="btn-ok" id="startQuizBtn">テスト開始<br>Bắt đầu</button>
+        <button type="button" class="btn-sub" id="nextQuizBtn" disabled>次の問題<br>Câu tiếp</button>
+      </div>
+    </div>
+    <div id="quizResult" class="quiz-result hidden"></div>
+    <div class="final-test-box locked" id="finalTestBox">
+      <h3>総合修了テスト 100問<br>Kiểm tra hoàn thành 100 câu</h3>
+      <span class="final-test-status" id="finalTestStatus">先生が開けると受けられます / Chờ giáo viên mở bài</span>
+      <p>出題内容は受ける人ごとに変わります。<br>Nội dung câu hỏi sẽ khác nhau theo từng người.</p>
+      <button type="button" class="btn-ok" id="startFinalQuizBtn" disabled>総合修了テストを始める<br>Bắt đầu kiểm tra hoàn thành</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script src="common/auth.js"></script>
+<script>
+window.TERMINOLOGY_APP = {
+  storagePrefix: 'oota',
+  companyNameJa: 'オオタ',
+  companyNameVi: 'Oota',
+  loginPage: 'oota-terminology-login.html',
+  vocabGlobal: 'OOTA_VOCAB',
+  imageGlobal: 'OOTA_IMAGE_QUIZ',
+  allowedCompanyKeywords: ['オオタ', 'oota', '株式会社オオタ'],
+  adminStudentIds: ['GRV001'],
+  quizSetPrefix: 'oota-test-2026',
+  finalQuizSetId: 'oota-final-2026',
+  quizSetSize: 20,
+  finalQuizSize: 47,
+  enableFinalTest: false,
+};
+</script>
+<script src="data/oota-vocab.js?v=1"></script>
+<script src="data/oota-image-quiz.js?v=1"></script>
+<script src="terminology.js?v=31"></script>
+</body>
+</html>
