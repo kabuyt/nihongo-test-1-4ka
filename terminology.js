@@ -1126,6 +1126,44 @@ function startFinalQuiz() {
   renderQuiz();
 }
 
+function normalizeAnswerKey(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+// 誤答候補を最大3件選ぶ。
+// 1) 正解と同じanswer（ベトナム語の意味）を持つ候補は除外する（「正解が2つ見える」事故の防止）。
+// 2) word問題は正解と同じcategoryの候補を優先し、足りない分だけ全プールから補充する（食材の問題にポジション名が混ざる等を防ぐ）。
+// 3) 選ばれる候補同士でもanswerが重複しないようにする。
+// 候補が3件に満たない場合はそのまま少ない件数を返す（呼び出し側は3択以下でも壊れない前提）。
+function pickQuizDistractors(question, pool) {
+  const correctKey = normalizeAnswerKey(question.answer);
+  const sameType = pool.filter(item => item.type === question.type
+    && item.id !== question.id
+    && normalizeAnswerKey(item.answer) !== correctKey);
+
+  const usedAnswers = new Set([correctKey]);
+  const picked = [];
+
+  const takeFrom = candidates => {
+    if (picked.length >= 3) return;
+    for (const item of shuffle(candidates)) {
+      if (picked.length >= 3) break;
+      const key = normalizeAnswerKey(item.answer);
+      if (usedAnswers.has(key)) continue;
+      usedAnswers.add(key);
+      picked.push(item);
+    }
+  };
+
+  if (question.type === 'word' && question.source?.category) {
+    const sameCategory = sameType.filter(item => item.source?.category === question.source.category);
+    takeFrom(sameCategory);
+  }
+  if (picked.length < 3) takeFrom(sameType);
+
+  return picked;
+}
+
 function renderQuiz() {
   const quiz = termState.quiz;
   if (!quiz || quiz.index >= quiz.questions.length) {
@@ -1133,9 +1171,7 @@ function renderQuiz() {
     return;
   }
   const question = quiz.questions[quiz.index];
-  const options = question.type === 'image'
-    ? shuffle([question, ...shuffle(getUnifiedTestItems().filter(item => item.type === 'image' && item.id !== question.id && item.answer !== question.answer)).slice(0, 3)])
-    : shuffle([question, ...shuffle(getUnifiedTestItems().filter(item => item.type === 'word' && item.id !== question.id)).slice(0, 3)]);
+  const options = shuffle([question, ...pickQuizDistractors(question, getUnifiedTestItems())]);
   quiz.answered = false;
   document.getElementById('quizNow').textContent = quiz.index + 1;
   document.getElementById('quizTotal').textContent = quiz.questions.length;
