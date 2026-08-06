@@ -282,8 +282,34 @@ async function loadSupabaseProgress() {
       };
     });
     saveLocalProgress();
+    if (data.length === 0) {
+      await backfillLocalProgress();
+    }
   } catch (err) {
     console.warn('progress load skipped', err);
+  }
+}
+
+async function backfillLocalProgress() {
+  if (!termState.profile?.id) return;
+  const validIds = new Set((termState.terms || []).map(t => t.id));
+  const rows = Object.entries(termState.progress)
+    .filter(([termId, p]) => validIds.has(termId) && p && ['learning', 'learned', 'review'].includes(p.status))
+    .map(([termId, p]) => ({
+      trainee_id: termState.profile.id,
+      term_id: termId,
+      status: p.status,
+      correct_count: p.correct || 0,
+      wrong_count: Math.max((p.attempts || 0) - (p.correct || 0), 0),
+      last_studied_at: p.updatedAt || new Date().toISOString(),
+    }));
+  if (!rows.length) return;
+  try {
+    const { error } = await supabase.from('terminology_progress').upsert(rows, { onConflict: 'trainee_id,term_id' });
+    if (error) console.error('progress backfill failed', error);
+    else console.info('progress backfill: ' + rows.length + ' terms uploaded');
+  } catch (err) {
+    console.warn('progress backfill skipped', err);
   }
 }
 
@@ -429,7 +455,7 @@ async function saveProgress(termId, status) {
 
   if (!termState.profile?.id) return;
   try {
-    await supabase.from('terminology_progress').upsert({
+    const { error } = await supabase.from('terminology_progress').upsert({
       trainee_id: termState.profile.id,
       term_id: termId,
       status,
@@ -437,6 +463,7 @@ async function saveProgress(termId, status) {
       wrong_count: Math.max((termState.progress[termId].attempts || 0) - (termState.progress[termId].correct || 0), 0),
       last_studied_at: new Date().toISOString(),
     }, { onConflict: 'trainee_id,term_id' });
+    if (error) console.error('progress save failed', error);
   } catch (err) {
     console.warn('progress save skipped', err);
   }
@@ -1072,7 +1099,7 @@ async function finishQuiz() {
 
   if (!termState.profile?.id) return;
   try {
-    await supabase.from('terminology_quiz_results').insert({
+    const { error } = await supabase.from('terminology_quiz_results').insert({
       trainee_id: termState.profile.id,
       set_id: isFinal ? FINAL_QUIZ_SET_ID : `kinrei-test-2023-${String(quiz.setNumber).padStart(2, '0')}`,
       total_questions: quiz.questions.length,
@@ -1080,6 +1107,11 @@ async function finishQuiz() {
       score_rate: rate,
       answers_json: quiz.answers,
     });
+    if (error) {
+      console.error('quiz result save failed', error);
+      const resultEl = document.getElementById('quizResult');
+      if (resultEl) resultEl.innerHTML += '<p style="color:#c62828">結果を保存できませんでした。先生に伝えてください。<br>Không lưu được kết quả. Hãy báo với giáo viên.</p>';
+    }
   } catch (err) {
     console.warn('quiz result save skipped', err);
   }
