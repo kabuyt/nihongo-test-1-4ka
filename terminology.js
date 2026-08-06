@@ -106,6 +106,57 @@ function esc(value) {
   }[ch]));
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+let saveFailBannerVisible = false;
+
+function showSaveFailBanner() {
+  const el = document.getElementById('saveFailBanner');
+  if (!el) return;
+  el.classList.remove('hidden');
+  saveFailBannerVisible = true;
+}
+
+function hideSaveFailBanner() {
+  if (!saveFailBannerVisible) return;
+  const el = document.getElementById('saveFailBanner');
+  if (el) el.classList.add('hidden');
+  saveFailBannerVisible = false;
+}
+
+// Supabaseへの書き込みを実行し、失敗したら2秒後に1回だけ自動リトライする。
+// それでも失敗したら画面上部にバナーを表示する。以後どれか1件でも保存に成功したら自動で消す。
+// operationはPostgrestのthenable（{error}を返すもの）を返す関数を渡す。
+async function writeWithRetry(operation) {
+  try {
+    const { error } = await operation();
+    if (!error) {
+      hideSaveFailBanner();
+      return true;
+    }
+    console.error('save failed, retrying in 2s', error);
+  } catch (err) {
+    console.warn('save failed, retrying in 2s', err);
+  }
+  await delay(2000);
+  try {
+    const { error } = await operation();
+    if (!error) {
+      hideSaveFailBanner();
+      return true;
+    }
+    console.error('save retry failed', error);
+    showSaveFailBanner();
+    return false;
+  } catch (err) {
+    console.warn('save retry failed', err);
+    showSaveFailBanner();
+    return false;
+  }
+}
+
 function isKinreiProfile(profile) {
   const studentId = String(profile?.student_id || '').toUpperCase();
   if (studentId === 'GRV001') return true;
@@ -199,18 +250,13 @@ async function saveImageItemProgress(item, status) {
   if (!item) return;
   termState.imageProgress[item.id] = { ...getImageProgress(item.id), status, updatedAt: new Date().toISOString() };
   saveImageProgress();
-  if (termState.profile?.id) {
-    try {
-      await supabase.from('terminology_image_progress').upsert({
-        trainee_id: termState.profile.id,
-        image_id: item.id,
-        status,
-        last_studied_at: new Date().toISOString(),
-      }, { onConflict: 'trainee_id,image_id' });
-    } catch (err) {
-      console.warn('image progress save skipped', err);
-    }
-  }
+  if (!termState.profile?.id) return;
+  await writeWithRetry(() => supabase.from('terminology_image_progress').upsert({
+    trainee_id: termState.profile.id,
+    image_id: item.id,
+    status,
+    last_studied_at: new Date().toISOString(),
+  }, { onConflict: 'trainee_id,image_id' }));
 }
 
 function testSetKey() {
@@ -337,6 +383,7 @@ async function loadSupabaseImageProgress() {
 
 async function loadSupabaseQuizHistory() {
   if (!termState.profile?.id) return;
+  const dbCompletedSets = new Set();
   try {
     const { data, error } = await supabase
       .from('terminology_quiz_results')
@@ -346,10 +393,44 @@ async function loadSupabaseQuizHistory() {
     if (error || !data) return;
     data.forEach(item => {
       const match = String(item.set_id || '').match(/^kinrei-test-2023-(\d+)$/);
-      if (match && Number(item.score_rate || 0) >= 100) saveCompletedTestSet(Number(match[1]));
+      if (!match) return;
+      const setNumber = Number(match[1]);
+      if (Number(item.score_rate || 0) >= 100) {
+        saveCompletedTestSet(setNumber);
+        dbCompletedSets.add(setNumber);
+      }
     });
   } catch (err) {
     console.warn('quiz history load skipped', err);
+    return;
+  }
+  await backfillLocalQuizResultsToSupabase(dbCompletedSets);
+}
+
+// テーブル欠落期間の合格を端末から補填する。旧端末で1回開けば移行完了。
+// localStorageには合格記録があるがDB(terminology_quiz_results)には無いセットについて、
+// 100点扱いの補填行をinsertする。既にDBにある合格セット(dbCompletedSets)とは突合して重複させない。
+// 失敗はconsole.warnのみに留め、次回起動時に再試行させる（ここではリトライ処理を行わない）。
+async function backfillLocalQuizResultsToSupabase(dbCompletedSets) {
+  if (!termState.profile?.id) return;
+  const totalSets = getQuizSets().length;
+  const localCompleted = loadCompletedTestSets();
+  const missingSets = [...localCompleted].filter(n => n >= 1 && n <= totalSets && !dbCompletedSets.has(n));
+  if (!missingSets.length) return;
+  for (const setNumber of missingSets) {
+    try {
+      const { error } = await supabase.from('terminology_quiz_results').insert({
+        trainee_id: termState.profile.id,
+        set_id: `kinrei-test-2023-${String(setNumber).padStart(2, '0')}`,
+        total_questions: 20,
+        correct_count: 20,
+        score_rate: 100,
+        answers_json: [],
+      });
+      if (error) console.warn('quiz result backfill failed', setNumber, error);
+    } catch (err) {
+      console.warn('quiz result backfill skipped', setNumber, err);
+    }
   }
 }
 
@@ -454,19 +535,14 @@ async function saveProgress(termId, status) {
   saveLocalProgress();
 
   if (!termState.profile?.id) return;
-  try {
-    const { error } = await supabase.from('terminology_progress').upsert({
-      trainee_id: termState.profile.id,
-      term_id: termId,
-      status,
-      correct_count: termState.progress[termId].correct || 0,
-      wrong_count: Math.max((termState.progress[termId].attempts || 0) - (termState.progress[termId].correct || 0), 0),
-      last_studied_at: new Date().toISOString(),
-    }, { onConflict: 'trainee_id,term_id' });
-    if (error) console.error('progress save failed', error);
-  } catch (err) {
-    console.warn('progress save skipped', err);
-  }
+  await writeWithRetry(() => supabase.from('terminology_progress').upsert({
+    trainee_id: termState.profile.id,
+    term_id: termId,
+    status,
+    correct_count: termState.progress[termId].correct || 0,
+    wrong_count: Math.max((termState.progress[termId].attempts || 0) - (termState.progress[termId].correct || 0), 0),
+    last_studied_at: new Date().toISOString(),
+  }, { onConflict: 'trainee_id,term_id' }));
 }
 
 function updateQuizProgress(termId, isCorrect) {
@@ -841,6 +917,8 @@ function renderArchive() {
   const learnedWords = termState.terms
     .filter(term => getProgress(term.id).status === 'learned')
     .map(term => ({
+      itemType: 'word',
+      id: term.id,
       type: 'ことば',
       typeVi: 'Từ',
       title: displayTermWithReading(term),
@@ -850,6 +928,8 @@ function renderArchive() {
   const learnedImages = getImageItems()
     .filter(item => getImageProgress(item.id).status === 'learned')
     .map(item => ({
+      itemType: 'image',
+      id: item.id,
       type: '写真',
       typeVi: 'Ảnh',
       title: item.term,
@@ -866,10 +946,30 @@ function renderArchive() {
           ${item.reading ? `<small>Cách đọc: ${esc(item.reading)}</small>` : ''}
           ${item.sub ? `<small>${esc(item.sub)}</small>` : ''}
         </span>
-        <em class="status-pill">${esc(item.type)} / ${esc(item.typeVi)}</em>
+        <span class="archive-row-actions">
+          <em class="status-pill">${esc(item.type)} / ${esc(item.typeVi)}</em>
+          <button type="button" class="btn-relearn" data-item-type="${esc(item.itemType)}" data-id="${esc(item.id)}">Học lại<br>学習に戻す</button>
+        </span>
       </div>
     `).join('')
     : '<p class="hint">Chưa có thẻ đã nhớ.<br>まだ覚えたカードはありません。</p>';
+
+  list.querySelectorAll('.btn-relearn').forEach(button => {
+    button.addEventListener('click', () => moveArchivedItemToReview(button.dataset.itemType, button.dataset.id));
+  });
+}
+
+async function moveArchivedItemToReview(itemType, id) {
+  if (itemType === 'word') {
+    await saveProgress(id, 'review');
+  } else if (itemType === 'image') {
+    const item = getImageItems().find(candidate => candidate.id === id);
+    await saveImageItemProgress(item, 'review');
+  } else {
+    return;
+  }
+  applyFilters();
+  renderStats();
 }
 
 function getUnifiedTestItems() {
@@ -1098,22 +1198,17 @@ async function finishQuiz() {
   renderQuizOverview();
 
   if (!termState.profile?.id) return;
-  try {
-    const { error } = await supabase.from('terminology_quiz_results').insert({
-      trainee_id: termState.profile.id,
-      set_id: isFinal ? FINAL_QUIZ_SET_ID : `kinrei-test-2023-${String(quiz.setNumber).padStart(2, '0')}`,
-      total_questions: quiz.questions.length,
-      correct_count: quiz.correct,
-      score_rate: rate,
-      answers_json: quiz.answers,
-    });
-    if (error) {
-      console.error('quiz result save failed', error);
-      const resultEl = document.getElementById('quizResult');
-      if (resultEl) resultEl.innerHTML += '<p style="color:#c62828">結果を保存できませんでした。先生に伝えてください。<br>Không lưu được kết quả. Hãy báo với giáo viên.</p>';
-    }
-  } catch (err) {
-    console.warn('quiz result save skipped', err);
+  const ok = await writeWithRetry(() => supabase.from('terminology_quiz_results').insert({
+    trainee_id: termState.profile.id,
+    set_id: isFinal ? FINAL_QUIZ_SET_ID : `kinrei-test-2023-${String(quiz.setNumber).padStart(2, '0')}`,
+    total_questions: quiz.questions.length,
+    correct_count: quiz.correct,
+    score_rate: rate,
+    answers_json: quiz.answers,
+  }));
+  if (!ok) {
+    const resultEl = document.getElementById('quizResult');
+    if (resultEl) resultEl.innerHTML += '<p style="color:#c62828">結果を保存できませんでした。先生に伝えてください。<br>Không lưu được kết quả. Hãy báo với giáo viên.</p>';
   }
 }
 
@@ -1184,6 +1279,5 @@ function setupEvents() {
   await loadFinalTestUnlock();
   setupEvents();
   applyFilters();
-  renderImageCard();
   renderStats();
 })();
