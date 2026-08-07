@@ -1,9 +1,26 @@
-const TERM_STORAGE_KEY = 'kinreiTerminologyProgress:v1';
-const TEST_STORAGE_KEY = 'kinreiTerminologyPerfectTestSets:v2';
-const IMAGE_STORAGE_KEY = 'kinreiImageMemoryProgress:v1';
-const QUIZ_SET_SIZE = 20;
-const FINAL_QUIZ_SIZE = 100;
-const FINAL_QUIZ_SET_ID = 'kinrei-final-2023';
+const APP_CONFIG = {
+  storagePrefix: 'kinrei',
+  companyNameJa: 'キンレイ',
+  companyNameVi: 'Kinrei',
+  loginPage: 'terminology-login.html',
+  vocabGlobal: 'KINREI_VOCAB',
+  imageGlobal: 'KINREI_IMAGE_QUIZ',
+  allowedCompanyKeywords: ['キンレイ', 'kinrei'],
+  adminStudentIds: ['GRV001'],
+  quizSetPrefix: 'kinrei-test-2023',
+  finalQuizSetId: 'kinrei-final-2023',
+  quizSetSize: 20,
+  finalQuizSize: 100,
+  enableFinalTest: true,
+  ...(window.TERMINOLOGY_APP || {}),
+};
+
+const TERM_STORAGE_KEY = `${APP_CONFIG.storagePrefix}TerminologyProgress:v1`;
+const TEST_STORAGE_KEY = `${APP_CONFIG.storagePrefix}TerminologyPerfectTestSets:v2`;
+const IMAGE_STORAGE_KEY = `${APP_CONFIG.storagePrefix}ImageMemoryProgress:v1`;
+const QUIZ_SET_SIZE = APP_CONFIG.quizSetSize || 20;
+const FINAL_QUIZ_SIZE = APP_CONFIG.finalQuizSize || 100;
+const FINAL_QUIZ_SET_ID = APP_CONFIG.finalQuizSetId;
 const TERM_OVERRIDES = {
   'kinrei-mono-002': { display: '棚、ラック', reading: 'たな', inline: '棚(たな)、ラック' },
   'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
@@ -157,23 +174,30 @@ async function writeWithRetry(operation) {
   }
 }
 
-function isKinreiProfile(profile) {
+function escapeRegExp(value) {
+  return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isAllowedTerminologyProfile(profile) {
   const studentId = String(profile?.student_id || '').toUpperCase();
-  if (studentId === 'GRV001') return true;
+  if ((APP_CONFIG.adminStudentIds || []).map(id => String(id).toUpperCase()).includes(studentId)) return true;
   const company = String(profile?.company || '').toLowerCase();
   const group = String(profile?.class_group || '').toLowerCase();
-  return company.includes('キンレイ') || company.includes('kinrei') || group.includes('キンレイ') || group.includes('kinrei');
+  return (APP_CONFIG.allowedCompanyKeywords || []).some(keyword => {
+    const key = String(keyword || '').toLowerCase();
+    return key && (company.includes(key) || group.includes(key));
+  });
 }
 
 async function terminologyLogout() {
   await supabase.auth.signOut();
-  window.location.href = 'terminology-login.html';
+  window.location.href = APP_CONFIG.loginPage;
 }
 
 async function checkTerminologyAuth() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    window.location.href = 'terminology-login.html';
+    window.location.href = APP_CONFIG.loginPage;
     return null;
   }
 
@@ -185,17 +209,17 @@ async function checkTerminologyAuth() {
 
   if (error || !data) {
     await supabase.auth.signOut();
-    window.location.href = 'terminology-login.html';
+    window.location.href = APP_CONFIG.loginPage;
     return null;
   }
 
-  if (!isKinreiProfile(data)) {
+  if (!isAllowedTerminologyProfile(data)) {
     document.body.innerHTML = `
-      <header><h1>キンレイ専門用語</h1><p>Từ vựng chuyên ngành Kinrei</p></header>
+      <header><h1>${esc(APP_CONFIG.companyNameJa)}専門用語</h1><p>Từ vựng chuyên ngành ${esc(APP_CONFIG.companyNameVi)}</p></header>
       <main class="term-wrap">
         <section class="term-hero">
           <div>
-            <h2>この学習ページはキンレイ実習生専用です</h2>
+            <h2>この学習ページは${esc(APP_CONFIG.companyNameJa)}実習生専用です</h2>
             <p>対象者ではないため利用できません。必要な場合は管理者に確認してください。</p>
           </div>
         </section>
@@ -389,10 +413,10 @@ async function loadSupabaseQuizHistory() {
       .from('terminology_quiz_results')
       .select('set_id,score_rate')
       .eq('trainee_id', termState.profile.id)
-      .like('set_id', 'kinrei-test-2023-%');
+      .like('set_id', `${APP_CONFIG.quizSetPrefix}-%`);
     if (error || !data) return;
     data.forEach(item => {
-      const match = String(item.set_id || '').match(/^kinrei-test-2023-(\d+)$/);
+      const match = String(item.set_id || '').match(new RegExp(`^${escapeRegExp(APP_CONFIG.quizSetPrefix)}-(\\d+)$`));
       if (!match) return;
       const setNumber = Number(match[1]);
       if (Number(item.score_rate || 0) >= 100) {
@@ -421,7 +445,7 @@ async function backfillLocalQuizResultsToSupabase(dbCompletedSets) {
     try {
       const { error } = await supabase.from('terminology_quiz_results').insert({
         trainee_id: termState.profile.id,
-        set_id: `kinrei-test-2023-${String(setNumber).padStart(2, '0')}`,
+        set_id: `${APP_CONFIG.quizSetPrefix}-${String(setNumber).padStart(2, '0')}`,
         total_questions: 20,
         correct_count: 20,
         score_rate: 100,
@@ -740,7 +764,7 @@ function shuffle(items) {
 
 function seededShuffle(items, seedText) {
   let seed = 2166136261;
-  for (const ch of String(seedText || 'kinrei')) {
+  for (const ch of String(seedText || APP_CONFIG.storagePrefix || 'terminology')) {
     seed ^= ch.charCodeAt(0);
     seed = Math.imul(seed, 16777619);
   }
@@ -1012,6 +1036,10 @@ function renderFinalQuizOverview() {
   const status = document.getElementById('finalTestStatus');
   const button = document.getElementById('startFinalQuizBtn');
   if (!box || !status || !button) return;
+  if (!APP_CONFIG.enableFinalTest) {
+    box.style.display = 'none';
+    return;
+  }
   const allSmallTestsDone = isAllQuizSetsCompleted();
   const unlocked = isFinalQuizUnlocked();
   box.classList.toggle('locked', !unlocked);
@@ -1060,7 +1088,7 @@ function renderQuizOverview() {
 }
 
 function getImageItems() {
-  return window.KINREI_IMAGE_QUIZ?.items || [];
+  return window[APP_CONFIG.imageGlobal]?.items || [];
 }
 
 function moveCard(delta) {
@@ -1236,7 +1264,7 @@ async function finishQuiz() {
   if (!termState.profile?.id) return;
   const ok = await writeWithRetry(() => supabase.from('terminology_quiz_results').insert({
     trainee_id: termState.profile.id,
-    set_id: isFinal ? FINAL_QUIZ_SET_ID : `kinrei-test-2023-${String(quiz.setNumber).padStart(2, '0')}`,
+    set_id: isFinal ? FINAL_QUIZ_SET_ID : `${APP_CONFIG.quizSetPrefix}-${String(quiz.setNumber).padStart(2, '0')}`,
     total_questions: quiz.questions.length,
     correct_count: quiz.correct,
     score_rate: rate,
@@ -1303,7 +1331,7 @@ function setupEvents() {
   document.getElementById('student-bar').style.display = 'flex';
   document.getElementById('student-name').textContent = auth.profile.name_katakana || auth.profile.name_romaji || '';
   document.getElementById('student-id-display').textContent = `（${auth.profile.student_id || ''}）`;
-  termState.terms = window.KINREI_VOCAB?.terms || [];
+  termState.terms = window[APP_CONFIG.vocabGlobal]?.terms || [];
   termState.progress = loadLocalProgress();
   termState.imageProgress = loadImageProgress();
   await logStudySession();

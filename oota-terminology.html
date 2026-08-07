@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a5276">
-<title>キンレイ専門用語 暗記・テスト</title>
+<title>オオタ専門用語 暗記・テスト</title>
 <link rel="stylesheet" href="common/style.css">
 <style>
 .student-bar{background:#fff;border-bottom:2px solid #1a5276;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
@@ -52,7 +52,7 @@
 .card-progress-track{height:6px;background:#dce8f0;border-radius:999px;overflow:hidden}
 .card-progress-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,#27ae60,#1a5276);transition:width .2s}
 .term-main{font-size:46px;line-height:1.25;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere;text-align:center}
-.term-kana{font-size:20px;color:#666;margin-top:12px;text-align:center}
+.term-kana{display:inline-block;align-self:center;font-size:30px;line-height:1.35;color:#1a5276;margin-top:14px;text-align:center;font-weight:800;background:#eef6fb;border:1px solid #cfe1ec;border-radius:999px;padding:8px 18px}
 .term-meaning{font-size:30px;line-height:1.4;color:#1a5276;font-weight:bold}
 .card-side-label{font-size:12px;font-weight:bold;color:#6b7b88;margin-bottom:8px;letter-spacing:.04em}
 .flash-card .hint{font-size:15px;color:#697b88;margin-top:26px;text-align:center}
@@ -127,6 +127,7 @@
   .term-stats{min-width:0}
   .term-panel{grid-template-columns:1fr}
   .term-main{font-size:34px}
+  .term-kana{font-size:26px;border-radius:16px}
   .term-meaning{font-size:24px}
   .quiz-word-prompt{font-size:28px}
   .flash-card{min-height:360px}
@@ -136,8 +137,8 @@
 <body>
 <div id="saveFailBanner" class="save-fail-banner hidden" role="alert">Chưa lưu được. Kiểm tra mạng và thử lại / 保存できていません。電波を確認してください</div>
 <header>
-  <h1>キンレイ専門用語 暗記・確認テスト</h1>
-  <p>Từ vựng chuyên ngành - Kinrei</p>
+  <h1>オオタ専門用語 暗記・確認テスト</h1>
+  <p>Từ vựng chuyên ngành - Oota</p>
 </header>
 
 <div class="student-bar" id="student-bar" style="display:none">
@@ -155,10 +156,10 @@
     <h2>Học theo 2 bước</h2>
     <p>Học lần lượt các thẻ từ chuyên ngành → làm kiểm tra. Mỗi bài kiểm tra nhỏ có 20 câu.<br>専門用語カードを順番に覚える → テストを受ける。小テストは20問ずつです。</p>
     <div class="study-alert">
-      Hãy làm 18 bài kiểm tra nhỏ, sau đó làm bài kiểm tra tổng hợp 100 câu.<br>
+      Hãy làm 4 bài kiểm tra nhỏ. Mỗi bài có 20 câu.<br>
       Tiến độ học tập sẽ được báo cáo cho công ty. Hệ thống cũng ghi lại mỗi ngày bạn đã học bao nhiêu phút.<br>
       Cố gắng nhé.<br>
-      小テスト18回を受けて最後に総合テスト100問を受けましょう。学習の進捗は企業に報告します。一日何分学習したかも記録しています。頑張ってください。
+      小テスト4回を受けましょう。1回20問です。学習の進捗は企業に報告します。一日何分学習したかも記録しています。頑張ってください。
       <span class="study-time-red" id="studyTimeNotice">Tổng thời gian học / 総学習時間: --</span>
     </div>
     <div class="quick-steps">
@@ -166,7 +167,7 @@
       <span>2. Mỗi lần 20 câu<br>テスト 20問ずつ</span>
     </div>
     <div class="term-stats">
-      <div><b id="statLearned">0 / 357</b><span>Đã nhớ<br>覚えた</span></div>
+      <div><b id="statLearned">0 / 70</b><span>Đã nhớ<br>覚えた</span></div>
       <div><b id="statReview">0</b><span>Chưa nhớ<br>おぼえてない</span></div>
       <div><b id="statRate">0%</b><span>Tỷ lệ đúng<br>正答率</span></div>
     </div>
@@ -174,7 +175,7 @@
 
   <section class="term-hero">
     <div>
-      <h2>キンレイ専門用語</h2>
+      <h2>オオタ専門用語</h2>
       <p>Nhấn vào thẻ để lật và kiểm tra nghĩa tiếng Việt.<br>カードをクリックして裏返し、ベトナム語の意味を確認します。</p>
     </div>
   </section>
@@ -264,8 +265,25 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="common/config.js"></script>
 <script src="common/auth.js"></script>
-<script src="data/kinrei-vocab.js?v=5"></script>
-<script src="data/kinrei-image-quiz.js?v=1"></script>
+<script>
+window.TERMINOLOGY_APP = {
+  storagePrefix: 'oota',
+  companyNameJa: 'オオタ',
+  companyNameVi: 'Oota',
+  loginPage: 'oota-terminology-login.html',
+  vocabGlobal: 'OOTA_VOCAB',
+  imageGlobal: 'OOTA_IMAGE_QUIZ',
+  allowedCompanyKeywords: ['オオタ', 'oota', '株式会社オオタ'],
+  adminStudentIds: ['GRV001'],
+  quizSetPrefix: 'oota-test-2026',
+  finalQuizSetId: 'oota-final-2026',
+  quizSetSize: 20,
+  finalQuizSize: 70,
+  enableFinalTest: false,
+};
+</script>
+<script src="data/oota-vocab.js?v=1"></script>
+<script src="data/oota-image-quiz.js?v=1"></script>
 <script src="terminology.js?v=35"></script>
 </body>
 </html>
