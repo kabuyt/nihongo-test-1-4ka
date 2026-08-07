@@ -714,7 +714,7 @@ function cleanKanaReading(value) {
   const text = String(value || '').trim();
   if (!text) return '';
   const chars = [...text].filter(ch => !/[\s・（）()、,]/.test(ch));
-  return chars.length > 0 && chars.every(isKatakana) ? text : '';
+  return chars.length > 0 && chars.every(ch => isKatakana(ch) || isHiragana(ch)) ? text : '';
 }
 
 function shouldPreferKanaReading(termText, inlineReading, kanaReading) {
