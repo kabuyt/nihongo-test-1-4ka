@@ -12,6 +12,9 @@ const APP_CONFIG = {
   quizSetSize: 20,
   finalQuizSize: 100,
   enableFinalTest: true,
+  // 'quiz-ladder' = 小テストN回を順に全問正解して進む方式（キンレイ・既定値）。
+  // 'srs' = 間隔反復方式（オオタ）。window.TERMINOLOGY_APPで上書きされない限りこの既定値のまま。
+  learningMode: 'quiz-ladder',
   ...(window.TERMINOLOGY_APP || {}),
 };
 
@@ -21,6 +24,8 @@ const IMAGE_STORAGE_KEY = `${APP_CONFIG.storagePrefix}ImageMemoryProgress:v1`;
 const QUIZ_SET_SIZE = APP_CONFIG.quizSetSize || 20;
 const FINAL_QUIZ_SIZE = APP_CONFIG.finalQuizSize || 100;
 const FINAL_QUIZ_SET_ID = APP_CONFIG.finalQuizSetId;
+// SRSモード(learningMode==='srs')専用の間隔反復レベル。レベル1→+1日、2→+3日、3→+7日、4→+14日、5以上→+30日。
+const SRS_INTERVALS_DAYS = [1, 3, 7, 14, 30];
 const TERM_OVERRIDES = {
   'kinrei-mono-002': { display: '棚、ラック', reading: 'たな', inline: '棚(たな)、ラック' },
   'kinrei-mono-041': { display: '生産表', reading: 'せいさんひょう' },
@@ -176,6 +181,28 @@ async function writeWithRetry(operation) {
 
 function escapeRegExp(value) {
   return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+// SRSモード専用: レベル(1〜5、範囲外はクランプ)に対応する次回復習までの日数。
+function srsIntervalForLevel(level) {
+  const idx = clamp(level, 1, SRS_INTERVALS_DAYS.length) - 1;
+  return SRS_INTERVALS_DAYS[idx];
+}
+
+// SRSモード専用: 基準日時(ISO文字列、省略時は現在時刻)にdays日を加算したISO文字列を返す。
+function addDaysFromISO(iso, days) {
+  const base = iso ? new Date(iso) : new Date();
+  const result = new Date(base.getTime());
+  result.setDate(result.getDate() + days);
+  return result.toISOString();
+}
+
+function addDaysISO(days) {
+  return addDaysFromISO(new Date().toISOString(), days);
 }
 
 function isAllowedTerminologyProfile(profile) {
@@ -343,13 +370,21 @@ async function loadSupabaseProgress() {
     if (error || !data) return;
     data.forEach(item => {
       const local = getProgress(item.term_id);
-      termState.progress[item.term_id] = {
+      const merged = {
         ...local,
         status: item.status || local.status,
         correct: Math.max(local.correct || 0, item.correct_count || 0),
         attempts: Math.max(local.attempts || 0, (item.correct_count || 0) + (item.wrong_count || 0)),
         updatedAt: item.last_studied_at || local.updatedAt,
       };
+      // SRSモード: 端末変更等でローカルにsrsLevelが無い場合、DBのcorrect/wrong集計から復元する。
+      // DBにsrsLevel/nextReviewAtの列は無いため、既存列からの近似復元であり劣化は許容する。
+      if (APP_CONFIG.learningMode === 'srs' && !local.srsLevel && ['learned', 'review'].includes(item.status)) {
+        const level = clamp((item.correct_count || 0) - (item.wrong_count || 0), 1, 5);
+        merged.srsLevel = level;
+        merged.nextReviewAt = addDaysFromISO(item.last_studied_at, srsIntervalForLevel(level));
+      }
+      termState.progress[item.term_id] = merged;
     });
     saveLocalProgress();
     if (data.length === 0) {
@@ -582,6 +617,37 @@ function updateQuizProgress(termId, isCorrect) {
   saveProgress(termId, termState.progress[termId].status);
 }
 
+// SRSモード専用: カードで「覚えた」を押した時にsrsLevel=1・nextReviewAt=+1日をローカルへ書く。
+// この直後に呼ばれるsaveProgress()がこのローカル状態(current経由)を引き継いでDBへ保存する。
+function applySrsCardLearned(termId) {
+  const current = getProgress(termId);
+  termState.progress[termId] = {
+    ...current,
+    srsLevel: 1,
+    nextReviewAt: addDaysISO(SRS_INTERVALS_DAYS[0]),
+  };
+  saveLocalProgress();
+}
+
+// SRSモード専用: 復習(4択)の正誤に応じてsrsLevel/nextReviewAtを更新する。
+// 正解: レベル+1(上限5)。不正解: レベル1に戻す。correct/attempts集計は既存のsaveProgress()経由でDBへ反映される。
+function updateSrsQuizProgress(termId, isCorrect) {
+  const current = getProgress(termId);
+  const prevLevel = current.srsLevel || 0;
+  const newLevel = isCorrect ? Math.min(prevLevel + 1, SRS_INTERVALS_DAYS.length) : 1;
+  termState.progress[termId] = {
+    ...current,
+    attempts: (current.attempts || 0) + 1,
+    correct: (current.correct || 0) + (isCorrect ? 1 : 0),
+    status: isCorrect ? 'learned' : 'review',
+    srsLevel: newLevel,
+    nextReviewAt: addDaysISO(srsIntervalForLevel(newLevel)),
+    updatedAt: new Date().toISOString(),
+  };
+  saveLocalProgress();
+  saveProgress(termId, termState.progress[termId].status);
+}
+
 function statusLabel(status) {
   return {
     new: 'Chưa học / 未学習',
@@ -791,8 +857,46 @@ function renderStats() {
   const attempts = values.reduce((sum, item) => sum + (item.attempts || 0), 0);
   const correct = values.reduce((sum, item) => sum + (item.correct || 0), 0);
   document.getElementById('statLearned').textContent = `${learned + imageLearned} / ${totalItems}`;
-  document.getElementById('statReview').textContent = review + imageReview;
+  const statReviewEl = document.getElementById('statReview');
+  if (APP_CONFIG.learningMode === 'srs') {
+    // SRSモード: 真ん中の統計カードを「おぼえてない」件数ではなく「今日の復習」残数に差し替える。
+    statReviewEl.textContent = getDueSrsWords().length;
+    const statReviewLabel = statReviewEl.nextElementSibling;
+    if (statReviewLabel) statReviewLabel.innerHTML = 'Ôn tập hôm nay<br>今日の復習';
+  } else {
+    statReviewEl.textContent = review + imageReview;
+  }
   document.getElementById('statRate').textContent = attempts ? `${Math.round((correct / attempts) * 100)}%` : '0%';
+}
+
+// SRSモード専用: 期限到来語(srsLevel>=1 かつ nextReviewAt<=今)を返す。
+function getDueSrsWords() {
+  const now = Date.now();
+  return termState.terms.filter(term => {
+    const p = getProgress(term.id);
+    const level = p.srsLevel || 0;
+    if (level < 1 || !p.nextReviewAt) return false;
+    return new Date(p.nextReviewAt).getTime() <= now;
+  });
+}
+
+// SRSモード専用: 期限到来語が無い時に見せる「次回の復習日時」。学習未着手(srsLevel=0)の語は対象外。
+function getNextUpcomingReviewAt() {
+  let soonest = null;
+  termState.terms.forEach(term => {
+    const p = getProgress(term.id);
+    if ((p.srsLevel || 0) < 1 || !p.nextReviewAt) return;
+    const t = new Date(p.nextReviewAt).getTime();
+    if (soonest === null || t < soonest) soonest = t;
+  });
+  return soonest;
+}
+
+// SRSモード専用: 総合テストの開放判定(全語 srsLevel>=2)。
+function srsFinalUnlockStatus() {
+  const total = termState.terms.length;
+  const level2Count = termState.terms.filter(term => (getProgress(term.id).srsLevel || 0) >= 2).length;
+  return { total, level2Count, unlocked: total > 0 && level2Count >= total };
 }
 
 function totalLearningItems() {
@@ -839,7 +943,7 @@ function applyFilters() {
   termState.flipped = false;
   renderCard();
   renderArchive();
-  renderQuizOverview();
+  if (APP_CONFIG.learningMode === 'srs') renderSrsReviewOverview(); else renderQuizOverview();
 }
 
 function renderCard() {
@@ -1040,6 +1144,16 @@ function renderFinalQuizOverview() {
     box.style.display = 'none';
     return;
   }
+  if (APP_CONFIG.learningMode === 'srs') {
+    // SRSモード: terminology_final_unlocks(管理開放)や小テスト完了条件は参照せず、全語のsrsLevel>=2だけで判定する。
+    const { total, level2Count, unlocked } = srsFinalUnlockStatus();
+    box.classList.toggle('locked', !unlocked);
+    button.disabled = !unlocked;
+    status.textContent = unlocked
+      ? '先生の前で受けられます / Có thể làm bài trước giáo viên'
+      : `レベル2以上: ${level2Count} / ${total} / Cấp 2 trở lên: ${level2Count} / ${total}`;
+    return;
+  }
   const allSmallTestsDone = isAllQuizSetsCompleted();
   const unlocked = isFinalQuizUnlocked();
   box.classList.toggle('locked', !unlocked);
@@ -1087,6 +1201,39 @@ function renderQuizOverview() {
   renderFinalQuizOverview();
 }
 
+// SRSモード専用: テストタブの表示。小テストの回選択select・進捗バーは隠し、期限到来語数を表示する。
+function renderSrsReviewOverview() {
+  const planLabel = document.querySelector('#wordQuizBox .quiz-plan strong');
+  const select = document.getElementById('quizSetSelect');
+  const summary = document.getElementById('quizSetSummary');
+  const progressWrap = document.querySelector('#wordQuizBox .test-progress');
+  const progressText = document.getElementById('testProgressText');
+  if (select) select.style.display = 'none';
+  if (progressWrap) progressWrap.style.display = 'none';
+  if (progressText) progressText.style.display = 'none';
+  if (planLabel) planLabel.textContent = 'Ôn tập / 復習';
+
+  const due = getDueSrsWords();
+  if (summary) {
+    if (due.length) {
+      summary.textContent = `Ôn tập hôm nay / 今日の復習: ${due.length}語`;
+    } else {
+      const nextAt = getNextUpcomingReviewAt();
+      summary.textContent = nextAt
+        ? `Hôm nay không có bài ôn tập / 今日の復習はありません（次回 ${new Date(nextAt).toLocaleDateString('ja-JP')}）`
+        : 'Hôm nay không có bài ôn tập / 今日の復習はありません';
+    }
+  }
+
+  const startBtn = document.getElementById('startQuizBtn');
+  if (startBtn) {
+    startBtn.innerHTML = '復習を始める<br>Bắt đầu ôn tập';
+    startBtn.disabled = due.length === 0;
+  }
+
+  renderFinalQuizOverview();
+}
+
 function getImageItems() {
   return window[APP_CONFIG.imageGlobal]?.items || [];
 }
@@ -1110,7 +1257,9 @@ function showMode(mode) {
   document.getElementById('testModeBtn').classList.toggle('active', test);
   if (!test && !archive) renderCard();
   if (archive) renderArchive();
-  if (test) renderQuizOverview();
+  if (test) {
+    if (APP_CONFIG.learningMode === 'srs') renderSrsReviewOverview(); else renderQuizOverview();
+  }
 }
 
 function startQuiz() {
@@ -1135,7 +1284,9 @@ function startQuiz() {
 }
 
 function startFinalQuiz() {
-  if (!isFinalQuizUnlocked()) {
+  // SRSモードでは terminology_final_unlocks(管理開放)・小テスト完了条件を見ず、srsFinalUnlockStatus()だけで判定する。
+  const unlocked = APP_CONFIG.learningMode === 'srs' ? srsFinalUnlockStatus().unlocked : isFinalQuizUnlocked();
+  if (!unlocked) {
     renderFinalQuizOverview();
     return;
   }
@@ -1144,6 +1295,25 @@ function startFinalQuiz() {
   termState.quiz = {
     kind: 'final',
     setNumber: 'final',
+    questions,
+    index: 0,
+    correct: 0,
+    answers: [],
+    answered: false,
+  };
+  document.getElementById('quizResult').classList.add('hidden');
+  renderQuiz();
+}
+
+// SRSモード専用: 復習セッション開始。期限到来語だけを出題する。
+// 既存のクイズUI(renderQuiz/answerQuiz/finishQuiz)をquiz.kind:'srs'として流用する。
+function startSrsReview() {
+  const dueIds = new Set(getDueSrsWords().map(term => term.id));
+  if (!dueIds.size) return;
+  const questions = shuffle(getUnifiedTestItems().filter(item => item.type === 'word' && dueIds.has(item.id)));
+  termState.quiz = {
+    kind: 'srs',
+    setNumber: null,
     questions,
     index: 0,
     correct: 0,
@@ -1226,7 +1396,11 @@ function answerQuiz(selectedId) {
   quiz.answered = true;
   quiz.correct += ok ? 1 : 0;
   quiz.answers.push({ type: question.type, id: question.id, correct: ok });
-  if (question.type === 'word' && quiz.kind !== 'final') updateQuizProgress(question.id, ok);
+  if (question.type === 'word' && quiz.kind !== 'final') {
+    // quiz.kind==='srs' はstartSrsReview()経由でのみ発生し、それ自体がlearningMode==='srs'の時にしか呼ばれない。
+    if (quiz.kind === 'srs') updateSrsQuizProgress(question.id, ok);
+    else updateQuizProgress(question.id, ok);
+  }
   document.querySelectorAll('.quiz-option').forEach(button => {
     button.disabled = true;
     if (button.dataset.id === question.id) button.classList.add('correct');
@@ -1242,8 +1416,14 @@ async function finishQuiz() {
   const quiz = termState.quiz;
   if (!quiz) return;
   const isFinal = quiz.kind === 'final';
+  // quiz.kind==='srs' はSRSモードの復習セッションでのみ発生する（startSrsReview()参照）。
+  const isSrsReview = quiz.kind === 'srs';
   const rate = quiz.questions.length ? Math.round((quiz.correct / quiz.questions.length) * 100) : 0;
-  document.getElementById('quizPrompt').textContent = isFinal ? '総合修了テスト完了 / Hoàn thành' : 'テスト完了 / Hoàn thành';
+  document.getElementById('quizPrompt').textContent = isFinal
+    ? '総合修了テスト完了 / Hoàn thành'
+    : isSrsReview
+      ? '復習完了 / Đã ôn xong'
+      : 'テスト完了 / Hoàn thành';
   document.getElementById('quizOptions').innerHTML = '';
   document.getElementById('quizFeedback').textContent = '';
   document.getElementById('quizQuestionImg').style.display = 'none';
@@ -1251,16 +1431,20 @@ async function finishQuiz() {
   document.getElementById('quizResult').classList.remove('hidden');
   document.getElementById('quizResult').innerHTML = isFinal
     ? `<strong>総合修了テスト 完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>修了テストの結果を保存しました。<br>Đã lưu kết quả kiểm tra hoàn thành.</p>`
-    : rate === 100
-      ? `<strong>第${quiz.setNumber}回 100%：${quiz.correct} / ${quiz.questions.length}問 正解</strong><p>次の回が開きました。<br>Đã mở bài tiếp theo.</p>`
-      : `<strong>第${quiz.setNumber}回：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>全問正解すると次の回が開きます。もう一度この回を受けてください。<br>Cần đúng 100% để mở bài tiếp theo.</p>`;
-  if (!isFinal && rate === 100) {
+    : isSrsReview
+      ? `<strong>復習完了：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>お疲れさまでした。<br>Bạn đã hoàn thành buổi ôn tập.</p>`
+      : rate === 100
+        ? `<strong>第${quiz.setNumber}回 100%：${quiz.correct} / ${quiz.questions.length}問 正解</strong><p>次の回が開きました。<br>Đã mở bài tiếp theo.</p>`
+        : `<strong>第${quiz.setNumber}回：${quiz.correct} / ${quiz.questions.length}問 正解 (${rate}%)</strong><p>全問正解すると次の回が開きます。もう一度この回を受けてください。<br>Cần đúng 100% để mở bài tiếp theo.</p>`;
+  if (!isFinal && !isSrsReview && rate === 100) {
     saveCompletedTestSet(quiz.setNumber);
     const sets = getQuizSets();
     if (termState.quizSetIndex < sets.length - 1) termState.quizSetIndex += 1;
   }
-  renderQuizOverview();
+  if (isSrsReview) renderSrsReviewOverview(); else renderQuizOverview();
 
+  // 復習セッション(srs)はquiz_resultsに行を作らない。進捗はterminology_progress側で既に保存済み。
+  if (isSrsReview) return;
   if (!termState.profile?.id) return;
   const ok = await writeWithRetry(() => supabase.from('terminology_quiz_results').insert({
     trainee_id: termState.profile.id,
@@ -1295,7 +1479,10 @@ function setupEvents() {
   });
   document.getElementById('learnedBtn').addEventListener('click', async () => {
     const item = termState.filtered[termState.currentIndex];
-    if (item?.type === 'word') await saveProgress(item.id, 'learned');
+    if (item?.type === 'word') {
+      if (APP_CONFIG.learningMode === 'srs') applySrsCardLearned(item.id);
+      await saveProgress(item.id, 'learned');
+    }
     if (item?.type === 'image') await saveImageItemProgress(item.source, 'learned');
     applyFilters();
     renderStats();
@@ -1315,7 +1502,9 @@ function setupEvents() {
     document.getElementById('quizTotal').textContent = set.length || QUIZ_SET_SIZE;
     renderQuizOverview();
   });
-  document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
+  document.getElementById('startQuizBtn').addEventListener('click', () => {
+    if (APP_CONFIG.learningMode === 'srs') startSrsReview(); else startQuiz();
+  });
   document.getElementById('startFinalQuizBtn').addEventListener('click', startFinalQuiz);
   document.getElementById('nextQuizBtn').addEventListener('click', () => {
     if (!termState.quiz) return;
@@ -1325,6 +1514,11 @@ function setupEvents() {
 }
 
 (async function init() {
+  if (APP_CONFIG.learningMode === 'srs') {
+    // SRSモード: 「テスト」タブを「復習」タブの表記に変更する。
+    const testTabBtn = document.getElementById('testModeBtn');
+    if (testTabBtn) testTabBtn.innerHTML = 'Ôn tập<br>ふくしゅう';
+  }
   const auth = await checkTerminologyAuth();
   if (!auth) return;
   termState.profile = auth.profile;

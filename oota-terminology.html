@@ -154,17 +154,17 @@
 <main class="term-wrap">
   <section class="quick-start">
     <h2>Học theo 2 bước</h2>
-    <p>Học lần lượt các thẻ từ chuyên ngành → làm kiểm tra. Mỗi bài kiểm tra nhỏ có 20 câu.<br>専門用語カードを順番に覚える → テストを受ける。小テストは20問ずつです。</p>
+    <p>Học từ mỗi ngày → khi đến hạn ôn tập thì trả lời. Khi tất cả từ đã thuộc, làm bài kiểm tra tổng hợp 70 câu.<br>毎日カードを覚える → 復習の期限が来た語に答える。全部の語が育ったら総合テスト70問を受けます。</p>
     <div class="study-alert">
-      Hãy làm 4 bài kiểm tra nhỏ. Mỗi bài có 20 câu.<br>
+      Hãy học thẻ mỗi ngày và trả lời khi đến hạn ôn tập. Khi tất cả các từ đã thuộc, hãy làm bài kiểm tra tổng hợp 70 câu.<br>
       Tiến độ học tập sẽ được báo cáo cho công ty. Hệ thống cũng ghi lại mỗi ngày bạn đã học bao nhiêu phút.<br>
       Cố gắng nhé.<br>
-      小テスト4回を受けましょう。1回20問です。学習の進捗は企業に報告します。一日何分学習したかも記録しています。頑張ってください。
+      毎日カードを覚えて、復習の期限が来た語に答えましょう。全部の語が育ったら総合テスト70問を受けます。学習の進捗は企業に報告します。一日何分学習したかも記録しています。頑張ってください。
       <span class="study-time-red" id="studyTimeNotice">Tổng thời gian học / 総学習時間: --</span>
     </div>
     <div class="quick-steps">
       <span>1. Học từ<br>覚える</span>
-      <span>2. Mỗi lần 20 câu<br>テスト 20問ずつ</span>
+      <span>2. Ôn tập khi đến hạn<br>期限が来たら復習</span>
     </div>
     <div class="term-stats">
       <div><b id="statLearned">0 / 70</b><span>Đã nhớ<br>覚えた</span></div>
@@ -279,11 +279,12 @@ window.TERMINOLOGY_APP = {
   finalQuizSetId: 'oota-final-2026',
   quizSetSize: 20,
   finalQuizSize: 70,
-  enableFinalTest: false,
+  enableFinalTest: true,
+  learningMode: 'srs',
 };
 </script>
 <script src="data/oota-vocab.js?v=1"></script>
 <script src="data/oota-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=37"></script>
+<script src="terminology.js?v=38"></script>
 </body>
 </html>
