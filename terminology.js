@@ -898,7 +898,7 @@ function renderCard() {
   }
   document.getElementById('cardCategory').textContent = term.category;
   document.getElementById('cardImage').style.display = 'none';
-  document.getElementById('cardTerm').textContent = displayTermWithReading(term);
+  document.getElementById('cardTerm').textContent = displayTermForTerm(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
   renderStats();
@@ -915,7 +915,7 @@ function renderList() {
     return `
       <button type="button" class="term-row ${index === termState.currentIndex ? 'active' : ''}" data-index="${index}">
         <span>
-          <strong>${esc(displayTermWithReading(term))}</strong>
+          <strong>${esc(displayTermForTerm(term))}</strong>
           ${reading ? `<small class="term-reading">Cách đọc: ${esc(reading)}</small>` : ''}
           <small>${esc(term.meaningVi)}</small>
         </span>
@@ -945,7 +945,7 @@ function renderArchive() {
       id: term.id,
       type: 'ことば',
       typeVi: 'Từ',
-      title: displayTermWithReading(term),
+      title: displayTermForTerm(term),
       sub: term.meaningVi,
       reading: readingForTerm(term),
     }));
