@@ -54,6 +54,7 @@
 .term-main{font-size:46px;line-height:1.25;color:#1a5276;font-weight:bold;word-break:keep-all;overflow-wrap:anywhere;text-align:center}
 .term-kana{display:inline-block;align-self:center;font-size:30px;line-height:1.35;color:#1a5276;margin-top:14px;text-align:center;font-weight:800;background:#eef6fb;border:1px solid #cfe1ec;border-radius:999px;padding:8px 18px}
 .term-meaning{font-size:30px;line-height:1.4;color:#1a5276;font-weight:bold}
+.term-note{font-size:15px;line-height:1.6;color:#516271;margin-top:14px;text-align:left;word-break:keep-all;overflow-wrap:break-word}
 .card-side-label{font-size:12px;font-weight:bold;color:#6b7b88;margin-bottom:8px;letter-spacing:.04em}
 .flash-card .hint{font-size:15px;color:#697b88;margin-top:26px;text-align:center}
 .card-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -206,6 +207,7 @@
         <div class="term-main" id="cardTerm">読み込み中...</div>
         <div class="term-kana" id="cardKana"></div>
         <div class="term-meaning" id="cardMeaning" style="display:none"></div>
+        <div class="term-note" id="cardNote" style="display:none"></div>
         <p class="hint" id="cardHint">クリックするとベトナム語の意味を表示します</p>
       </div>
       <div class="card-actions">
@@ -285,6 +287,6 @@ window.TERMINOLOGY_APP = {
 </script>
 <script src="data/oota-vocab.js?v=1"></script>
 <script src="data/oota-image-quiz.js?v=1"></script>
-<script src="terminology.js?v=38"></script>
+<script src="terminology.js?v=39"></script>
 </body>
 </html>

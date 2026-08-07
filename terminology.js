@@ -952,6 +952,8 @@ function renderCard() {
   document.getElementById('cardTerm').style.display = termState.flipped ? 'none' : '';
   document.getElementById('cardKana').style.display = termState.flipped ? 'none' : '';
   document.getElementById('cardMeaning').style.display = termState.flipped ? '' : 'none';
+  const cardNoteEl = document.getElementById('cardNote');
+  if (cardNoteEl) cardNoteEl.style.display = termState.flipped ? '' : 'none';
   document.getElementById('cardSideLabel').textContent = termState.flipped
     ? 'Nghĩa tiếng Việt / ベトナム語の意味'
     : 'Tiếng Nhật / 日本語';
@@ -967,6 +969,7 @@ function renderCard() {
     document.getElementById('cardTerm').textContent = 'Đã nhớ hết';
     document.getElementById('cardKana').textContent = '';
     document.getElementById('cardMeaning').textContent = '';
+    if (cardNoteEl) cardNoteEl.innerHTML = '';
     document.getElementById('cardHint').textContent = 'Xem lại ở tab thẻ đã nhớ / 覚えたカードで確認';
     return;
   }
@@ -988,6 +991,7 @@ function renderCard() {
     document.getElementById('cardTerm').textContent = term.term;
     document.getElementById('cardKana').textContent = term.reading ? `Cách đọc: ${term.reading}` : '';
     document.getElementById('cardMeaning').textContent = '';
+    if (cardNoteEl) cardNoteEl.innerHTML = '';
     document.getElementById('cardHint').textContent = termState.flipped
       ? 'Nhớ rồi thì bấm “Đã nhớ” / 覚えたら「覚えた」'
       : 'Bấm vào hình / 写真をタップ';
@@ -1005,6 +1009,12 @@ function renderCard() {
   document.getElementById('cardTerm').textContent = displayTermForTerm(term);
   document.getElementById('cardKana').textContent = reading ? `Cách đọc: ${reading}` : '';
   document.getElementById('cardMeaning').textContent = term.meaningVi;
+  if (cardNoteEl) {
+    // 解説はカード裏面（意味側）でのみ表示し、表面では空にする。
+    cardNoteEl.innerHTML = (termState.flipped && (term.noteJa || term.noteVi))
+      ? [term.noteJa, term.noteVi].filter(Boolean).map(esc).join('<br>')
+      : '';
+  }
   renderStats();
 }
 
@@ -1406,7 +1416,17 @@ function answerQuiz(selectedId) {
     if (button.dataset.id === question.id) button.classList.add('correct');
     if (button.dataset.id === selectedId && !ok) button.classList.add('wrong');
   });
-  document.getElementById('quizFeedback').textContent = ok ? '正解です / Đúng rồi' : `正解 / Đáp án: ${question.answer}`;
+  const feedbackText = ok ? '正解です / Đúng rồi' : `正解 / Đáp án: ${question.answer}`;
+  let feedbackHtml = esc(feedbackText);
+  // SRS復習の答え合わせ直後のみ、その語の解説(noteJa/noteVi)を小さく添える。総合テスト・キンレイ小テストでは出さない。
+  if (quiz.kind === 'srs' && question.type === 'word') {
+    const note = question.source || {};
+    if (note.noteJa || note.noteVi) {
+      const noteLines = [note.noteJa, note.noteVi].filter(Boolean).map(esc).join('<br>');
+      feedbackHtml += `<div class="term-note" style="margin-top:8px;font-weight:normal">${noteLines}</div>`;
+    }
+  }
+  document.getElementById('quizFeedback').innerHTML = feedbackHtml;
   document.getElementById('nextQuizBtn').disabled = false;
   renderStats();
   renderList();

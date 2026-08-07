@@ -5,7 +5,7 @@ window.OOTA_VOCAB = {
     "company": "株式会社オオタ",
     "language": "vi",
     "source": "オオタ専門用語ふりがな一覧（最新）.docx / 塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf",
-    "termCount": 70,
+    "termCount": 58,
     "categories": [
       "塗装専門用語"
     ]
@@ -153,7 +153,9 @@ window.OOTA_VOCAB = {
       "term": "1コート1ベーク仕様",
       "kana": "ワンコートワンベークしよう",
       "meaningVi": "Kĩ thuật 1 tô 1 nung",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "粉体・溶剤共。メラミンや粉体は殆どがこの仕様で、安値・手離れが良いなどの利点がある。",
+      "noteVi": "Dùng cả bột và dung môi. Melamine và các chất bột hầu hết đều dùng kỹ thuật này, có ưu điểm như rẻ và dễ thực hiện."
     },
     {
       "id": "oota-paint-013",
@@ -189,7 +191,9 @@ window.OOTA_VOCAB = {
       "term": "2コート2ベーク仕様",
       "kana": "ツーコートツーベークしよう",
       "meaningVi": "Kĩ thuật 2 tô 2 nung",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "溶剤が主で粉体もある。下塗り＋焼付の後、上塗り＋焼付。膜厚指定や屋外指定がある時に使われる。",
+      "noteVi": "Chủ yếu là dung môi, cũng có bột. Sơn lót + nung, sau đó sơn phủ + nung; dùng khi có yêu cầu về độ dày màng hoặc dùng ngoài trời."
     },
     {
       "id": "oota-paint-016",
@@ -201,7 +205,9 @@ window.OOTA_VOCAB = {
       "term": "膜厚",
       "kana": "まくあつ",
       "meaningVi": "độ dày màng",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "単位はμm。塗装別に適正膜厚があり、上回ったり下回ったりすると問題が生じる。",
+      "noteVi": "Đơn vị: μm. Mỗi loại sơn có độ dày màng phù hợp, vượt quá hoặc thấp hơn đều phát sinh vấn đề."
     },
     {
       "id": "oota-paint-017",
@@ -213,7 +219,9 @@ window.OOTA_VOCAB = {
       "term": "グロス",
       "kana": "",
       "meaningVi": "bóng",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "艶の単位はGU（グロスユニット）。0〜94の数値で表記され、主に焼付状態を調べるのに使う。",
+      "noteVi": "Đơn vị độ bóng: GU (Gloss Unit). Biểu thị bằng số từ 0 đến 94, chủ yếu dùng để kiểm tra tình trạng nung."
     },
     {
       "id": "oota-paint-018",
@@ -225,7 +233,9 @@ window.OOTA_VOCAB = {
       "term": "色差",
       "kana": "しきさ",
       "meaningVi": "độ sai màu",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "△E、単位は無い。基準となるお客様の塗り板を0とし、どれだけ差が有るかを調べる数値。",
+      "noteVi": "△E, không có đơn vị. Lấy tấm sơn tiêu chuẩn của khách hàng làm 0 và kiểm tra chênh lệch bao nhiêu."
     },
     {
       "id": "oota-paint-019",
@@ -237,7 +247,9 @@ window.OOTA_VOCAB = {
       "term": "碁盤目試験",
       "kana": "ごばんめしけん",
       "meaningVi": "Kiểm tra ô bàn cờ",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "表記は100/100。カッターで切り込みを入れ、JIS1級に相当するテープでの剥離を調べる。",
+      "noteVi": "Kí hiệu: 100/100. Dùng dao rọc cắt và kiểm tra độ bong tróc bằng băng dính tương đương JIS cấp 1."
     },
     {
       "id": "oota-paint-020",
@@ -249,7 +261,9 @@ window.OOTA_VOCAB = {
       "term": "アルコール検査",
       "kana": "アルコールけんさ",
       "meaningVi": "kiểm tra cồn",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "単位は無い。エタノール・メタノール・イソプロピルアルコール等を布に染み込ませ、通常20往復して変化を調べる。",
+      "noteVi": "Không có đơn vị. Thấm ethanol, methanol, rượu isopropyl v.v. vào vải, thông thường lau qua lại khoảng 20 lần và kiểm tra sự thay đổi."
     },
     {
       "id": "oota-paint-021",
@@ -261,7 +275,9 @@ window.OOTA_VOCAB = {
       "term": "密着試験",
       "kana": "みっちゃくしけん",
       "meaningVi": "kiểm tra độ bám dính",
-      "level": "basic"
+      "level": "basic",
+      "noteJa": "JIS Z 1522準拠。碁盤目試験を含む広義での試験。テープ検査のみでも密着試験と言う。",
+      "noteVi": "Theo tiêu chuẩn JIS Z 1522. Là kiểm tra nghĩa rộng bao gồm cả kiểm tra ô bàn cờ; chỉ kiểm tra băng dính cũng gọi là kiểm tra độ bám dính."
     },
     {
       "id": "oota-paint-022",
@@ -612,7 +628,9 @@ window.OOTA_VOCAB = {
       "kana": "えきかじゅうごうしよう",
       "meaningVi": "Phương pháp trùng hợp chất lỏng",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
+      "sourceNote": "塗装汎用句（VN語訳あり）.pdf",
+      "noteJa": "ウレタン・エポキシ等。A液とB液を指定された割合で混ぜ、反応させて硬化させる方法。",
+      "noteVi": "Urethane, epoxy v.v. Trộn chất lỏng A và B theo tỷ lệ chỉ định để phản ứng và làm cứng."
     },
     {
       "id": "oota-paint-051",
@@ -628,58 +646,6 @@ window.OOTA_VOCAB = {
       "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
     },
     {
-      "id": "oota-paint-052",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 52,
-      "term": "粉体・溶剤共",
-      "kana": "ふんたい・ようざいとも",
-      "meaningVi": "dùng cả bột và dung môi",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
-    },
-    {
-      "id": "oota-paint-053",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 53,
-      "term": "単位 μm",
-      "kana": "たんい マイクロメートル",
-      "meaningVi": "đơn vị μm",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
-    },
-    {
-      "id": "oota-paint-054",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 54,
-      "term": "単位 GU",
-      "kana": "たんい ジーユー",
-      "meaningVi": "đơn vị GU",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
-    },
-    {
-      "id": "oota-paint-055",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 55,
-      "term": "△E",
-      "kana": "デルタイー",
-      "meaningVi": "Không có đơn vị",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
-    },
-    {
       "id": "oota-paint-056",
       "setId": "oota-2026",
       "company": "株式会社オオタ",
@@ -690,7 +656,9 @@ window.OOTA_VOCAB = {
       "kana": "カッピングしけん",
       "meaningVi": "Kiểm tra giác hơi",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
+      "sourceNote": "塗装汎用句（VN語訳あり）.pdf",
+      "noteJa": "単位はmm。お椀型の押出機器で母材と塗料が何mmで割れるかを調べる。",
+      "noteVi": "Đơn vị: mm. Dùng thiết bị ép hình bát để kiểm tra vật liệu và lớp sơn nứt ở bao nhiêu mm."
     },
     {
       "id": "oota-paint-057",
@@ -703,7 +671,9 @@ window.OOTA_VOCAB = {
       "kana": "ふっすいしけん",
       "meaningVi": "Kiểm tra nước sôi",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
+      "sourceNote": "塗装汎用句（VN語訳あり）.pdf",
+      "noteJa": "1h／サイクル数。沸騰した水にワークの一部が出る様にして、何サイクルで塗膜が破壊されるかを調べる。",
+      "noteVi": "1h / số chu kỳ. Cho một phần sản phẩm ló ra khỏi nước sôi và kiểm tra sau bao nhiêu chu kỳ lớp sơn bị phá hủy."
     },
     {
       "id": "oota-paint-058",
@@ -716,7 +686,9 @@ window.OOTA_VOCAB = {
       "kana": "くっきょくしけん",
       "meaningVi": "Kiểm tra uốn cong",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
+      "sourceNote": "塗装汎用句（VN語訳あり）.pdf",
+      "noteJa": "単位はmm。塗装した板を上下で固定し、9mmか4mmの金属棒を挟み込むように曲げる。",
+      "noteVi": "Đơn vị: mm. Cố định tấm đã sơn và uốn cong quanh thanh kim loại 9mm hoặc 4mm."
     },
     {
       "id": "oota-paint-059",
@@ -729,7 +701,9 @@ window.OOTA_VOCAB = {
       "kana": "えんすいふんむしけん",
       "meaningVi": "Kiểm tra phun nước muối",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
+      "sourceNote": "塗装汎用句（VN語訳あり）.pdf",
+      "noteJa": "単位はh。5％の塩水（35℃又は50℃）を霧状に吹き付け、塗膜が何時間持つかを調べる。",
+      "noteVi": "Đơn vị: h. Phun nước muối 5% (35℃ hoặc 50℃) dạng sương và kiểm tra lớp sơn giữ được bao nhiêu giờ."
     },
     {
       "id": "oota-paint-060",
@@ -742,111 +716,9 @@ window.OOTA_VOCAB = {
       "kana": "たいこうしけん",
       "meaningVi": "kiểm tra độ bền thời tiết",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf"
-    },
-    {
-      "id": "oota-paint-061",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 61,
-      "term": "ウレタン・エポキシ等",
-      "kana": "",
-      "meaningVi": "Urethane, epoxy, v.v.",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-062",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 62,
-      "term": "溶剤が主で粉体もある",
-      "kana": "",
-      "meaningVi": "Chủ yếu là dung môi và một phần bột",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-063",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 63,
-      "term": "表記 100/100",
-      "kana": "",
-      "meaningVi": "kí hiệu 100/100",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-064",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 64,
-      "term": "単位 mm",
-      "kana": "",
-      "meaningVi": "đơn vị mm",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-065",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 65,
-      "term": "1h/サイクル数",
-      "kana": "",
-      "meaningVi": "1h / số lần lặp lại",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-066",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 66,
-      "term": "単位 h",
-      "kana": "",
-      "meaningVi": "đơn vị h",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-067",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 67,
-      "term": "単位は無い",
-      "kana": "",
-      "meaningVi": "không có đơn vị",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
-    },
-    {
-      "id": "oota-paint-068",
-      "setId": "oota-2026",
-      "company": "株式会社オオタ",
-      "category": "塗装専門用語",
-      "categoryKey": "paint",
-      "no": 68,
-      "term": "JIS Z 1522準拠",
-      "kana": "",
-      "meaningVi": "JIS Z 1522 tiêu chuẩn",
-      "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
+      "sourceNote": "塗装汎用句（VN語訳あり）.pdf",
+      "noteJa": "単位はh。サンシャインウェザーメーターとも呼び、主に紫外線による皮膜破壊を調べる。",
+      "noteVi": "Đơn vị: h. Còn gọi là máy đo thời tiết nắng, chủ yếu kiểm tra sự phá hủy lớp màng do tia cực tím."
     },
     {
       "id": "oota-paint-069",
