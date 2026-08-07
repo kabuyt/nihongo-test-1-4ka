@@ -1099,6 +1099,12 @@ function renderArchive() {
 
 async function moveArchivedItemToReview(itemType, id) {
   if (itemType === 'word') {
+    if (APP_CONFIG.learningMode === 'srs') {
+      // SRSでは「学習に戻す」=未習得に戻す。レベルと期限を消して覚えるタブからやり直し
+      const current = getProgress(id);
+      termState.progress[id] = { ...current, srsLevel: 0, nextReviewAt: null };
+      saveLocalProgress();
+    }
     await saveProgress(id, 'review');
   } else if (itemType === 'image') {
     const item = getImageItems().find(candidate => candidate.id === id);
