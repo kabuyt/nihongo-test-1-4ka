@@ -38,7 +38,7 @@ async function checkStudentAuth() {
   if (!_studentProfile || _studentProfile.auth_user_id !== session.user.id) {
     const { data, error } = await supabase
       .from('trainees')
-      .select('id, student_id, name_katakana, name_romaji, company, class_group, organization_id, auth_user_id')
+      .select('id, student_id, name_katakana, name_romaji, company, class_group, organization_id, auth_user_id, photo_url')
       .eq('auth_user_id', session.user.id)
       .single();
 
