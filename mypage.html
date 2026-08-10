@@ -36,12 +36,19 @@
 .result-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px;margin-bottom:10px}
 .result-title{font-size:15px;font-weight:bold;color:#1a5276;word-break:keep-all;overflow-wrap:break-word}
 .result-date{font-size:11px;color:#999;white-space:nowrap}
-.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.score-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .score-item{min-width:0}
 .score-item-label{font-size:11px;color:#777;margin-bottom:3px;line-height:1.4;word-break:keep-all;overflow-wrap:break-word}
 .score-value{font-size:16px;font-weight:bold;color:#1a5276;margin-bottom:4px}
 .score-bar-track{width:100%;height:6px;background:#eee;border-radius:3px;overflow:hidden}
 .score-bar-fill{height:100%;border-radius:3px}
+
+/* 点数推移グラフ */
+.score-chart-card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.score-chart-card svg{width:100%;height:auto;display:block}
+.score-chart-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;margin-top:8px;font-size:11px;color:#555}
+.score-chart-legend-item{display:inline-flex;align-items:center;gap:4px;word-break:keep-all;overflow-wrap:break-word}
+.score-chart-legend-swatch{display:inline-block;width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
 /* アドバイス */
 .advice-card{background:#eef6fb;border:1px solid #cfe1ec;border-radius:10px;padding:12px 14px;margin-top:10px}
@@ -86,6 +93,7 @@
   <div id="menu-list"></div>
 
   <div class="section-h">Kết quả kiểm tra hàng tháng / 月間テストの結果</div>
+  <div id="score-chart"></div>
   <div id="result-list">
     <div class="loading" id="loading">Đang tải... / 読み込み中...</div>
   </div>
@@ -123,6 +131,93 @@ function scoreItemHtml(labelVi, labelJa, score) {
       <div class="score-item-label">${esc(labelVi)}<br>${esc(labelJa)}</div>
       <div class="score-value">${valueHtml}</div>
       ${barHtml}
+    </div>
+  `;
+}
+
+// 点数推移グラフの系列定義（凡例・折れ線の色もここで統一管理）
+const SCORE_CHART_SERIES = [
+  { key: 'score_vocab', labelVi: 'Từ vựng', labelJa: '語彙', color: '#1a5276' },
+  { key: 'score_grammar', labelVi: 'Ngữ pháp', labelJa: '文法', color: '#27ae60' },
+  { key: 'score_listening', labelVi: 'Nghe', labelJa: '聴解', color: '#e67e22' },
+  { key: 'score_conversation', labelVi: 'Hội thoại', labelJa: '会話', color: '#8e44ad' },
+];
+
+// display_name（例:「第3回月間テスト」）から「第N回」だけを抜き出す。取れなければ受験順の連番。
+function shortTestLabel(displayName, index) {
+  const m = String(displayName ?? '').match(/第\s*(\d+)\s*回/);
+  if (m) return `第${m[1]}回`;
+  return `第${index + 1}回`;
+}
+
+// 受験済みテスト（古い順）から点数推移の折れ線グラフをインラインSVGで組み立てる。
+// - viewBoxは実機375px幅想定のサイズにしてあり、preserveAspectRatio+width:100%で縮小しても
+//   文字が潰れない（軸ラベルはほぼ等倍〜拡大でしか描画されない）
+// - null（未受験・未入力）の点は線をつながず、その系列の折れ線をそこで一旦切る
+// - テストが1件しかない場合はパスがM(moveto)のみになり線は描かれず、点だけが残る
+function buildScoreChartSvg(tests) {
+  if (!tests || tests.length === 0) return '';
+
+  const width = 320;
+  const height = 170;
+  const padL = 30;
+  const padR = 8;
+  const padT = 10;
+  const padB = 24;
+  const plotW = width - padL - padR;
+  const plotH = height - padT - padB;
+  const n = tests.length;
+
+  const xFor = (i) => (n === 1 ? padL + plotW / 2 : padL + (plotW * i) / (n - 1));
+  const yFor = (score) => padT + plotH - (plotH * Math.max(0, Math.min(100, score))) / 100;
+
+  const gridLines = [0, 50, 100].map(v => {
+    const y = yFor(v);
+    return `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="#e5e5e5" stroke-width="1" />` +
+      `<text x="${padL - 6}" y="${y + 3}" font-size="11" fill="#999" text-anchor="end">${v}</text>`;
+  }).join('');
+
+  // 両端のラベルはtext-anchor:middleのままだとSVG枠の外にはみ出て切れるため、
+  // 先頭はstart・末尾はendにして内側へ寄せる（1件だけのときはmiddleで中央）
+  const xLabels = tests.map((t, i) => {
+    const x = xFor(i);
+    const anchor = n === 1 ? 'middle' : (i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle'));
+    return `<text x="${x}" y="${height - padB + 16}" font-size="11" fill="#777" text-anchor="${anchor}">${esc(shortTestLabel(t.display_name, i))}</text>`;
+  }).join('');
+
+  const seriesSvg = SCORE_CHART_SERIES.map(s => {
+    let pathD = '';
+    let drawing = false;
+    let dots = '';
+    tests.forEach((t, i) => {
+      const score = t[s.key];
+      const has = score !== null && score !== undefined;
+      if (!has) { drawing = false; return; }
+      const x = xFor(i);
+      const y = yFor(score);
+      pathD += (drawing ? ' L ' : 'M ') + x + ' ' + y;
+      drawing = true;
+      dots += `<circle cx="${x}" cy="${y}" r="3" fill="${esc(s.color)}" />`;
+    });
+    const pathSvg = pathD ? `<path d="${esc(pathD)}" fill="none" stroke="${esc(s.color)}" stroke-width="2" />` : '';
+    return pathSvg + dots;
+  }).join('');
+
+  const legendItems = SCORE_CHART_SERIES.map(s => `
+    <span class="score-chart-legend-item">
+      <span class="score-chart-legend-swatch" style="background:${esc(s.color)}"></span>
+      <span>${esc(s.labelVi)}/${esc(s.labelJa)}</span>
+    </span>
+  `).join('');
+
+  return `
+    <div class="score-chart-card">
+      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Biểu đồ điểm số / 点数推移グラフ">
+        ${gridLines}
+        ${seriesSvg}
+        ${xLabels}
+      </svg>
+      <div class="score-chart-legend">${legendItems}</div>
     </div>
   `;
 }
@@ -234,6 +329,8 @@ async function fetchTerminologySets() {
     .filter(t => t.is_submitted)
     .sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0));
 
+  const scoreChartEl = document.getElementById('score-chart');
+
   if (submitted.length === 0) {
     resultList.innerHTML = `
       <div class="no-result">Chưa có kết quả kiểm tra / まだテストの結果はありません</div>
@@ -241,6 +338,9 @@ async function fetchTerminologySets() {
     `;
     return;
   }
+
+  // submitted は新しい順なので、グラフ用に古い順へ並べ替える
+  scoreChartEl.innerHTML = buildScoreChartSvg([...submitted].reverse());
 
   const rowsHtml = submitted.map(t => {
     const hasAdvice = t.student_advice_vi || t.student_advice_ja;
@@ -262,6 +362,7 @@ async function fetchTerminologySets() {
           ${scoreItemHtml('Từ vựng', '語彙', t.score_vocab)}
           ${scoreItemHtml('Ngữ pháp', '文法', t.score_grammar)}
           ${scoreItemHtml('Nghe', '聴解', t.score_listening)}
+          ${scoreItemHtml('Hội thoại', '会話', t.score_conversation)}
         </div>
         ${adviceHtml}
       </div>
