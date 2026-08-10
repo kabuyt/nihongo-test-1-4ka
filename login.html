@@ -65,7 +65,7 @@
 (async function() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    window.location.href = 'index.html';
+    window.location.href = 'mypage.html';
   }
 })();
 
@@ -99,7 +99,7 @@ async function doLogin() {
   const ok = await studentLogin(studentId, birthDate);
 
   if (ok) {
-    window.location.href = 'index.html';
+    window.location.href = 'mypage.html';
   } else {
     errEl.textContent = '学生IDまたは生年月日が違います / Mã sinh viên hoặc ngày sinh không đúng';
     errEl.style.display = 'block';

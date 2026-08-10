@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a5276">
+<title>マイページ - みんなの日本語 月間テスト</title>
+<link rel="stylesheet" href="common/style.css">
+<style>
+.mypage-wrap{max-width:600px;margin:0 auto;padding:0 16px 32px}
+/* 学生バー（写真つき） */
+.student-bar{background:#fff;border-bottom:2px solid #1a5276;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.student-bar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.student-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #eaf0fb;background:#eaf0fb}
+.student-text{min-width:0}
+.student-bar .name{font-size:14px;font-weight:bold;color:#1a5276;word-break:keep-all;overflow-wrap:break-word}
+.student-bar .id{font-size:12px;color:#888}
+.student-bar .company{font-size:11px;color:#999;word-break:keep-all;overflow-wrap:break-word}
+.btn-logout{padding:6px 14px;border:1px solid #c0392b;border-radius:6px;background:#fff;color:#c0392b;font-size:12px;cursor:pointer;white-space:nowrap}
+.btn-logout:hover{background:#c0392b;color:#fff}
+.btn-mypage-link{font-size:12px;color:#1a5276;text-decoration:none;font-weight:bold;white-space:nowrap;word-break:keep-all}
+.btn-mypage-link:hover{text-decoration:underline}
+
+/* メニューカード */
+.menu-section{margin:20px 0 8px}
+.section-h{font-size:13px;color:#777;font-weight:bold;margin:20px 0 8px;word-break:keep-all;overflow-wrap:break-word}
+.menu-card{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1);text-decoration:none;color:#333;transition:transform .15s;border-left:5px solid #1a5276}
+.menu-card:active{transform:scale(.98)}
+.menu-card .menu-text{font-size:15px;font-weight:bold;color:#1a5276;line-height:1.5;word-break:keep-all;overflow-wrap:break-word}
+.menu-card .menu-arrow{font-size:20px;color:#1a5276;flex-shrink:0}
+
+/* 結果一覧 */
+.result-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.result-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.result-title{font-size:15px;font-weight:bold;color:#1a5276;word-break:keep-all;overflow-wrap:break-word}
+.result-date{font-size:11px;color:#999;white-space:nowrap}
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.score-item{min-width:0}
+.score-item-label{font-size:11px;color:#777;margin-bottom:3px;line-height:1.4;word-break:keep-all;overflow-wrap:break-word}
+.score-value{font-size:16px;font-weight:bold;color:#1a5276;margin-bottom:4px}
+.score-bar-track{width:100%;height:6px;background:#eee;border-radius:3px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px}
+
+/* アドバイス */
+.advice-card{background:#eef6fb;border:1px solid #cfe1ec;border-radius:10px;padding:12px 14px;margin-top:10px}
+.advice-title{font-size:12px;font-weight:bold;color:#1a5276;margin-bottom:6px}
+.advice-text{font-size:13px;color:#333;line-height:1.7;word-break:keep-all;overflow-wrap:break-word;margin-bottom:6px}
+.advice-text:last-child{margin-bottom:0}
+
+.no-result{background:#fff;border-radius:10px;padding:20px 16px;text-align:center;color:#888;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.08);word-break:keep-all;overflow-wrap:break-word}
+.view-all-link{display:block;text-align:center;font-size:13px;color:#1a5276;font-weight:bold;text-decoration:none;margin-top:12px;padding:10px}
+.view-all-link:hover{text-decoration:underline}
+
+.error-box{background:#fdecea;border:1px solid #f5b7b1;border-radius:10px;padding:16px;color:#c0392b;font-size:13px;line-height:1.7;margin:16px 0;word-break:keep-all;overflow-wrap:break-word}
+.loading{text-align:center;padding:40px;color:#888;font-size:14px}
+
+@media(max-width:360px){
+  .score-item-label{font-size:10px}
+  .score-value{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Trang của tôi / マイページ</h1>
+  <p>Minna no Nihongo - Kết quả học tập</p>
+</header>
+
+<div class="student-bar" id="student-bar" style="display:none">
+  <div class="student-bar-left">
+    <img class="student-avatar" id="student-avatar" style="display:none" alt="">
+    <div class="student-text">
+      <div><span class="name" id="student-name"></span> <span class="id" id="student-id-display"></span></div>
+      <div class="company" id="student-company"></div>
+    </div>
+  </div>
+  <button class="btn-logout" onclick="studentLogout()">ログアウト</button>
+</div>
+
+<div class="mypage-wrap">
+
+  <div class="section-h">Chức năng / メニュー</div>
+  <div id="menu-list"></div>
+
+  <div class="section-h">Kết quả kiểm tra hàng tháng / 月間テストの結果</div>
+  <div id="result-list">
+    <div class="loading" id="loading">Đang tải... / 読み込み中...</div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="common/config.js"></script>
+<script src="common/auth.js"></script>
+<script>
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
+function nl2br(text) {
+  return esc(text).replace(/\n/g, '<br>');
+}
+
+// キンレイ／オオタの出し分け判定（terminology.js の isAllowedTerminologyProfile と同じ考え方）
+function matchesKeyword(profile, keywords) {
+  const company = String(profile?.company || '').toLowerCase();
+  const group = String(profile?.class_group || '').toLowerCase();
+  return keywords.some(keyword => company.includes(keyword) || group.includes(keyword));
+}
+
+function isKinreiProfile(profile) {
+  return matchesKeyword(profile, ['キンレイ', 'kinrei']);
+}
+
+function isOotaProfile(profile) {
+  return matchesKeyword(profile, ['オオタ', 'oota']);
+}
+
+function isAdminProfile(profile) {
+  return String(profile?.student_id || '').toUpperCase() === 'GRV001';
+}
+
+function scoreBarColor(score) {
+  if (score >= 80) return '#27ae60';
+  if (score >= 60) return '#e67e22';
+  return '#c0392b';
+}
+
+function scoreItemHtml(labelVi, labelJa, score) {
+  const hasScore = score !== null && score !== undefined;
+  const valueHtml = hasScore ? `${esc(score)}点` : '—';
+  const barHtml = hasScore
+    ? `<div class="score-bar-track"><div class="score-bar-fill" style="width:${Math.max(0, Math.min(100, score))}%;background:${scoreBarColor(score)}"></div></div>`
+    : '';
+  return `
+    <div class="score-item">
+      <div class="score-item-label">${esc(labelVi)}<br>${esc(labelJa)}</div>
+      <div class="score-value">${valueHtml}</div>
+      ${barHtml}
+    </div>
+  `;
+}
+
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}/${m}/${day}`;
+}
+
+// getStudentTestList() と同じRPCを直接呼び、失敗を検知できるようにする
+async function fetchStudentTestList() {
+  const { data, error } = await supabase.rpc('get_student_test_list');
+  if (error) {
+    console.error('テスト一覧取得エラー:', error);
+    return { list: null, error };
+  }
+  return { list: data || [], error: null };
+}
+
+(async function() {
+  // 認証チェック
+  const auth = await checkStudentAuth();
+  if (!auth) return;
+
+  const profile = auth.profile;
+
+  // 学生情報バー表示
+  const bar = document.getElementById('student-bar');
+  bar.style.display = 'flex';
+  document.getElementById('student-name').textContent =
+    profile.name_katakana || profile.name_romaji || '';
+  document.getElementById('student-id-display').textContent =
+    '（' + (profile.student_id || '') + '）';
+  document.getElementById('student-company').textContent = profile.company || '';
+
+  if (profile.photo_url) {
+    const avatarEl = document.getElementById('student-avatar');
+    avatarEl.src = profile.photo_url;
+    avatarEl.style.display = 'block';
+    avatarEl.onerror = () => { avatarEl.style.display = 'none'; };
+  }
+
+  // メニューカード
+  const menuList = document.getElementById('menu-list');
+  const menuItems = [];
+  menuItems.push({ href: 'index.html', vi: 'Kiểm tra hàng tháng', ja: '月間テスト' });
+
+  const admin = isAdminProfile(profile);
+  if (isKinreiProfile(profile) || admin) {
+    menuItems.push({ href: 'terminology-login.html', vi: 'Từ vựng chuyên ngành (Kinrei)', ja: '専門用語（キンレイ）' });
+  }
+  if (isOotaProfile(profile) || admin) {
+    menuItems.push({ href: 'oota-terminology-login.html', vi: 'Từ vựng chuyên ngành (Oota)', ja: '専門用語（オオタ）' });
+  }
+
+  menuList.innerHTML = menuItems.map(item => `
+    <a class="menu-card" href="${esc(item.href)}">
+      <span class="menu-text">${esc(item.vi)} / ${esc(item.ja)}</span>
+      <span class="menu-arrow">→</span>
+    </a>
+  `).join('');
+
+  // 月間テスト結果一覧
+  const resultList = document.getElementById('result-list');
+  const loadingEl = document.getElementById('loading');
+
+  const { list, error } = await fetchStudentTestList();
+  loadingEl.style.display = 'none';
+
+  if (error) {
+    resultList.innerHTML = `
+      <div class="error-box">
+        Không tải được kết quả. Hãy thử lại sau.<br>
+        結果を読み込めませんでした。あとでもう一度開いてください。
+      </div>
+    `;
+    return;
+  }
+
+  const submitted = (list || [])
+    .filter(t => t.is_submitted)
+    .sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0));
+
+  if (submitted.length === 0) {
+    resultList.innerHTML = `
+      <div class="no-result">Chưa có kết quả kiểm tra / まだテストの結果はありません</div>
+      <a class="view-all-link" href="index.html">Xem tất cả bài kiểm tra / テスト一覧を見る →</a>
+    `;
+    return;
+  }
+
+  const rowsHtml = submitted.map(t => {
+    const hasAdvice = t.student_advice_vi || t.student_advice_ja;
+    const adviceHtml = hasAdvice ? `
+      <div class="advice-card">
+        <div class="advice-title">Lời khuyên / アドバイス</div>
+        ${t.student_advice_vi ? `<div class="advice-text">${nl2br(t.student_advice_vi)}</div>` : ''}
+        ${t.student_advice_ja ? `<div class="advice-text">${nl2br(t.student_advice_ja)}</div>` : ''}
+      </div>
+    ` : '';
+
+    return `
+      <div class="result-card">
+        <div class="result-head">
+          <span class="result-title">${esc(t.display_name)}</span>
+          <span class="result-date">${esc(formatDate(t.submitted_at))}</span>
+        </div>
+        <div class="score-grid">
+          ${scoreItemHtml('Từ vựng', '語彙', t.score_vocab)}
+          ${scoreItemHtml('Ngữ pháp', '文法', t.score_grammar)}
+          ${scoreItemHtml('Nghe', '聴解', t.score_listening)}
+        </div>
+        ${adviceHtml}
+      </div>
+    `;
+  }).join('');
+
+  resultList.innerHTML = rowsHtml + `
+    <a class="view-all-link" href="index.html">Xem tất cả bài kiểm tra / テスト一覧を見る →</a>
+  `;
+})();
+</script>
+</body>
+</html>

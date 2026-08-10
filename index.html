@@ -30,6 +30,9 @@
 .btn-logout:hover{background:#c0392b;color:#fff}
 .footer-note{text-align:center;font-size:12px;color:#aaa;margin:32px 0 16px}
 .loading{text-align:center;padding:40px;color:#888;font-size:14px}
+.student-bar-actions{display:flex;align-items:center;gap:12px}
+.btn-mypage-link{font-size:12px;color:#1a5276;text-decoration:none;font-weight:bold;white-space:nowrap;word-break:keep-all}
+.btn-mypage-link:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -44,7 +47,10 @@
     <span class="name" id="student-name"></span>
     <span class="id" id="student-id-display"></span>
   </div>
-  <button class="btn-logout" onclick="studentLogout()">ログアウト</button>
+  <div class="student-bar-actions">
+    <a class="btn-mypage-link" href="mypage.html">← Trang của tôi / マイページ</a>
+    <button class="btn-logout" onclick="studentLogout()">ログアウト</button>
+  </div>
 </div>
 
 <div class="test-list" id="test-list">
