@@ -665,7 +665,10 @@ function readingForTerm(term) {
   if (!text) return '';
   const inlineReading = collectHiraganaParts(text);
   const kanaReading = cleanKanaReading(term.kana);
-  if (inlineReading.length) {
+  // 読み仮名は漢字の読み方を示すためのもの。漢字を含まない語で語中のひらがなを
+  // 拾うと「オーバーベーク（＝やきすぎ）→ 読み: やきすぎ」「チェックします → 読み: します」
+  // のように、読みでないものが読みとして出てしまう（2026-08-10 修正）
+  if (inlineReading.length && hasKanji(text)) {
     const joined = inlineReading.join('・');
     return shouldPreferKanaReading(text, joined, kanaReading) ? katakanaToHiragana(kanaReading) : joined;
   }
