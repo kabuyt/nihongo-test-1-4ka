@@ -516,7 +516,9 @@ window.OOTA_VOCAB = {
       "no": 41,
       "term": "ガン肌",
       "kana": "ガンはだ",
-      "meaningVi": "Nước sơn",
+      "meaningVi": "Nước sơn lỗi (bề mặt sần như vỏ cam)",
+      "noteJa": "塗膜欠陥の1つで、塗装の仕上がり状態を指す言葉。塗面がオレンジの皮の表面のような凹凸の状態になること。ワークとガンの距離が近すぎたり、膜厚過多の際に出る。",
+      "noteVi": "Là một lỗi màng sơn, chỉ tình trạng bề mặt sau khi sơn. Bề mặt sơn bị sần sùi lồi lõm như vỏ quả cam. Phát sinh khi khoảng cách giữa súng phun và sản phẩm quá gần, hoặc khi màng sơn quá dày.",
       "level": "basic"
     },
     {
@@ -574,9 +576,11 @@ window.OOTA_VOCAB = {
       "category": "塗装専門用語",
       "categoryKey": "paint",
       "no": 46,
-      "term": "オーバーベーク",
-      "kana": "（やきすぎ）",
+      "term": "オーバーベーク（＝やきすぎ）",
+      "kana": "",
       "meaningVi": "Quá nhiệt độ",
+      "noteJa": "適正を上回った温度・時間で焼付した物。主に白色系統に出やすく、艶引け・黄変し、皮膜強度も下がる。",
+      "noteVi": "Sản phẩm được sấy ở nhiệt độ và thời gian cao hơn mức phù hợp. Thường phát sinh ở sản phẩm tông trắng, làm giảm độ bóng, ngả vàng và giảm cả độ bền màng sơn.",
       "level": "basic"
     },
     {
@@ -586,9 +590,11 @@ window.OOTA_VOCAB = {
       "category": "塗装専門用語",
       "categoryKey": "paint",
       "no": 47,
-      "term": "アンダーベーク",
-      "kana": "（やきあま）",
+      "term": "アンダーベーク（＝やきあま）",
+      "kana": "",
       "meaningVi": "Thiếu nhiệt độ",
+      "noteJa": "適正を下回った温度・時間で焼付した物。主に黒色系統に出やすく、艶が出てアルコール類で剥離する。",
+      "noteVi": "Sản phẩm được sấy ở nhiệt độ và thời gian thấp hơn mức phù hợp. Thường phát sinh ở sản phẩm tông đen, bị bóng lên và dễ bong tróc khi gặp cồn.",
       "level": "basic"
     },
     {
