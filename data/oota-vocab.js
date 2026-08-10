@@ -729,9 +729,11 @@ window.OOTA_VOCAB = {
       "no": 69,
       "term": "スピッド",
       "kana": "",
-      "meaningVi": "Tốc độ",
+      "meaningVi": "Giọt sơn bắn (vệt tròn như giọt nước trên bề mặt sơn)",
+      "noteJa": "吹いている塗料と同じ物が、塗装面になだらかな水滴の様な形を作る不良。ガンからのみ出て円形になる場合が多い。",
+      "noteVi": "Lỗi do chính loại sơn đang phun tạo thành hình giọt nước mịn trên bề mặt sơn. Phần lớn là do sơn nhỏ ra từ súng phun nên có hình tròn.",
       "level": "basic",
-      "sourceNote": "塗装汎用句（VN語訳あり）.pdf / ㈱オオタ塗装専門用語.pdf"
+      "sourceNote": "㈱オオタ塗装専門用語.pdf（不良品カテゴリー）"
     },
     {
       "id": "oota-paint-070",
