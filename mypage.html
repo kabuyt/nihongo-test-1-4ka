@@ -28,6 +28,7 @@
 .menu-card{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.1);text-decoration:none;color:#333;transition:transform .15s;border-left:5px solid #1a5276}
 .menu-card:active{transform:scale(.98)}
 .menu-card .menu-text{font-size:15px;font-weight:bold;color:#1a5276;line-height:1.5;word-break:keep-all;overflow-wrap:break-word}
+.menu-card .menu-sub{display:block;font-size:12px;font-weight:normal;color:#777;margin-top:2px;word-break:keep-all;overflow-wrap:break-word}
 .menu-card .menu-arrow{font-size:20px;color:#1a5276;flex-shrink:0}
 
 /* 結果一覧 */
@@ -105,25 +106,6 @@ function nl2br(text) {
   return esc(text).replace(/\n/g, '<br>');
 }
 
-// キンレイ／オオタの出し分け判定（terminology.js の isAllowedTerminologyProfile と同じ考え方）
-function matchesKeyword(profile, keywords) {
-  const company = String(profile?.company || '').toLowerCase();
-  const group = String(profile?.class_group || '').toLowerCase();
-  return keywords.some(keyword => company.includes(keyword) || group.includes(keyword));
-}
-
-function isKinreiProfile(profile) {
-  return matchesKeyword(profile, ['キンレイ', 'kinrei']);
-}
-
-function isOotaProfile(profile) {
-  return matchesKeyword(profile, ['オオタ', 'oota']);
-}
-
-function isAdminProfile(profile) {
-  return String(profile?.student_id || '').toUpperCase() === 'GRV001';
-}
-
 function scoreBarColor(score) {
   if (score >= 80) return '#27ae60';
   if (score >= 60) return '#e67e22';
@@ -165,6 +147,16 @@ async function fetchStudentTestList() {
   return { list: data || [], error: null };
 }
 
+// 企業マスタ経由で自分が使える専門用語セット一覧を取得する
+async function fetchTerminologySets() {
+  const { data, error } = await supabase.rpc('get_my_terminology_sets');
+  if (error) {
+    console.error('専門用語セット取得エラー:', error);
+    return { sets: null, error };
+  }
+  return { sets: data || [], error: null };
+}
+
 (async function() {
   // 認証チェック
   const auth = await checkStudentAuth();
@@ -188,31 +180,44 @@ async function fetchStudentTestList() {
     avatarEl.onerror = () => { avatarEl.style.display = 'none'; };
   }
 
-  // メニューカード
   const menuList = document.getElementById('menu-list');
-  const menuItems = [];
-  menuItems.push({ href: 'index.html', vi: 'Kiểm tra hàng tháng', ja: '月間テスト' });
-
-  const admin = isAdminProfile(profile);
-  if (isKinreiProfile(profile) || admin) {
-    menuItems.push({ href: 'terminology-login.html', vi: 'Từ vựng chuyên ngành (Kinrei)', ja: '専門用語（キンレイ）' });
-  }
-  if (isOotaProfile(profile) || admin) {
-    menuItems.push({ href: 'oota-terminology-login.html', vi: 'Từ vựng chuyên ngành (Oota)', ja: '専門用語（オオタ）' });
-  }
-
-  menuList.innerHTML = menuItems.map(item => `
-    <a class="menu-card" href="${esc(item.href)}">
-      <span class="menu-text">${esc(item.vi)} / ${esc(item.ja)}</span>
-      <span class="menu-arrow">→</span>
-    </a>
-  `).join('');
-
-  // 月間テスト結果一覧
   const resultList = document.getElementById('result-list');
   const loadingEl = document.getElementById('loading');
 
-  const { list, error } = await fetchStudentTestList();
+  // 月間テスト一覧と専門用語セット一覧は並行取得（片方が失敗してももう片方は表示する）
+  const [testResult, termResult] = await Promise.all([
+    fetchStudentTestList(),
+    fetchTerminologySets(),
+  ]);
+
+  // メニューカード（月間テストは常に先頭）
+  let menuHtml = `
+    <a class="menu-card" href="index.html">
+      <span class="menu-text">Kiểm tra hàng tháng / 月間テスト</span>
+      <span class="menu-arrow">→</span>
+    </a>
+  `;
+
+  if (termResult.error) {
+    menuHtml += `
+      <div class="error-box">
+        Không tải được danh sách bài học.<br>
+        学習メニューを読み込めませんでした。
+      </div>
+    `;
+  } else if (termResult.sets && termResult.sets.length > 0) {
+    menuHtml += termResult.sets.map(set => `
+      <a class="menu-card" href="${esc(set.app_path)}">
+        <span class="menu-text">Từ vựng chuyên ngành / 専門用語<span class="menu-sub">${esc(set.name)}</span></span>
+        <span class="menu-arrow">→</span>
+      </a>
+    `).join('');
+  }
+
+  menuList.innerHTML = menuHtml;
+
+  // 月間テスト結果一覧
+  const { list, error } = testResult;
   loadingEl.style.display = 'none';
 
   if (error) {
