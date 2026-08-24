@@ -515,7 +515,7 @@ R.render_table_fill = function(q, container) {
   if (q.audio_src) {
     const a = document.createElement('div');
     a.style.cssText = 'margin:8px 0';
-    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    a.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(a);
   }
   // tablesがない場合: items + columns 構造をtablesに変換
@@ -1260,13 +1260,13 @@ R.render_radio_choice = function(q, container) {
   if (q.audio_src) {
     const a = document.createElement('div');
     a.style.cssText = 'margin:10px 0';
-    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    a.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(a);
   }
   if (q.intro_audio) {
     const a = document.createElement('div');
     a.style.cssText = 'margin:10px 0';
-    a.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}" style="width:100%"></audio>`;
+    a.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls preload="none" src="${asset(q.intro_audio)}" style="width:100%"></audio>`;
     block.appendChild(a);
   }
   const wrap = document.createElement('div');
@@ -1278,7 +1278,7 @@ R.render_radio_choice = function(q, container) {
     if (item.audio_src) {
       const a = document.createElement('div');
       a.style.cssText = 'margin-bottom:6px';
-      a.innerHTML = `<audio controls src="${asset(item.audio_src)}" style="width:100%"></audio>`;
+      a.innerHTML = `<audio controls preload="none" src="${asset(item.audio_src)}" style="width:100%"></audio>`;
       qDiv.appendChild(a);
     }
     if (item.image_src) {
@@ -1317,7 +1317,7 @@ R.render_audio_image_radio = function(q, container) {
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
-    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}"></audio>`;
+    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls preload="none" src="${asset(q.intro_audio)}"></audio>`;
     block.appendChild(intro);
   }
   // 共有画像（全item共通）
@@ -1331,7 +1331,7 @@ R.render_audio_image_radio = function(q, container) {
   if (q.audio_src && !q.intro_audio) {
     const a = document.createElement('div');
     a.style.cssText = 'margin:8px 0';
-    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    a.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(a);
   }
   q.items.forEach(item => {
@@ -1339,7 +1339,7 @@ R.render_audio_image_radio = function(q, container) {
     aq.className = 'audio-q';
     aq.style.marginTop = '12px';
     aq.innerHTML = `<div class="qlabel">${item.label || ''}</div>`;
-    if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
+    if (item.audio_src) aq.innerHTML += `<audio controls preload="none" src="${asset(item.audio_src)}"></audio>`;
     if (item.scene_image_src) {
       const scene = document.createElement('div');
       scene.style.cssText = 'max-width:860px;margin:10px auto;text-align:center';
@@ -1440,7 +1440,7 @@ R.render_audio_select = function(q, container) {
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
-    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}"></audio>`;
+    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls preload="none" src="${asset(q.intro_audio)}"></audio>`;
     block.appendChild(intro);
   }
   // 共有画像
@@ -1464,7 +1464,7 @@ R.render_audio_select = function(q, container) {
   if (q.audio_src && !q.audio_files && !q.intro_audio) {
     const a = document.createElement('div');
     a.style.cssText = 'margin:8px 0';
-    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    a.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(a);
   }
   // parts構造（test4 c3など）
@@ -1479,7 +1479,7 @@ R.render_audio_select = function(q, container) {
       if (part.audio_src) {
         const a = document.createElement('div');
         a.style.cssText = 'margin:6px 0';
-        a.innerHTML = `<audio controls src="${asset(part.audio_src)}" style="width:100%"></audio>`;
+        a.innerHTML = `<audio controls preload="none" src="${asset(part.audio_src)}" style="width:100%"></audio>`;
         block.appendChild(a);
       }
       (part.items || []).forEach(item => {
@@ -1518,7 +1518,7 @@ R.render_audio_select = function(q, container) {
     aq.className = 'audio-q';
     aq.style.marginTop = '8px';
     if (item.label) aq.innerHTML += `<div class="qlabel">${item.label}</div>`;
-    if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
+    if (item.audio_src) aq.innerHTML += `<audio controls preload="none" src="${asset(item.audio_src)}"></audio>`;
     if (item.image_src) aq.innerHTML += `<div style="margin-top:8px;text-align:center"><img src="${asset(item.image_src)}" style="width:100%;max-width:480px;height:auto;display:block;margin:0 auto;border:1px solid #ddd;border-radius:4px"></div>`;
     if (item.question) aq.innerHTML += `<p style="font-size:13px;margin-top:8px">${item.question}</p>`;
     if (item.sentence_html && item.fields) {
@@ -1587,7 +1587,7 @@ R.render_audio_multi_select = function(q, container) {
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
-    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}"></audio>`;
+    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls preload="none" src="${asset(q.intro_audio)}"></audio>`;
     if (q.intro_image) intro.innerHTML += `<div style="margin-top:8px"><img src="${asset(q.intro_image)}" style="max-width:100%;max-height:200px;border:1px solid #ddd;border-radius:4px"></div>`;
     block.appendChild(intro);
   }
@@ -1602,7 +1602,7 @@ R.render_audio_multi_select = function(q, container) {
     aq.className = 'audio-q';
     aq.style.marginTop = '10px';
     aq.innerHTML = `<div class="qlabel">${item.label || ''}</div>`;
-    if (item.audio_src) aq.innerHTML += `<audio controls src="${asset(item.audio_src)}"></audio>`;
+    if (item.audio_src) aq.innerHTML += `<audio controls preload="none" src="${asset(item.audio_src)}"></audio>`;
     if (item.image_src) aq.innerHTML += `<div style="margin-top:6px"><img src="${asset(item.image_src)}" style="max-width:100%;max-height:180px;border:1px solid #ddd;border-radius:4px"></div>`;
 
     // sentence_html モード: 文中にselectを埋め込む
@@ -1653,7 +1653,7 @@ R.render_audio_price_country = function(q, container) {
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
-    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls src="${asset(q.intro_audio)}"></audio>`;
+    intro.innerHTML = `<div class="qlabel">${q.intro_label || ''}</div><audio controls preload="none" src="${asset(q.intro_audio)}"></audio>`;
     if (q.intro_image) intro.innerHTML += `<div style="margin-top:8px"><img src="${asset(q.intro_image)}" style="max-width:100%;max-height:200px;border:1px solid #ddd;border-radius:4px"></div>`;
     block.appendChild(intro);
   }
@@ -1661,7 +1661,7 @@ R.render_audio_price_country = function(q, container) {
     const aq = document.createElement('div');
     aq.className = 'audio-q';
     aq.style.marginTop = '10px';
-    aq.innerHTML = `<div class="qlabel">${item.label}</div><audio controls src="${asset(item.audio_src)}"></audio>`;
+    aq.innerHTML = `<div class="qlabel">${item.label}</div><audio controls preload="none" src="${asset(item.audio_src)}"></audio>`;
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;margin-top:6px';
     // 値段
@@ -1683,7 +1683,7 @@ R.render_audio_schedule = function(q, container) {
   if (q.intro_audio) {
     const intro = document.createElement('div');
     intro.className = 'audio-q';
-    intro.innerHTML = `<audio controls src="${asset(q.intro_audio)}"></audio>`;
+    intro.innerHTML = `<audio controls preload="none" src="${asset(q.intro_audio)}"></audio>`;
     if (q.intro_image) intro.innerHTML += `<div style="margin-top:8px"><img src="${asset(q.intro_image)}" style="max-width:100%;border:1px solid #ddd;border-radius:4px"></div>`;
     block.appendChild(intro);
   }
@@ -1691,7 +1691,7 @@ R.render_audio_schedule = function(q, container) {
     const aq = document.createElement('div');
     aq.className = 'audio-q';
     aq.style.marginTop = '10px';
-    aq.innerHTML = `<div class="qlabel">${item.label}</div><audio controls src="${asset(item.audio_src)}"></audio>`;
+    aq.innerHTML = `<div class="qlabel">${item.label}</div><audio controls preload="none" src="${asset(item.audio_src)}"></audio>`;
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;margin-top:6px';
     item.fields.forEach(f => {
@@ -1725,14 +1725,14 @@ R.render_audio_ox = function(q, container) {
   if (q.audio_src) {
     const audioDiv = document.createElement('div');
     audioDiv.style.cssText = 'margin:8px 0';
-    audioDiv.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    audioDiv.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(audioDiv);
   }
   q.items.forEach(item => {
     const aq = document.createElement('div');
     aq.className = 'audio-q';
     if (item.audio_src) {
-      aq.innerHTML = `<audio controls src="${asset(item.audio_src)}"></audio>`;
+      aq.innerHTML = `<audio controls preload="none" src="${asset(item.audio_src)}"></audio>`;
     }
     const p = document.createElement('p');
     p.style.cssText = 'font-size:13px;margin-top:4px';
@@ -1765,7 +1765,7 @@ R.render_audio_tanaka = function(q, container) {
   if (q.audio_src) {
     const audioDiv = document.createElement('div');
     audioDiv.style.cssText = 'margin:12px 0';
-    audioDiv.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    audioDiv.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(audioDiv);
   }
   // 問題
@@ -1820,7 +1820,7 @@ function renderIntro(q, block) {
   if (q.audio_src) {
     const a = document.createElement('div');
     a.style.cssText = 'margin:10px 0';
-    a.innerHTML = `<audio controls src="${asset(q.audio_src)}" style="width:100%"></audio>`;
+    a.innerHTML = `<audio controls preload="none" src="${asset(q.audio_src)}" style="width:100%"></audio>`;
     block.appendChild(a);
   }
 }
@@ -2215,7 +2215,7 @@ R.sealAudio = function(audio) {
   audio.dataset.sealed = '1';
   audio.controls = false;
   audio.style.display = 'none';
-  audio.preload = 'auto';
+  audio.preload = 'none';
   const playLimit = Math.max(1, Number(window.AUDIO_PLAY_LIMIT) || 1);
   const audioSource = audio.getAttribute('src') || audio.currentSrc || '';
   const storageKey = `audio-play-count:${window.CURRENT_TEST_ID || 'test'}:${audioSource}`;
