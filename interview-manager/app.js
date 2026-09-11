@@ -634,6 +634,17 @@ function behaviorChoicesHtml(item) {
   </div>`;
 }
 
+function behaviorPrintChoicesHtml(item) {
+  return `<div class="pb-options" aria-label="設問${item.number}の選択肢">
+    ${item.choices.map(choice => `
+      <p class="pb-option ${choice.selected ? 'selected' : 'unselected'}">
+        <strong>${choice.selected ? '選択' : '未選択'} ${choice.id}</strong>
+        <span>${escapeHtml(choice.label)}</span>
+      </p>
+    `).join('')}
+  </div>`;
+}
+
 function behaviorSummary(record) {
   if (!record) return '未受験';
   const count = behaviorAnswerItems(record).length;
@@ -1162,7 +1173,7 @@ function renderPrintReport(interview, rows) {
             <p class="print-behavior-summary"><strong>一言コメント：</strong>${escapeHtml(behaviorTendencyComment(row.behavior))}</p>
             ${items.map(item => `<div class="pb-item">
               <p class="pb-q"><strong>設問${item.number}</strong>　${escapeHtml(item.question)}</p>
-              <p class="pb-choice"><strong>選んだ回答：</strong>${escapeHtml(item.choice)}</p>
+              ${behaviorPrintChoicesHtml(item)}
               <p class="pb-analysis">${escapeHtml(item.analysis)}</p>
             </div>`).join('') || '<p>未受験</p>'}
           </article>`;

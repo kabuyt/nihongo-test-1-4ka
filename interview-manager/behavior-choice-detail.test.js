@@ -34,7 +34,7 @@ const context = {
   },
 };
 vm.createContext(context);
-vm.runInContext(`${behaviorFunctions[0]}\nthis.behaviorAnswerItems = behaviorAnswerItems; this.behaviorChoicesHtml = behaviorChoicesHtml;`, context);
+vm.runInContext(`${behaviorFunctions[0]}\nthis.behaviorAnswerItems = behaviorAnswerItems; this.behaviorChoicesHtml = behaviorChoicesHtml; this.behaviorPrintChoicesHtml = behaviorPrintChoicesHtml;`, context);
 
 const record = { q1: 4, q2: 2, q3: 1, q4: 3, q5: 3, q6: 3 };
 const items = context.behaviorAnswerItems(record);
@@ -52,6 +52,11 @@ for (const item of items) {
   assert.equal((html.match(/behavior-choice selected/g) || []).length, 1);
   assert.equal((html.match(/behavior-choice unselected/g) || []).length, 3);
   item.choices.forEach(choice => assert.ok(html.includes(context.escapeHtml(choice.label))));
+
+  const printHtml = context.behaviorPrintChoicesHtml(item);
+  assert.equal((printHtml.match(/pb-option selected/g) || []).length, 1);
+  assert.equal((printHtml.match(/pb-option unselected/g) || []).length, 3);
+  item.choices.forEach(choice => assert.ok(printHtml.includes(context.escapeHtml(choice.label))));
 }
 
 console.log('behavior choice detail tests: ok');
