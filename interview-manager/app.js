@@ -610,10 +610,28 @@ function behaviorAnswerItems(record) {
     return selected ? {
       number: question.n,
       question: question.ja,
+      selectedId,
       choice: selected.ja,
       analysis: selected.analysis,
+      choices: question.choices.map(choice => ({
+        id: choice.id,
+        label: choice.ja,
+        selected: choice.id === selectedId,
+      })),
     } : null;
   }).filter(Boolean);
+}
+
+function behaviorChoicesHtml(item) {
+  return `<div class="behavior-choice-list" aria-label="設問${item.number}の選択肢">
+    ${item.choices.map(choice => `
+      <div class="behavior-choice ${choice.selected ? 'selected' : 'unselected'}">
+        <span class="behavior-choice-state">${choice.selected ? '選択' : '未選択'}</span>
+        <span class="behavior-choice-number">${choice.id}</span>
+        <span class="behavior-choice-text">${escapeHtml(choice.label)}</span>
+      </div>
+    `).join('')}
+  </div>`;
 }
 
 function behaviorSummary(record) {
@@ -1316,7 +1334,8 @@ function openBehaviorDetail(candidateId) {
     ${items.map(item => `
       <section class="behavior-answer">
         <h3>設問${item.number}</h3>
-        <p><strong>選択：</strong>${escapeHtml(item.choice)}</p>
+        <p class="behavior-question-text">${escapeHtml(item.question)}</p>
+        ${behaviorChoicesHtml(item)}
         <p class="analysis"><strong>行動傾向：</strong>${escapeHtml(item.analysis)}</p>
       </section>
     `).join('') || '<p>回答データがありません。</p>'}
