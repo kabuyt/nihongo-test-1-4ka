@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 const appSource = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8');
 const behaviorFunctions = appSource.match(
-  /function behaviorAnswerItems[\s\S]+?(?=function behaviorSummary)/
+  /function isBehaviorAlertChoice[\s\S]+?(?=function behaviorSummary)/
 );
 assert.ok(behaviorFunctions, '行動選択の表示関数を app.js から取得できること');
 
@@ -36,7 +36,7 @@ const context = {
 vm.createContext(context);
 vm.runInContext(`${behaviorFunctions[0]}\nthis.behaviorAnswerItems = behaviorAnswerItems; this.behaviorChoicesHtml = behaviorChoicesHtml; this.behaviorPrintChoicesHtml = behaviorPrintChoicesHtml;`, context);
 
-const record = { q1: 4, q2: 2, q3: 1, q4: 3, q5: 3, q6: 3 };
+const record = { q1: 4, q2: 4, q3: 1, q4: 3, q5: 3, q6: 3 };
 const items = context.behaviorAnswerItems(record);
 
 assert.equal(items.length, 6, '6問すべてを復元すること');
@@ -51,12 +51,21 @@ for (const item of items) {
   const html = context.behaviorChoicesHtml(item);
   assert.equal((html.match(/behavior-choice selected/g) || []).length, 1);
   assert.equal((html.match(/behavior-choice unselected/g) || []).length, 3);
+  assert.equal((html.match(/behavior-choice-state">選択肢[1-4]/g) || []).length, 4);
+  assert.ok(!html.includes('未選択'));
+  assert.ok(!html.includes('>選択<'));
   item.choices.forEach(choice => assert.ok(html.includes(context.escapeHtml(choice.label))));
 
   const printHtml = context.behaviorPrintChoicesHtml(item);
   assert.equal((printHtml.match(/pb-option selected/g) || []).length, 1);
   assert.equal((printHtml.match(/pb-option unselected/g) || []).length, 3);
+  assert.equal((printHtml.match(/<strong>選択肢[1-4]<\/strong>/g) || []).length, 4);
+  assert.ok(!printHtml.includes('未選択'));
   item.choices.forEach(choice => assert.ok(printHtml.includes(context.escapeHtml(choice.label))));
 }
+
+assert.equal((context.behaviorChoicesHtml(items[1]).match(/alert-selected/g) || []).length, 1);
+assert.equal((context.behaviorPrintChoicesHtml(items[1]).match(/alert-selected/g) || []).length, 1);
+assert.equal((context.behaviorChoicesHtml(items[0]).match(/alert-selected/g) || []).length, 0);
 
 console.log('behavior choice detail tests: ok');

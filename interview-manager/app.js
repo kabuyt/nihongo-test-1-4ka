@@ -602,6 +602,11 @@ function getBehaviorFor(candidate, interview) {
   )) || null;
 }
 
+function isBehaviorAlertChoice(questionNumber, choiceId) {
+  return (questionNumber === 2 && (choiceId === 3 || choiceId === 4))
+    || (questionNumber === 4 && (choiceId === 1 || choiceId === 2 || choiceId === 4));
+}
+
 function behaviorAnswerItems(record) {
   if (!record || typeof QUESTIONS === 'undefined') return [];
   return QUESTIONS.map(question => {
@@ -617,6 +622,7 @@ function behaviorAnswerItems(record) {
         id: choice.id,
         label: choice.ja,
         selected: choice.id === selectedId,
+        alert: choice.id === selectedId && isBehaviorAlertChoice(question.n, choice.id),
       })),
     } : null;
   }).filter(Boolean);
@@ -625,9 +631,8 @@ function behaviorAnswerItems(record) {
 function behaviorChoicesHtml(item) {
   return `<div class="behavior-choice-list" aria-label="設問${item.number}の選択肢">
     ${item.choices.map(choice => `
-      <div class="behavior-choice ${choice.selected ? 'selected' : 'unselected'}">
-        <span class="behavior-choice-state">${choice.selected ? '選択' : '未選択'}</span>
-        <span class="behavior-choice-number">${choice.id}</span>
+      <div class="behavior-choice ${choice.selected ? `selected${choice.alert ? ' alert-selected' : ''}` : 'unselected'}">
+        <span class="behavior-choice-state">選択肢${choice.id}</span>
         <span class="behavior-choice-text">${escapeHtml(choice.label)}</span>
       </div>
     `).join('')}
@@ -637,8 +642,8 @@ function behaviorChoicesHtml(item) {
 function behaviorPrintChoicesHtml(item) {
   return `<div class="pb-options" aria-label="設問${item.number}の選択肢">
     ${item.choices.map(choice => `
-      <p class="pb-option ${choice.selected ? 'selected' : 'unselected'}">
-        <strong>${choice.selected ? '選択' : '未選択'} ${choice.id}</strong>
+      <p class="pb-option ${choice.selected ? `selected${choice.alert ? ' alert-selected' : ''}` : 'unselected'}">
+        <strong>選択肢${choice.id}</strong>
         <span>${escapeHtml(choice.label)}</span>
       </p>
     `).join('')}
