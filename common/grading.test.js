@@ -435,17 +435,16 @@ if (t2) {
   eq('test2 g1 ひらがな解答', TG.gradeSection(t2.goii.answer_key, { g1: t2.goii.scoring_rules.g1 }, { g1_1: 'たまご' }), 1);
   eq('test2 g1 漢字解答', TG.gradeSection(t2.goii.answer_key, { g1: t2.goii.scoring_rules.g1 }, { g1_1: '卵' }), 1);
 
-  // split_match w/ strip_suffix
-  eq('test2 g5 strip_suffix 「ひまな」も「ひま」もOK', TG.gradeSection(t2.goii.answer_key, { g5: t2.goii.scoring_rules.g5 }, { g5_4: 'ひまな' }), 1);
-  eq('test2 g5 strip_suffix 「ひま」もOK', TG.gradeSection(t2.goii.answer_key, { g5: t2.goii.scoring_rules.g5 }, { g5_4: 'ひま' }), 1);
+  // Choice controls submit only their canonical option values.
+  eq('test2 g5 canonical choice', TG.gradeSection(t2.goii.answer_key, { g5: t2.goii.scoring_rules.g5 }, { g5_4: 'ひま' }), 1);
+  eq('test2 g5 non-option variant rejected', TG.gradeSection(t2.goii.answer_key, { g5: t2.goii.scoring_rules.g5 }, { g5_4: 'ひまな' }), 0);
 
-  // flex_match w/ separator + アクセント無視（ベトナム語）
   eq('test2 g6 アクセント有り', TG.gradeSection(t2.goii.answer_key, { g6: t2.goii.scoring_rules.g6 }, { g6_5: 'Ký túc xá' }), 2);
-  eq('test2 g6 アクセント無し', TG.gradeSection(t2.goii.answer_key, { g6: t2.goii.scoring_rules.g6 }, { g6_5: 'Ky tuc xa' }), 2);
-  eq('test2 g6 separator 別表記', TG.gradeSection(t2.goii.answer_key, { g6: t2.goii.scoring_rules.g6 }, { g6_5: 'Kí túc xá' }), 2);
+  eq('test2 g6 non-option accentless value rejected', TG.gradeSection(t2.goii.answer_key, { g6: t2.goii.scoring_rules.g6 }, { g6_5: 'Ky tuc xa' }), 0);
+  eq('test2 g6 non-option spelling rejected', TG.gradeSection(t2.goii.answer_key, { g6: t2.goii.scoring_rules.g6 }, { g6_5: 'Kí túc xá' }), 0);
 
   // === bunpo 全問正解 = 100 ===
-  // b1 multi_field_match (13×1=13), b2 exact_match (5×2=10),
+  // b1 exact_match (13×1=13), b2 exact_match (5×2=10),
   // b3 normalized_match (5×3=15), b4 exact_match (7×2=14),
   // b5 pair_match (4×3=12), b6 exact_match (5×2=10),
   // b7 exact_match (10×1=10), b8 radio_exact (8×2=16)
@@ -755,8 +754,8 @@ const t5 = loadAnswerKeys(5);
 if (t5) {
   // 自動部分の満点 + 手動部分 = 100 になっているか
   eq('test5 goii scoring_rules 合計 = 100', getSectionMaxPoints(t5.goii.scoring_rules), 100);
-  eq('test5 bunpo 自動採点部分 = 80', getSectionMaxPoints(t5.bunpo.scoring_rules), 80);
-  eq('test5 chokkai 自動採点部分 = 91', getSectionMaxPoints(t5.chokkai.scoring_rules), 91);
+  eq('test5 bunpo 全選択式自動採点 = 100', getSectionMaxPoints(t5.bunpo.scoring_rules), 100);
+  eq('test5 chokkai 全選択式自動採点 = 100', getSectionMaxPoints(t5.chokkai.scoring_rules), 100);
 
   function manualMaxPoints(scoringRules) {
     let total = 0;
@@ -772,7 +771,7 @@ if (t5) {
 
   // 自動生成した満点解答 → 100/80/91
   const t5Perfect = generatePerfectAnswers(t5);
-  deepEq('test5 gradeTest 自動部分満点 = 100/80/91', TG.gradeTest(t5, t5Perfect), { score_vocab: 100, score_grammar: 80, score_listening: 91 });
+  deepEq('test5 gradeTest 全選択式満点 = 100/100/100', TG.gradeTest(t5, t5Perfect), { score_vocab: 100, score_grammar: 100, score_listening: 100 });
 
   // 全空 → 0/0/0
   deepEq('test5 gradeTest 全空 = 0/0/0', TG.gradeTest(t5, {}), { score_vocab: 0, score_grammar: 0, score_listening: 0 });
@@ -792,23 +791,23 @@ if (t5) {
   // --- 個別回帰 ---
 
   // goii g1: 読みの複数許容（九時十七分 = ななふん/しちふん）
-  eq('test5 g1 じゅうしちふん も正解', TG.gradeSection(t5.goii.answer_key, { g1: t5.goii.scoring_rules.g1 }, { g1_2: 'くじじゅうしちふん' }), 2);
+  eq('test5 g1 選択肢外表記は不正解', TG.gradeSection(t5.goii.answer_key, { g1: t5.goii.scoring_rules.g1 }, { g1_2: 'くじじゅうしちふん' }), 0);
   // goii g1: えらび／えらびます どちらも正解
-  eq('test5 g1 えらびます も正解', TG.gradeSection(t5.goii.answer_key, { g1: t5.goii.scoring_rules.g1 }, { g1_8: 'えらびます' }), 2);
+  eq('test5 g1 選択肢外活用は不正解', TG.gradeSection(t5.goii.answer_key, { g1: t5.goii.scoring_rules.g1 }, { g1_8: 'えらびます' }), 0);
   // goii g2: ベトナム語アクセント無視 (hư hỏng → hu hong)
-  eq('test5 g2 アクセント無し正解', TG.gradeSection(t5.goii.answer_key, { g2: t5.goii.scoring_rules.g2 }, { g2_1: 'hu hong' }), 2);
-  eq('test5 g2 大文字も正解', TG.gradeSection(t5.goii.answer_key, { g2: t5.goii.scoring_rules.g2 }, { g2_16: 'Thông báo' }), 2);
+  eq('test5 g2 選択肢外表記は不正解', TG.gradeSection(t5.goii.answer_key, { g2: t5.goii.scoring_rules.g2 }, { g2_1: 'hu hong' }), 0);
+  eq('test5 g2 選択値は完全一致', TG.gradeSection(t5.goii.answer_key, { g2: t5.goii.scoring_rules.g2 }, { g2_16: 'Thông báo' }), 0);
 
   // bunpo b1: 15フィールド（原文の空欄数）
   eq('test5 b1 フィールド数 = 15', t5.bunpo.scoring_rules.b1.field_ids.length, 15);
   // b1_5: に／へ どちらも正解
   eq('test5 b1_5 に', TG.gradeSection(t5.bunpo.answer_key, { b1: t5.bunpo.scoring_rules.b1 }, { b1_5: 'に' }), 1);
-  eq('test5 b1_5 へ', TG.gradeSection(t5.bunpo.answer_key, { b1: t5.bunpo.scoring_rules.b1 }, { b1_5: 'へ' }), 1);
+  eq('test5 b1_5 へも文法上の正答', TG.gradeSection(t5.bunpo.answer_key, { b1: t5.bunpo.scoring_rules.b1 }, { b1_5: 'へ' }), 1);
 
   // b5: 句読点付きでも正解（じゅんびしろ。）
-  eq('test5 b5 句点付き正解', TG.gradeSection(t5.bunpo.answer_key, { b5: t5.bunpo.scoring_rules.b5 }, { b5_3: 'じゅんびしろ。' }), 2);
+  eq('test5 b5 選択肢外の句点付きは不正解', TG.gradeSection(t5.bunpo.answer_key, { b5: t5.bunpo.scoring_rules.b5 }, { b5_3: 'じゅんびしろ。' }), 0);
   // b5: 漢字表記も正解
-  eq('test5 b5 漢字表記', TG.gradeSection(t5.bunpo.answer_key, { b5: t5.bunpo.scoring_rules.b5 }, { b5_1: '入れ' }), 2);
+  eq('test5 b5 選択肢外表記は不正解', TG.gradeSection(t5.bunpo.answer_key, { b5: t5.bunpo.scoring_rules.b5 }, { b5_1: '入れ' }), 0);
 
   // b8: 原文の丸付け解答 ×○○×（旧キー ×○×○ は誤りだった）
   eq('test5 b8 原文キー ×○○×', TG.gradeSection(t5.bunpo.answer_key, { b8: t5.bunpo.scoring_rules.b8 },
@@ -821,15 +820,15 @@ if (t5) {
     { c1_1a: '×', c1_2a: '×', c1_3a: '○' }), 6);
 
   // c3: 記述の表記ゆれ（雨が降る／あめがふる）
-  eq('test5 c3 雨が降る(漢字)も正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: '雨が降る' }), 3);
-  eq('test5 c3 あめがふる(かな)も正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: 'あめがふる' }), 3);
-  eq('test5 c3 「きっと雨がふる」も部分一致で正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: 'きっと雨がふる' }), 3);
+  eq('test5 c3 選択肢の正答', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: '雨がふる' }), 3);
+  eq('test5 c3 選択肢外表記は不正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: 'あめがふる' }), 0);
+  eq('test5 c3 選択肢外の文は不正解', TG.gradeSection(t5.chokkai.answer_key, { c3_text: t5.chokkai.scoring_rules.c3_text }, { c3_1a: 'きっと雨がふる' }), 0);
 
   // c7: 数字は exact_only（「1」だけで正解、無関係な文字列は不正解）
-  eq('test5 c7 数字 全角１も正解', TG.gradeSection(t5.chokkai.answer_key, { c7_num: t5.chokkai.scoring_rules.c7_num }, { c7_1a: '１' }), 2);
+  eq('test5 c7 選択値1が正解', TG.gradeSection(t5.chokkai.answer_key, { c7_num: t5.chokkai.scoring_rules.c7_num }, { c7_1a: '1' }), 2);
   eq('test5 c7 数字 10 は不正解', TG.gradeSection(t5.chokkai.answer_key, { c7_num: t5.chokkai.scoring_rules.c7_num }, { c7_1a: '10' }), 0);
   // c7: 動詞の表記ゆれ
-  eq('test5 c7 おぼえた(かな)も正解', TG.gradeSection(t5.chokkai.answer_key, { c7_verb: t5.chokkai.scoring_rules.c7_verb }, { c7_1c: 'おぼえた' }), 2);
+  eq('test5 c7 選択値の覚えたが正解', TG.gradeSection(t5.chokkai.answer_key, { c7_verb: t5.chokkai.scoring_rules.c7_verb }, { c7_1c: '覚えた' }), 2);
   // c7: 名詞は部分一致（富士山についてレポート ⊃ レポート）
   eq('test5 c7 レポートを含む解答も正解', TG.gradeSection(t5.chokkai.answer_key, { c7_noun: t5.chokkai.scoring_rules.c7_noun }, { c7_2b: '富士山についてレポート' }), 1);
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a5276">
-<title>みんなの日本語 月間テスト</title>
+<title>月間テスト</title>
 <link rel="stylesheet" href="common/style.css?v=20260720-choice-bank-1">
 <style>
 .confirm-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -22,7 +22,7 @@
 <body>
 
 <header>
-  <h1 id="test-title">みんなの日本語 第2版　月間テスト</h1>
+  <h1 id="test-title">月間テスト</h1>
   <p id="test-subtitle"></p>
 </header>
 
@@ -120,14 +120,24 @@
 const params = new URLSearchParams(location.search);
 const TEST_ID = params.get('id');
 window.CURRENT_TEST_ID = TEST_ID;
-// 学生受験モードでは巻き戻しを禁止する。まるごと第1・2回は2回、ほかは従来どおり1回まで。
+const IS_SERVER_SCORED_TEST = /^(marugoto|irodori)_\d+$/.test(TEST_ID || '');
+// 学生受験モードでは巻き戻しを禁止する。まるごと/いろどりの第1・2回は2回、ほかは従来どおり1回まで。
 window.ONE_SHOT_AUDIO = true;
-window.AUDIO_PLAY_LIMIT = /^marugoto_[12]$/.test(TEST_ID) ? 2 : 1;
-const TIME_LIMITS_ENABLED = false;
+window.AUDIO_PLAY_LIMIT = /^(marugoto|irodori)_[12]$/.test(TEST_ID) ? 2 : 1;
+
+// テストIDのプレフィクスから教材名を出し分ける（みんなの日本語 / まるごと / いろどり）。
+// 新しいカリキュラムを足す場合はここに1行追加するだけでよい。
+function getCurriculumMaterialLabel(testId) {
+  if (/^marugoto_/.test(testId || '')) return 'まるごと 入門A1';
+  if (/^irodori_/.test(testId || '')) return 'いろどり 生活の日本語';
+  return 'みんなの日本語 第2版';
+}
+const TIME_LIMITS_ENABLED = /^test[1-8]$/.test(TEST_ID || '');
 const SECTION_TIME_LIMIT_SECONDS = 50 * 60;
 const SECTION_LABELS = { goii: 'Từ vựng', bunpo: 'Ngữ pháp', chokkai: 'Nghe hiểu' };
 let _sections = [];
 let _testDef = null;
+let _testRevision = null;
 let _sectionGradingData = {}; // {section: {answer_key, scoring_rules}}
 let _isSubmitting = false;
 let _timerInterval = null;
@@ -137,6 +147,7 @@ let _confirmResolver = null;
 let _activeSectionIndex = 0;
 let _lockedSections = new Set();
 let _allSectionsExpired = false;
+let _checkpointAnswers = {};
 
 function showConfirmModal({ title, message, confirmLabel, cancelLabel }) {
   if (_confirmResolver) _confirmResolver(false);
@@ -273,7 +284,48 @@ function openTimedSection(index) {
   startSectionTimer();
 }
 
-function closeSectionAndAdvance(reason) {
+function collectSectionAnswers(section) {
+  const answers = {};
+  const panel = document.getElementById('tab-' + section);
+  if (!panel) return answers;
+  panel.querySelectorAll('select[id], input[type=text][id], input[type=hidden][id]').forEach(el => {
+    answers[el.id] = el.value || '';
+  });
+  panel.querySelectorAll('input[type=radio]:checked').forEach(el => {
+    answers[el.name] = el.value;
+  });
+  return answers;
+}
+
+function restoreCheckpointAnswers(answers) {
+  Object.entries(answers || {}).forEach(([fieldId, value]) => {
+    const byId = document.getElementById(fieldId);
+    if (byId && ['INPUT', 'SELECT', 'TEXTAREA'].includes(byId.tagName)) {
+      byId.value = value == null ? '' : String(value);
+      return;
+    }
+    document.querySelectorAll(`input[type=radio][name="${CSS.escape(fieldId)}"]`).forEach(radio => {
+      radio.checked = radio.value === String(value);
+    });
+  });
+}
+
+async function saveSectionCheckpoint(section, complete = true) {
+  if (IS_SERVER_SCORED_TEST || !_testRevision) return null;
+  const sectionAnswers = collectSectionAnswers(section);
+  const { data, error } = await supabase.rpc('save_monthly_section_checkpoint', {
+    p_test_id: TEST_ID,
+    p_test_revision: _testRevision,
+    p_section: section,
+    p_answers: sectionAnswers,
+    p_complete: complete
+  });
+  if (error) throw error;
+  _checkpointAnswers = { ..._checkpointAnswers, ...sectionAnswers, ...(data?.answers || {}) };
+  return data;
+}
+
+async function closeSectionAndAdvance(reason) {
   if (_isSubmitting || _allSectionsExpired) return;
   const currentSection = getActiveTimedSection();
   if (!currentSection) return;
@@ -285,13 +337,29 @@ function closeSectionAndAdvance(reason) {
   }
 
   stopTestTimer();
+  _isSubmitting = true;
+  showTimeNotice(`${SECTION_LABELS[currentSection] || currentSection} đang được lưu... / 保存中...`);
+  let progress;
+  try {
+    progress = await saveSectionCheckpoint(currentSection, true);
+  } catch (error) {
+    console.error('パート保存エラー:', error);
+    _isSubmitting = false;
+    showTimeNotice('Không thể lưu phần này. Vui lòng kiểm tra mạng và thử lại. / パートを保存できませんでした。通信を確認して再試行してください。');
+    if (reason !== 'timeout') resumeTestTimer();
+    return;
+  }
+  _isSubmitting = false;
   _lockedSections.add(currentSection);
   setSectionLocked(currentSection, true);
 
   const nextIndex = _activeSectionIndex + 1;
   if (nextIndex < _sections.length) {
     showTimeNotice(`${SECTION_LABELS[currentSection] || currentSection} đã hết thời gian. Phần này đã bị khóa. Hãy làm phần tiếp theo.`);
-    openTimedSection(nextIndex);
+    _activeSectionIndex = nextIndex;
+    updateSectionAccess();
+    showTab(_sections[nextIndex]);
+    startSectionTimer(progress?.section_deadline ? Date.parse(progress.section_deadline) : null);
     return;
   }
 
@@ -312,7 +380,7 @@ function tickTestTimer() {
   }
 }
 
-function startSectionTimer() {
+function startSectionTimer(serverDeadline = null) {
   stopTestTimer();
   if (!TIME_LIMITS_ENABLED) {
     _timerDeadline = 0;
@@ -323,7 +391,7 @@ function startSectionTimer() {
     return;
   }
   _timerWarned = false;
-  _timerDeadline = Date.now() + (SECTION_TIME_LIMIT_SECONDS * 1000);
+  _timerDeadline = serverDeadline || (Date.now() + (SECTION_TIME_LIMIT_SECONDS * 1000));
   tickTestTimer();
   _timerInterval = setInterval(tickTestTimer, 1000);
 }
@@ -375,9 +443,23 @@ function showError(title, detail) {
     return;
   }
 
-  // タイトル設定
-  document.title = testDef.display_name + ' - みんなの日本語 月間テスト';
-  document.getElementById('test-title').textContent = 'みんなの日本語 第2版　月間テスト（' + testDef.display_name + '）';
+  // みんなの日本語の月間テストは、受験開始時の問題・正解・保存先を
+  // 同じリビジョンに固定する。公開処理が受験中に走っても版が混ざらない。
+  if (!IS_SERVER_SCORED_TEST) {
+    _testRevision = await getActiveTestRevision(TEST_ID);
+    if (_testRevision == null) {
+      showError(
+        'テストの版情報を取得できません',
+        'ページを再読み込みしてください。問題が続く場合は管理者に連絡してください。'
+      );
+      return;
+    }
+  }
+
+  // タイトル設定（教材名はTEST_IDのプレフィクスから出し分け）
+  const materialLabel = getCurriculumMaterialLabel(TEST_ID);
+  document.title = testDef.display_name + ' - ' + materialLabel + ' 月間テスト';
+  document.getElementById('test-title').textContent = materialLabel + '　月間テスト（' + testDef.display_name + '）';
   document.getElementById('test-subtitle').textContent = 'Bài kiểm tra hàng tháng';
 
   // 受験者情報を自動入力
@@ -415,7 +497,14 @@ function showError(title, detail) {
   // セクション読み込み
   const container = document.getElementById('sections-container');
   for (const sec of _sections) {
-    const questions = await getTestQuestions(TEST_ID, sec);
+    const questions = await getTestQuestions(TEST_ID, sec, _testRevision);
+    if (!Array.isArray(questions)) {
+      showError(
+        '問題を読み込めません',
+        `${sec} の問題データ（revision ${_testRevision || 'active'}）を取得できませんでした。`
+      );
+      return;
+    }
     const secDiv = document.createElement('div');
     secDiv.id = 'tab-' + sec;
     secDiv.className = 'section' + (sec === _sections[0] ? ' active' : '');
@@ -474,19 +563,47 @@ function showError(title, detail) {
 
   // ローディング非表示、終了ボタン表示
   document.getElementById('loading').style.display = 'none';
-  updateFinishButtonVisibility(_sections[0]);
-  updateSectionAccess();
-  startSectionTimer();
+  if (TIME_LIMITS_ENABLED && !IS_SERVER_SCORED_TEST) {
+    const { data: progress, error: progressError } = await supabase.rpc('get_monthly_attempt_progress', {
+      p_test_id: TEST_ID,
+      p_test_revision: _testRevision
+    });
+    if (progressError) {
+      showError('受験状態を読み込めません', progressError.message);
+      return;
+    }
+    _checkpointAnswers = progress?.answers || {};
+    restoreCheckpointAnswers(_checkpointAnswers);
+    _lockedSections = new Set(progress?.completed_sections || []);
+    _lockedSections.forEach(sec => setSectionLocked(sec, true));
+    const resumedIndex = _sections.indexOf(progress?.active_section);
+    _activeSectionIndex = resumedIndex >= 0 ? resumedIndex : _sections.length - 1;
+    updateSectionAccess();
+    showTab(_sections[_activeSectionIndex], true);
+    updateFinishButtonVisibility(_sections[_activeSectionIndex]);
+    if (progress?.active_section) {
+      startSectionTimer(progress?.section_deadline ? Date.parse(progress.section_deadline) : null);
+    } else {
+      _allSectionsExpired = true;
+      stopTestTimer();
+      renderTimer(0);
+      showTimeNotice('Tất cả các phần đã được lưu. Hãy nhấn nút gửi để hoàn tất. / 全パート保存済みです。提出ボタンを押してください。');
+    }
+  } else {
+    updateFinishButtonVisibility(_sections[0]);
+    updateSectionAccess();
+    startSectionTimer();
+  }
 
   // カンニング防止を有効化
   setupAntiCheat();
 })();
 
 // ===== タブ切替 =====
-function showTab(name) {
+function showTab(name, force = false) {
   const requestedIndex = _sections.indexOf(name);
   if (requestedIndex < 0) return;
-  if (TIME_LIMITS_ENABLED && (requestedIndex > _activeSectionIndex || _lockedSections.has(name))) return;
+  if (!force && TIME_LIMITS_ENABLED && (requestedIndex > _activeSectionIndex || _lockedSections.has(name))) return;
   if (!TIME_LIMITS_ENABLED) _activeSectionIndex = requestedIndex;
 
   document.querySelectorAll('.section').forEach(s => {
@@ -562,8 +679,24 @@ async function doSubmit(options = {}) {
   const status = document.getElementById('send-status');
   const resultBox = document.getElementById('result-box');
 
-  // 全回答を収集
-  const answers = {};
+  // 最終パートも先にチェックポイント保存する。最終提出が通信エラーに
+  // なっても、再読み込み後に回答を復元して提出をやり直せる。
+  if (TIME_LIMITS_ENABLED && !IS_SERVER_SCORED_TEST && !_lockedSections.has(getActiveTimedSection())) {
+    try {
+      await saveSectionCheckpoint(getActiveTimedSection(), true);
+      _lockedSections.add(getActiveTimedSection());
+    } catch (checkpointError) {
+      console.error('最終パート保存エラー:', checkpointError);
+      status.textContent = '❌ 最終パートを保存できませんでした。通信を確認してもう一度押してください。';
+      status.style.color = '#c0392b';
+      _isSubmitting = false;
+      if (!triggeredByTimeout) resumeTestTimer();
+      return;
+    }
+  }
+
+  // 全回答を収集（保存済みパートも合成）
+  const answers = { ..._checkpointAnswers };
   document.querySelectorAll('select, input[type=text], input[type=hidden]').forEach(el => {
     if (el.id && !['student_id', 'name_kata', 'name_latin', 'class_name', 'company', 'test_date'].includes(el.id)) {
       answers[el.id] = el.value || '';
@@ -572,6 +705,14 @@ async function doSubmit(options = {}) {
   document.querySelectorAll('input[type=radio]:checked').forEach(el => {
     answers[el.name] = el.value;
   });
+
+  // 1問も答えずに提出された場合の保険。
+  // submit_test_result は answers_json が {} の行を「会話点だけの行（＝未受験）」とみなす
+  // （2026-07-24 の会話点保護の判定）。ラジオは未選択だと何も送らないため、全問ラジオの
+  // テストだと白紙提出がちょうどこの形になり、学生側は「未受験」表示のまま管理側だけ
+  // 0点を拾う食い違いが起きる。白紙であることを示す印を1つ入れて正規の提出として扱わせる。
+  // 採点は scoring_rules に載っている field_id しか見ないので、点数には影響しない。
+  if (Object.keys(answers).length === 0) answers._blank_submission = true;
 
   // 未回答チェック（セクション別）
   const secUnans = { goii: 0, bunpo: 0, chokkai: 0 };
@@ -633,13 +774,16 @@ async function doSubmit(options = {}) {
   const profile = getStudentProfile();
   const testDate = document.getElementById('test_date').value;
 
-  // まるごと総合テストは正解データをブラウザへ渡さず、提出RPC内で採点する。
+  // まるごと/いろどりの総合テストは正解データをブラウザへ渡さず、提出RPC内で採点する。
   // 既存テストは従来どおりクライアント採点を使用する。
   let scores = { score_vocab: null, score_grammar: null, score_listening: null };
-  let autoScored = /^marugoto_\d+$/.test(TEST_ID);
+  let autoScored = IS_SERVER_SCORED_TEST;
   if (!autoScored) {
     try {
-      const { data: gradingData, error: gdErr } = await supabase.rpc('get_grading_data', { p_test_id: TEST_ID });
+      const { data: gradingData, error: gdErr } = await supabase.rpc('get_grading_data_for_revision', {
+        p_test_id: TEST_ID,
+        p_revision: _testRevision
+      });
       if (!gdErr && gradingData && typeof window.TestGrading !== 'undefined') {
         scores = window.TestGrading.gradeTest(gradingData, answers);
         autoScored = true;
@@ -655,7 +799,10 @@ async function doSubmit(options = {}) {
   status.textContent = '送信中...';
 
   // Supabaseに結果を保存（スコア付き）
-  const { error } = await supabase.rpc('submit_test_result', {
+  const submitRpc = IS_SERVER_SCORED_TEST
+    ? 'submit_test_result'
+    : 'submit_test_result_revisioned';
+  const submitParams = {
     p_test_id: TEST_ID,
     p_test_date: testDate || new Date().toISOString().slice(0, 10),
     p_answers: answers,
@@ -663,7 +810,9 @@ async function doSubmit(options = {}) {
     p_score_grammar: scores.score_grammar,
     p_score_listening: scores.score_listening,
     p_auto_scored: autoScored,
-  });
+  };
+  if (!IS_SERVER_SCORED_TEST) submitParams.p_test_revision = _testRevision;
+  const { error } = await supabase.rpc(submitRpc, submitParams);
 
   if (error) {
     console.error('送信エラー:', error);
