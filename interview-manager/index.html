@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=53">
+  <link rel="stylesheet" href="style.css?v=54">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -91,6 +91,14 @@
           <div class="eyebrow">選択中の面接</div>
           <h2 id="active-title">面接を作成してください</h2>
           <div id="active-meta" class="active-meta hidden">
+            <label id="active-date-control">
+              面接日
+              <input id="active-date" type="date" aria-label="選択中の面接日">
+            </label>
+            <div id="active-date-display" class="sender-display hidden">
+              <span>面接日</span>
+              <strong id="active-date-name"></strong>
+            </div>
             <label id="active-sender-control">
               送り出し
               <select id="active-sender">
@@ -281,6 +289,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
   <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
-  <script src="app.js?v=68"></script>
+  <script src="app.js?v=69"></script>
 </body>
 </html>

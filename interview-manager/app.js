@@ -1477,10 +1477,15 @@ function render() {
   $('#current-account').textContent = user ? `${user.label}でログイン中` : '';
   $('#interview-sender').value = user?.role === 'sender' ? user.sender : ($('#interview-sender').value || 'BARAEN');
   $('#interview-sender').disabled = user?.role === 'sender';
+  $('#active-date-control').classList.toggle('hidden', !isAdmin);
+  $('#active-date-display').classList.toggle('hidden', isAdmin || !hasInterview);
   $('#active-sender-control').classList.toggle('hidden', !isAdmin);
   $('#active-sender-display').classList.toggle('hidden', isAdmin || !hasInterview);
+  $('#active-date-name').textContent = !isAdmin && hasInterview ? interview.date || '-' : '';
   $('#active-sender-name').textContent = !isAdmin && hasInterview ? user?.sender || '' : '';
   if (hasInterview) {
+    $('#active-date').value = interview.date || '';
+    $('#active-date').disabled = user?.role !== 'admin' || !state.dbReady;
     $('#active-sender').value = interview.senderOrg || 'BARAEN';
     $('#active-sender').disabled = user?.role !== 'admin';
   }
@@ -1672,6 +1677,43 @@ async function updateInterviewSender(value) {
     return;
   }
   interview.senderOrg = value;
+  render();
+}
+
+function isValidInterviewDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+  if (!match) return false;
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}
+
+async function updateInterviewDate(value) {
+  const interview = activeInterview();
+  const input = $('#active-date');
+  if (!interview || !input || !isAdminUser()) return;
+  if (!isValidInterviewDate(value)) {
+    alert('正しい面接日を入力してください。');
+    input.value = interview.date || '';
+    return;
+  }
+  if (value === interview.date) return;
+
+  const previous = interview.date || '';
+  input.disabled = true;
+  const { error } = await supabase
+    .from('interview_sessions')
+    .update({ interview_date: value })
+    .eq('id', interview.id);
+  input.disabled = false;
+  if (error) {
+    alert('面接日の保存に失敗しました: ' + error.message);
+    input.value = previous;
+    return;
+  }
+  interview.date = value;
   render();
 }
 
@@ -2107,6 +2149,7 @@ function bindEvents() {
   $('#auth-form').addEventListener('submit', handleAuth);
   $('#interview-form').addEventListener('submit', createInterview);
   $('#candidate-form').addEventListener('submit', addCandidate);
+  $('#active-date').addEventListener('change', event => updateInterviewDate(event.target.value));
   $('#active-sender').addEventListener('change', event => updateInterviewSender(event.target.value));
   $('#renumber-candidates').addEventListener('click', renumberCandidates);
   $('#delete-interview').addEventListener('click', deleteInterview);

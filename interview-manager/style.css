@@ -419,6 +419,7 @@ h2 {
 
 .active-meta label { display: flex; align-items: center; gap: 8px; }
 .active-meta select { min-height: 32px; width: 140px; padding-block: 4px; }
+.active-meta input[type="date"] { min-height: 32px; width: 150px; padding-block: 4px; }
 
 .sender-display { display: grid; gap: 3px; font-size: 12px; }
 .sender-display span { color: var(--muted); font-weight: 700; }
