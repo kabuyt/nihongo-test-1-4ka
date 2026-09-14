@@ -664,6 +664,13 @@ h2 {
   box-shadow: var(--shadow-sm);
 }
 
+.score-entry-order-note {
+  margin: 0 0 9px;
+  color: #526177;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 table {
   width: 100%;
   min-width: 1960px;

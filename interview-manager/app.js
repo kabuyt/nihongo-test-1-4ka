@@ -892,6 +892,16 @@ function buildRows(interview) {
     });
 }
 
+// 採点入力中は得点の変化で行が移動しないよう、管理表だけ候補者番号順に固定する。
+// buildRows() の順位順はPDF・CSV用に維持する。
+function scoreEntryRows(rows) {
+  return [...rows].sort((a, b) => String(a.no ?? '').localeCompare(
+    String(b.no ?? ''),
+    'ja',
+    { numeric: true, sensitivity: 'base' }
+  ));
+}
+
 function renderStatus() {
   const existing = document.querySelector('.status-banner');
   if (existing) existing.remove();
@@ -1363,7 +1373,8 @@ function openBehaviorDetail(candidateId) {
 }
 
 function renderTable(interview) {
-  const rows = buildRows(interview);
+  const rankedRows = buildRows(interview);
+  const rows = scoreEntryRows(rankedRows);
   const body = $('#score-body');
   const canDeleteCandidates = isAdminUser();
   body.innerHTML = rows.map(row => {
@@ -1447,8 +1458,8 @@ function renderTable(interview) {
     button.addEventListener('click', () => openBehaviorDetail(button.dataset.id));
   });
 
-  renderMetrics(interview, rows);
-  renderPrintReport(interview, rows);
+  renderMetrics(interview, rankedRows);
+  renderPrintReport(interview, rankedRows);
 }
 
 function render() {
