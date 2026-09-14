@@ -106,16 +106,40 @@ async function getStudentTestList() {
  * テスト問題を取得（RPC経由、answer_keyは含まれない）
  * @param {string} testId
  * @param {string} section - 'goii', 'bunpo', 'chokkai'
+ * @param {number|null} revision - 受験開始時に固定した定義リビジョン
  * @returns {Array|null} 問題データJSON
  */
-async function getTestQuestions(testId, section) {
-  const { data, error } = await supabase.rpc('get_test_questions', {
+async function getTestQuestions(testId, section, revision = null) {
+  const rpcName = revision == null
+    ? 'get_test_questions'
+    : 'get_test_questions_for_revision';
+  const params = {
     p_test_id: testId,
     p_section: section
-  });
+  };
+  if (revision != null) params.p_revision = revision;
+
+  const { data, error } = await supabase.rpc(rpcName, params);
   if (error) {
     console.error('問題取得エラー:', error);
     return null;
   }
   return data;
+}
+
+/**
+ * 現在公開中の問題定義リビジョンを受験開始時に固定する。
+ * @param {string} testId
+ * @returns {number|null}
+ */
+async function getActiveTestRevision(testId) {
+  const { data, error } = await supabase.rpc('get_active_test_revision', {
+    p_test_id: testId
+  });
+  if (error) {
+    console.error('テストリビジョン取得エラー:', error);
+    return null;
+  }
+  const revision = Number(data);
+  return Number.isInteger(revision) && revision > 0 ? revision : null;
 }
