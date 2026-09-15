@@ -44,5 +44,20 @@ assert.match(
   /\.print-table tbody td:first-child\s*\{[^}]*position:\s*static;[^}]*box-shadow:\s*none;/s,
   '印刷時は順位列に画面用の追加シャドウ罫線を残さないこと'
 );
+assert.match(
+  css,
+  /\.print-behavior-card \.pb-analysis\s*\{[^}]*background:\s*#f6f3fb;[^}]*color:\s*#594a70;/s,
+  '選択肢下の分析コメントを選択肢とは異なる注釈デザインにすること'
+);
+assert.match(
+  css,
+  /\.print-behavior-card \.pb-analysis::before\s*\{[^}]*content:\s*"判断ポイント";[^}]*background:\s*#8064a2;/s,
+  '分析コメントに判断ポイントのラベルを表示すること'
+);
+assert.match(
+  css,
+  /\.print-behavior-card \.pb-option\s*\{[^}]*color:\s*#26364a;[^}]*font-weight:\s*600;/s,
+  '未選択肢も印刷で読める濃い文字色と太さにすること'
+);
 
 console.log('behavior print pagination tests: ok');
