@@ -187,6 +187,56 @@ R.render_image_select_grid = function(q, container) {
   container.appendChild(block);
 };
 
+const _rehydrators = [];
+
+function registerRehydrator(node, run) {
+  _rehydrators.push({
+    alive() { return !!(node && node.isConnected); },
+    run(root) {
+      if (!node || !node.isConnected) return;
+      if (root && root !== document && !root.contains(node)) return;
+      run();
+    }
+  });
+}
+
+R.rehydrateFromHidden = function(root) {
+  for (let i = _rehydrators.length - 1; i >= 0; i -= 1) {
+    if (!_rehydrators[i].alive()) {
+      _rehydrators.splice(i, 1);
+      continue;
+    }
+    _rehydrators[i].run(root || document);
+  }
+};
+
+function plainTileWord(word) {
+  return String(word || '').replace(/<ruby>([^<]*)<rt>[^<]*<\/rt><\/ruby>/g, '$1');
+}
+
+function parseOrderedTiles(words, saved) {
+  const target = String(saved || '');
+  if (!target) return null;
+  const remaining = words.slice();
+  const selected = [];
+  let rest = target;
+  while (rest.length) {
+    let best = -1;
+    let bestLen = -1;
+    remaining.forEach((word, index) => {
+      const plain = plainTileWord(word);
+      if (plain && rest.startsWith(plain) && plain.length > bestLen) {
+        best = index;
+        bestLen = plain.length;
+      }
+    });
+    if (best < 0) return null;
+    selected.push(remaining.splice(best, 1)[0]);
+    rest = rest.slice(plainTileWord(selected[selected.length - 1]).length);
+  }
+  return { selected, remaining };
+}
+
 // tile_sort_buckets: カテゴリ分類
 R.render_tile_sort_buckets = function(q, container) {
   const block = createQBlock(q.title_html);
@@ -205,11 +255,12 @@ R.render_tile_sort_buckets = function(q, container) {
     block.appendChild(ex);
   }
 
-  // 状態管理
+  // 状態管理。hydrated 前の hidden は、空の state で上書きしない。
   const state = {
     selectedKey: null,            // 現在選択中のタイル key
     placement: {},                // key -> bucketId（'g3-b-<id>'）またはundefined（プール内）
   };
+  let hydrated = false;
 
   const tileMap = {};             // key -> {label}
   q.tiles.forEach(t => { tileMap[t.key] = t; });
@@ -274,12 +325,25 @@ R.render_tile_sort_buckets = function(q, container) {
   resetBtn.textContent = '↺ Đặt lại / リセット';
   resetBtn.style.cssText = 'font-size:12px;padding:4px 12px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555';
   resetBtn.onclick = () => {
+    hydrated = true;
     state.selectedKey = null;
     state.placement = {};
     rerender();
   };
   resetDiv.appendChild(resetBtn);
   block.appendChild(resetDiv);
+
+  function beginUserEdit() {
+    if (!hydrated && q.buckets.some(b => {
+      const h = document.getElementById(b.id);
+      return h && h.value && h.value !== '[]';
+    })) {
+      rehydrate();
+      return false;
+    }
+    hydrated = true;
+    return true;
+  }
 
   function makeTile(key) {
     const tile = document.createElement('button');
@@ -290,6 +354,7 @@ R.render_tile_sort_buckets = function(q, container) {
     tile.dataset.key = key;
     tile.onclick = (e) => {
       e.stopPropagation();
+      if (!beginUserEdit()) return;
       // 既に置かれているタイルをクリック → 取り出してプールに戻す
       if (state.placement[key]) {
         delete state.placement[key];
@@ -304,12 +369,21 @@ R.render_tile_sort_buckets = function(q, container) {
   }
 
   function placeOrPick(bucketId) {
-    if (state.selectedKey) {
-      // 選択中のタイルをこのバケットに置く
-      state.placement[state.selectedKey] = bucketId;
-      state.selectedKey = null;
-      rerender();
-    }
+    if (!state.selectedKey) return;
+    if (!beginUserEdit()) return;
+    // 選択中のタイルをこのバケットに置く
+    state.placement[state.selectedKey] = bucketId;
+    state.selectedKey = null;
+    rerender();
+  }
+
+  function readBucketKeys(raw) {
+    if (!raw || raw === '[]') return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch (_) {}
+    return [];
   }
 
   function updateHiddenFields() {
@@ -317,8 +391,31 @@ R.render_tile_sort_buckets = function(q, container) {
       const bucketId = 'g3-b-' + String(b.id).replace('g3_', '');
       const keys = Object.keys(state.placement).filter(k => state.placement[k] === bucketId);
       const h = document.getElementById(b.id);
-      if (h) h.value = JSON.stringify(keys);
+      if (!h) return;
+      const next = JSON.stringify(keys);
+      if (!hydrated && h.value && h.value !== '[]' && h.value !== next) return;
+      h.value = next;
     });
+  }
+
+  function rehydrate() {
+    const placement = {};
+    let any = false;
+    q.buckets.forEach(b => {
+      const h = document.getElementById(b.id);
+      if (!h || !h.isConnected) return;
+      const bucketId = 'g3-b-' + String(b.id).replace('g3_', '');
+      readBucketKeys(h.value).forEach(key => {
+        if (!tileMap[key]) return;
+        placement[key] = bucketId;
+        any = true;
+      });
+    });
+    if (!any) return;
+    state.placement = placement;
+    state.selectedKey = null;
+    hydrated = true;
+    rerender();
   }
 
   function rerender() {
@@ -350,6 +447,8 @@ R.render_tile_sort_buckets = function(q, container) {
 
   rerender();
   container.appendChild(block);
+  const anchor = block.querySelector('input[type=hidden]');
+  if (anchor) registerRehydrator(anchor, rehydrate);
 };
 
 // table_fill: 表の穴埋め
@@ -391,6 +490,7 @@ function renderTest3G6CategoryTiles(q, container) {
   ];
   const exampleKeys = new Set(['A', 'D', 'F']);
   const state = { selectedKey: null, placement: {} };
+  let hydrated = false;
   const tileMap = {};
   tiles.forEach(t => { tileMap[t.key] = t; });
 
@@ -428,6 +528,7 @@ function renderTest3G6CategoryTiles(q, container) {
   resetBtn.textContent = 'リセット';
   resetBtn.style.cssText = 'font-size:12px;padding:4px 12px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer;color:#555';
   resetBtn.onclick = () => {
+    hydrated = true;
     state.selectedKey = null;
     state.placement = {};
     rerender();
@@ -448,6 +549,7 @@ function renderTest3G6CategoryTiles(q, container) {
     tile.onclick = (e) => {
       e.stopPropagation();
       if (isExample) return;
+      if (!beginUserEdit()) return;
       if (state.placement[key]) {
         delete state.placement[key];
         state.selectedKey = null;
@@ -459,8 +561,21 @@ function renderTest3G6CategoryTiles(q, container) {
     return tile;
   }
 
+  function beginUserEdit() {
+    if (!hydrated && buckets.some(b => {
+      const h = document.getElementById(b.id);
+      return h && h.value;
+    })) {
+      rehydrate();
+      return false;
+    }
+    hydrated = true;
+    return true;
+  }
+
   function placeSelected(bucketId) {
     if (!state.selectedKey) return;
+    if (!beginUserEdit()) return;
     state.placement[state.selectedKey] = bucketId;
     state.selectedKey = null;
     rerender();
@@ -470,8 +585,30 @@ function renderTest3G6CategoryTiles(q, container) {
     buckets.forEach(b => {
       const keys = tiles.map(t => t.key).filter(k => state.placement[k] === b.id);
       const hidden = document.getElementById(b.id);
-      if (hidden) hidden.value = keys.join(',');
+      if (!hidden) return;
+      const next = keys.join(',');
+      if (!hydrated && hidden.value && hidden.value !== next) return;
+      hidden.value = next;
     });
+  }
+
+  function rehydrate() {
+    const placement = {};
+    let any = false;
+    buckets.forEach(b => {
+      const hidden = document.getElementById(b.id);
+      if (!hidden || !hidden.isConnected || !hidden.value) return;
+      hidden.value.split(',').map(key => key.trim()).filter(Boolean).forEach(key => {
+        if (!tileMap[key] || exampleKeys.has(key)) return;
+        placement[key] = b.id;
+        any = true;
+      });
+    });
+    if (!any) return;
+    state.placement = placement;
+    state.selectedKey = null;
+    hydrated = true;
+    rerender();
   }
 
   function rerender() {
@@ -491,6 +628,8 @@ function renderTest3G6CategoryTiles(q, container) {
 
   rerender();
   container.appendChild(block);
+  const anchor = block.querySelector('input[type=hidden]');
+  if (anchor) registerRehydrator(anchor, rehydrate);
 }
 
 R.render_table_fill = function(q, container) {
@@ -847,6 +986,16 @@ R.render_word_puzzle = function(q, container) {
 
     // 状態
     const state = { selected: [], remaining: p.words.slice() };
+    let hydrated = false;
+
+    function beginUserEdit() {
+      if (!hydrated && hidden.value) {
+        rehydrate();
+        return false;
+      }
+      hydrated = true;
+      return true;
+    }
 
     function makeTile(word, inAnswer) {
       const tile = document.createElement('button');
@@ -869,6 +1018,7 @@ R.render_word_puzzle = function(q, container) {
       state.selected.forEach((w, i) => {
         const t = makeTile(w, true);
         t.onclick = () => {
+          if (!beginUserEdit()) return;
           // クリックで未選択側に戻す
           state.selected.splice(i, 1);
           state.remaining.push(w);
@@ -880,6 +1030,7 @@ R.render_word_puzzle = function(q, container) {
       state.remaining.forEach((w, i) => {
         const t = makeTile(w, false);
         t.onclick = () => {
+          if (!beginUserEdit()) return;
           state.remaining.splice(i, 1);
           state.selected.push(w);
           render();
@@ -887,10 +1038,23 @@ R.render_word_puzzle = function(q, container) {
         tilesArea.appendChild(t);
       });
       // 隠しフィールドを更新（rubyタグを除去したプレーン文字列）
-      const plain = state.selected.map(w => w.replace(/<ruby>([^<]*)<rt>[^<]*<\/rt><\/ruby>/g, '$1')).join('');
+      const plain = state.selected.map(w => plainTileWord(w)).join('');
+      if (!hydrated && hidden.value && hidden.value !== plain) return;
       hidden.value = plain;
     }
+
+    function rehydrate() {
+      if (!hidden.isConnected || !hidden.value || hydrated) return;
+      const parsed = parseOrderedTiles(p.words, hidden.value);
+      if (!parsed) return;
+      state.selected = parsed.selected;
+      state.remaining = parsed.remaining;
+      hydrated = true;
+      render();
+    }
+
     render();
+    registerRehydrator(hidden, rehydrate);
     block.appendChild(puzzleDiv);
   });
   container.appendChild(block);
@@ -943,6 +1107,16 @@ R.render_tile_select = function(q, container) {
     wrap.appendChild(hidden);
 
     const state = { selected: [], remaining: (item.tiles || []).slice() };
+    let hydrated = false;
+
+    function beginUserEdit() {
+      if (!hydrated && hidden.value) {
+        rehydrate();
+        return false;
+      }
+      hydrated = true;
+      return true;
+    }
 
     function makeTile(t, placed, disabled) {
       const btn = document.createElement('button');
@@ -970,6 +1144,7 @@ R.render_tile_select = function(q, container) {
       state.selected.forEach(t => {
         const btn = makeTile(t, true, false);
         btn.onclick = () => {
+          if (!beginUserEdit()) return;
           const i = state.selected.indexOf(t);
           if (i >= 0) state.selected.splice(i, 1);
           state.remaining.push(t);
@@ -984,6 +1159,7 @@ R.render_tile_select = function(q, container) {
         const btn = makeTile(t, false, isLast);
         if (!isLast) {
           btn.onclick = () => {
+            if (!beginUserEdit()) return;
             const i = state.remaining.indexOf(t);
             if (i >= 0) state.remaining.splice(i, 1);
             state.selected.push(t);
@@ -993,9 +1169,23 @@ R.render_tile_select = function(q, container) {
         tilesArea.appendChild(btn);
       });
 
-      hidden.value = isLast ? state.remaining[0].value : '';
+      const next = isLast ? state.remaining[0].value : '';
+      if (!hydrated && hidden.value && hidden.value !== next) return;
+      hidden.value = next;
     }
+
+    function rehydrate() {
+      if (!hidden.isConnected || !hidden.value || hydrated) return;
+      const left = (item.tiles || []).find(t => t.value === hidden.value);
+      if (!left) return;
+      state.remaining = [left];
+      state.selected = (item.tiles || []).filter(t => t !== left);
+      hydrated = true;
+      render();
+    }
+
     render();
+    registerRehydrator(hidden, rehydrate);
     block.appendChild(wrap);
   });
   container.appendChild(block);
@@ -2206,9 +2396,65 @@ R.renderSection = function(questions, container) {
 };
 
 /**
+ * 同一受験・同一パートの再生回数。
+ * sessionStorage だけだと別タブで戻る。localStorage をタブ間の正にし、
+ * 受験キーが分かったあとは window.AUDIO_SERVER_PLAYS も重ねる。
+ * 回数は ended ではなく再生開始で消費する。
+ */
+const _sealedAudioLocks = [];
+
+function audioAttemptKey() {
+  return window.AUDIO_ATTEMPT_KEY || window.CURRENT_TEST_ID || 'test';
+}
+
+function audioPlayStorageKey(attemptKey, section, audioSource) {
+  return `audio-play-count:${attemptKey}:${section}:${audioSource}`;
+}
+
+function readStoredPlayCount(storageKey) {
+  let count = 0;
+  try {
+    count = Math.max(count, Number(localStorage.getItem(storageKey)) || 0);
+  } catch (_) {}
+  try {
+    count = Math.max(count, Number(sessionStorage.getItem(storageKey)) || 0);
+  } catch (_) {}
+  return count;
+}
+
+function writeStoredPlayCount(storageKey, count) {
+  const value = String(count);
+  try { localStorage.setItem(storageKey, value); } catch (_) {}
+  try { sessionStorage.setItem(storageKey, value); } catch (_) {}
+}
+
+R.migrateAudioPlayCounts = function(fromAttempt, toAttempt) {
+  if (!fromAttempt || !toAttempt || fromAttempt === toAttempt) return;
+  if (!String(fromAttempt).startsWith('pending:')) return;
+  const prefix = `audio-play-count:${fromAttempt}:`;
+  const nextPrefix = `audio-play-count:${toAttempt}:`;
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) keys.push(key);
+    }
+    keys.forEach(key => {
+      const dest = nextPrefix + key.slice(prefix.length);
+      if (localStorage.getItem(dest) == null) localStorage.setItem(dest, localStorage.getItem(key));
+      localStorage.removeItem(key);
+    });
+  } catch (_) {}
+};
+
+R.syncAudioPlayLocks = function() {
+  _sealedAudioLocks.forEach(entry => entry.sync());
+};
+
+/**
  * 音声要素を「指定回数のみ再生・巻き戻し不可」に制限。
  * ネイティブコントロールを削除し、再生ボタン + 一時停止ボタンのみ提供。
- * 上限回数の終了後は「再生済み」ラベルに置換。
+ * 再生を始めた時点で回数を消費する。上限後は「再生済み」。
  */
 R.sealAudio = function(audio) {
   if (audio.dataset.sealed === '1') return;
@@ -2217,17 +2463,50 @@ R.sealAudio = function(audio) {
   audio.style.display = 'none';
   audio.preload = 'none';
   const playLimit = Math.max(1, Number(window.AUDIO_PLAY_LIMIT) || 1);
-  const audioSource = audio.getAttribute('src') || audio.currentSrc || '';
-  const storageKey = `audio-play-count:${window.CURRENT_TEST_ID || 'test'}:${audioSource}`;
-  let completedPlays = 0;
-  try {
-    completedPlays = Math.min(playLimit, Math.max(0, Number(sessionStorage.getItem(storageKey)) || 0));
-  } catch (_) {
-    // Storage may be unavailable in strict/private browser modes.
+  const audioSource = audio.getAttribute('src') || audio.currentSrc || 'audio';
+  const panel = audio.closest && audio.closest('[id^="tab-"]');
+  const section = panel && panel.id.indexOf('tab-') === 0
+    ? panel.id.slice(4)
+    : (window.AUDIO_PLAY_SECTION || 'section');
+
+  let plays = 0;
+  let countedThisElement = false;
+
+  function storageKey() {
+    return audioPlayStorageKey(audioAttemptKey(), section, audioSource);
+  }
+
+  function serverPlays() {
+    const root = window.AUDIO_SERVER_PLAYS;
+    if (!root || typeof root !== 'object') return 0;
+    const sectionMap = root[section];
+    if (!sectionMap || typeof sectionMap !== 'object') return 0;
+    return Math.max(0, Number(sectionMap[audioSource]) || 0);
+  }
+
+  function readPlays() {
+    return Math.min(playLimit, Math.max(serverPlays(), readStoredPlayCount(storageKey())));
+  }
+
+  function writePlays(count) {
+    writeStoredPlayCount(storageKey(), count);
+    if (typeof window.persistAudioPlayCount === 'function') {
+      try {
+        window.persistAudioPlayCount({
+          storageKey: storageKey(),
+          count,
+          section,
+          source: audioSource,
+        });
+      } catch (_) {}
+    }
   }
 
   const wrap = document.createElement('span');
   wrap.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:4px 0';
+
+  const row = document.createElement('span');
+  row.style.cssText = 'display:inline-flex;align-items:center;gap:8px';
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -2237,46 +2516,71 @@ R.sealAudio = function(audio) {
   const status = document.createElement('span');
   status.style.cssText = 'font-size:12px;color:#666';
 
-  const showLocked = () => {
-    const done = document.createElement('span');
-    done.textContent = `🔇 ${completedPlays}/${playLimit}回 再生済み`;
-    done.style.cssText = 'display:inline-block;color:#888;font-size:13px;padding:6px 10px;background:#eee;border-radius:6px;border:1px solid #ccc';
-    if (wrap.parentNode) wrap.parentNode.replaceChild(done, wrap);
-  };
+  const done = document.createElement('span');
+  done.hidden = true;
+  done.style.cssText = 'display:inline-block;color:#888;font-size:13px;padding:6px 10px;background:#eee;border-radius:6px;border:1px solid #ccc';
+
+  function applyLockState() {
+    const consumed = plays >= playLimit && !countedThisElement;
+    row.hidden = consumed;
+    done.hidden = !consumed;
+    done.textContent = `🔇 ${Math.min(plays, playLimit)}/${playLimit}回 再生済み`;
+    if (consumed) {
+      try { audio.pause(); } catch (_) {}
+      return;
+    }
+    if (countedThisElement) return;
+    if (plays > 0) {
+      btn.textContent = '▶ もう一度再生 (Play again)';
+      btn.style.background = '#1a5276';
+      status.textContent = `${plays}/${playLimit}回 再生済み`;
+    } else {
+      btn.textContent = '▶ 再生 (Play)';
+      btn.style.background = '#1a5276';
+      status.textContent = '';
+    }
+  }
+
+  function sync() {
+    if (countedThisElement) return;
+    plays = readPlays();
+    applyLockState();
+  }
 
   btn.onclick = () => {
-    if (completedPlays >= playLimit) return;
-    if (audio.paused) {
-      audio.play();
-    } else {
-      audio.pause();
-    }
+    if (plays >= playLimit && !countedThisElement) return;
+    if (audio.paused) audio.play();
+    else audio.pause();
   };
 
   audio.addEventListener('play', () => {
+    if (!countedThisElement) {
+      countedThisElement = true;
+      if (plays < playLimit) {
+        plays += 1;
+        writePlays(plays);
+      }
+    }
     btn.textContent = '⏸ 一時停止 (Pause)';
     btn.style.background = '#d35400';
-    status.textContent = `再生中... (${completedPlays + 1}/${playLimit})`;
+    status.textContent = `再生中... (${Math.min(plays, playLimit)}/${playLimit})`;
   });
   audio.addEventListener('pause', () => {
-    if (!audio.ended) {
-      btn.textContent = '▶ 続ける (Resume)';
-      btn.style.background = '#1a5276';
-      status.textContent = '一時停止中';
-    }
+    if (audio.ended || !countedThisElement) return;
+    btn.textContent = '▶ 続ける (Resume)';
+    btn.style.background = '#1a5276';
+    status.textContent = '一時停止中';
   });
   audio.addEventListener('ended', () => {
-    completedPlays = Math.min(playLimit, completedPlays + 1);
-    try { sessionStorage.setItem(storageKey, String(completedPlays)); } catch (_) {}
-    if (completedPlays < playLimit) {
+    if (plays < playLimit) {
+      countedThisElement = false;
       lastTime = 0;
-      audio.currentTime = 0;
-      btn.textContent = '▶ もう一度再生 (Play again)';
-      btn.style.background = '#1a5276';
-      status.textContent = `${completedPlays}/${playLimit}回 再生済み`;
+      try { audio.currentTime = 0; } catch (_) {}
+      applyLockState();
       return;
     }
-    showLocked();
+    countedThisElement = false;
+    applyLockState();
   });
   // 巻き戻し禁止（万一seekingが発火した場合の保険）
   let lastTime = 0;
@@ -2284,16 +2588,24 @@ R.sealAudio = function(audio) {
   audio.addEventListener('seeking', () => {
     if (audio.currentTime < lastTime) audio.currentTime = lastTime;
   });
+  window.addEventListener('storage', event => {
+    if (event.key !== storageKey()) return;
+    if (countedThisElement) return;
+    const next = Number(event.newValue) || 0;
+    if (next >= playLimit) {
+      plays = Math.max(plays, Math.min(playLimit, next));
+      applyLockState();
+    }
+  });
 
-  wrap.appendChild(btn);
-  wrap.appendChild(status);
+  row.appendChild(btn);
+  row.appendChild(status);
+  wrap.appendChild(row);
+  wrap.appendChild(done);
   if (audio.parentNode) audio.parentNode.insertBefore(wrap, audio);
-  if (completedPlays >= playLimit) {
-    showLocked();
-  } else if (completedPlays > 0) {
-    btn.textContent = '▶ もう一度再生 (Play again)';
-    status.textContent = `${completedPlays}/${playLimit}回 再生済み`;
-  }
+  plays = readPlays();
+  applyLockState();
+  _sealedAudioLocks.push({ sync });
 };
 
 })();

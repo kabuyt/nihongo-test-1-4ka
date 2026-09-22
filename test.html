@@ -113,7 +113,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="common/config.js"></script>
 <script src="common/auth.js"></script>
-<script src="common/renderer.js?v=20260720-choice-bank-1"></script>
+<script src="common/renderer.js?v=20260922-tile-restore-1"></script>
 <script src="common/grading.js"></script>
 <script>
 // ===== テストページ メイン =====
@@ -308,7 +308,56 @@ function restoreCheckpointAnswers(answers) {
       radio.checked = radio.value === String(value);
     });
   });
+  if (window.TestRenderer && typeof TestRenderer.rehydrateFromHidden === 'function') {
+    TestRenderer.rehydrateFromHidden(document);
+  }
 }
+
+function monthlyAudioScopeStorageKey(testId, revision) {
+  return `monthly-audio-scope:${testId}:${revision}`;
+}
+
+function readMonthlyAudioScope(testId, revision) {
+  try {
+    const saved = localStorage.getItem(monthlyAudioScopeStorageKey(testId, revision));
+    if (saved) return saved;
+  } catch (_) {}
+  return `pending:${testId}:${revision}`;
+}
+
+function bindMonthlyAudioAttempt(progress) {
+  if (!TIME_LIMITS_ENABLED || IS_SERVER_SCORED_TEST || !_testRevision) return;
+  const started = progress && progress.attempt_started_at;
+  if (started) {
+    const nextKey = `${TEST_ID}:${_testRevision}:${started}`;
+    const prevKey = window.AUDIO_ATTEMPT_KEY;
+    if (prevKey && String(prevKey).startsWith('pending:') && prevKey !== nextKey && window.TestRenderer) {
+      TestRenderer.migrateAudioPlayCounts(prevKey, nextKey);
+    }
+    window.AUDIO_ATTEMPT_KEY = nextKey;
+    try { localStorage.setItem(monthlyAudioScopeStorageKey(TEST_ID, _testRevision), nextKey); } catch (_) {}
+  }
+  window.AUDIO_SERVER_PLAYS = (progress && progress.audio_plays) || {};
+  if (window.TestRenderer && TestRenderer.syncAudioPlayLocks) TestRenderer.syncAudioPlayLocks();
+}
+
+// 再生開始を受験セッションへ残す。RPC が未適用でも localStorage の消費は残る。
+// この関数は受験画面が再生したときだけ呼ばれる。ここでは実行しない。
+window.persistAudioPlayCount = function(meta) {
+  if (!TIME_LIMITS_ENABLED || IS_SERVER_SCORED_TEST || !_testRevision || !meta || !meta.source) return;
+  if (typeof supabase === 'undefined' || !supabase || typeof supabase.rpc !== 'function') return;
+  supabase.rpc('record_monthly_audio_play', {
+    p_test_id: TEST_ID,
+    p_test_revision: _testRevision,
+    p_section: meta.section || 'chokkai',
+    p_audio_key: meta.source
+  }).then(result => {
+    if (result && result.error) return;
+    if (result && result.data && result.data.audio_plays) {
+      window.AUDIO_SERVER_PLAYS = result.data.audio_plays;
+    }
+  }).catch(() => {});
+};
 
 async function saveSectionCheckpoint(section, complete = true) {
   if (IS_SERVER_SCORED_TEST || !_testRevision) return null;
@@ -494,6 +543,10 @@ function showError(title, detail) {
     tabBar.appendChild(btn);
   });
 
+  if (TIME_LIMITS_ENABLED && !IS_SERVER_SCORED_TEST && _testRevision) {
+    window.AUDIO_ATTEMPT_KEY = readMonthlyAudioScope(TEST_ID, _testRevision);
+  }
+
   // セクション読み込み
   const container = document.getElementById('sections-container');
   for (const sec of _sections) {
@@ -573,6 +626,7 @@ function showError(title, detail) {
       return;
     }
     _checkpointAnswers = progress?.answers || {};
+    bindMonthlyAudioAttempt(progress);
     restoreCheckpointAnswers(_checkpointAnswers);
     _lockedSections = new Set(progress?.completed_sections || []);
     _lockedSections.forEach(sec => setSectionLocked(sec, true));

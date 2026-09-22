@@ -166,8 +166,10 @@ function grade_radio_exact(rule, answerKey, userAnswers) {
   const answers = Array.isArray(answerKey) ? answerKey : (rule.field_ids || []).map(fid => answerKey[fid]);
   (rule.field_ids || []).forEach((fid, i) => {
     const expected = answers[i];
-    if (!expected) return;
-    if (normalize(userAnswers[fid]) === normalize(expected)) score += pts;
+    if (expected === undefined || expected === null || expected === '') return;
+    const expList = Array.isArray(expected) ? expected : [expected];
+    const actN = normalize(userAnswers[fid]);
+    if (expList.some(e => normalize(e) === actN)) score += pts;
   });
   return score;
 }
