@@ -1,0 +1,474 @@
+// ============ クレペリン検査 結果一覧 ============
+
+let allRecords = [];
+let currentFilteredRecords = [];
+let currentRecord = null;
+
+function getCandidateNo(record) {
+  if (!record || !record.name) return '';
+  const value = String(record.name).trim();
+  const match = value.match(/(?:^|\/\s*)No\.?\s*(.+)$/i);
+  return match ? match[1].trim() : '';
+}
+
+function getInterviewName(record) {
+  if (!record || !record.name) return '';
+  const value = String(record.name).trim();
+  const match = value.match(/^(.*?)\s*\/\s*No\.?\s*.+$/i);
+  return match ? match[1].trim() : '';
+}
+
+function getDisplayName(record) {
+  const candidateNo = getCandidateNo(record);
+  const interviewName = getInterviewName(record);
+  if (candidateNo && interviewName) return `${interviewName} / 候補者 ${candidateNo}`;
+  return candidateNo ? `候補者 ${candidateNo}` : (record.name || '(無名)');
+}
+
+function makeStoredName(interviewName, candidateNo) {
+  return `${interviewName.trim()} / No.${candidateNo.trim()}`;
+}
+
+function summarizeRecord(record) {
+  const results = Array.isArray(record.results) ? record.results : [];
+  const rowCounts = results.map(r => Results.calcRowStats(r).correct);
+  const firstCorrect = results
+    .filter(r => r.phase === 'first')
+    .reduce((sum, r) => sum + Results.calcRowStats(r).correct, 0);
+  const secondCorrect = results
+    .filter(r => r.phase === 'second')
+    .reduce((sum, r) => sum + Results.calcRowStats(r).correct, 0);
+  const totalCorrect = rowCounts.reduce((sum, value) => sum + value, 0);
+  const avgCorrect = rowCounts.length ? totalCorrect / rowCounts.length : null;
+  return { firstCorrect, secondCorrect, totalCorrect, avgCorrect };
+}
+
+async function loadRecords() {
+  const container = document.getElementById('list-container');
+  const stats = document.getElementById('stats');
+
+  try {
+    const { data, error } = await supabase
+      .from('kraepelin_results')
+      .select('*')
+      .order('started_at', { ascending: false, nullsFirst: false });
+
+    if (error) {
+      container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">読み込みエラー: ${error.message}</div>`;
+      stats.textContent = '';
+      return;
+    }
+
+    allRecords = data || [];
+    stats.textContent = `${allRecords.length} 件`;
+    updateInterviewFilter();
+    render();
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">読み込み失敗: ${e.message}</div>`;
+  }
+}
+
+function updateInterviewFilter() {
+  const select = document.getElementById('filter-interview');
+  if (!select) return;
+  const current = select.value;
+  const interviews = [...new Set(allRecords.map(getInterviewName).filter(Boolean))]
+    .sort((a, b) => b.localeCompare(a, 'ja'));
+  select.innerHTML = '<option value="">全ての面接</option>' + interviews
+    .map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join('');
+  if (interviews.includes(current)) select.value = current;
+}
+
+function render() {
+  const container = document.getElementById('list-container');
+  const search = document.getElementById('search-name').value.trim().toLowerCase();
+  const filterInterview = document.getElementById('filter-interview').value;
+  const filterJudgment = document.getElementById('filter-judgment').value;
+
+  let filtered = allRecords;
+  if (search) {
+    filtered = filtered.filter(r => {
+      const target = `${r.name || ''} ${getCandidateNo(r)} ${getDisplayName(r)}`.toLowerCase();
+      return target.includes(search);
+    });
+  }
+  if (filterInterview) filtered = filtered.filter(r => getInterviewName(r) === filterInterview);
+  if (filterJudgment) filtered = filtered.filter(r => r.judgment_type === filterJudgment);
+  currentFilteredRecords = filtered;
+
+  document.getElementById('stats').textContent = `${filtered.length} 件 / 全 ${allRecords.length} 件`;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">該当する記録がありません</div>';
+    return;
+  }
+
+  const judgeLabels = {
+    'typical': '定型',
+    'near-typical': '準定型',
+    'atypical': '非定型',
+    'incomplete': '未完了',
+  };
+
+  const rows = filtered.map(r => {
+    const date = r.started_at || r.created_at;
+    const dateStr = formatDate(date);
+    const judgeKey = r.judgment_type || 'incomplete';
+    const judgeLabel = judgeLabels[judgeKey] || judgeKey;
+    const summary = summarizeRecord(r);
+    const candidateNo = getCandidateNo(r);
+    const interviewName = getInterviewName(r);
+    const avg = summary.avgCorrect != null ? summary.avgCorrect.toFixed(1) : (r.avg_correct != null ? Number(r.avg_correct).toFixed(1) : '-');
+    const errPct = r.error_rate != null ? (Number(r.error_rate) * 100).toFixed(1) + '%' : '-';
+    return `
+      <tr class="row-hover" data-id="${r.id}">
+        <td onclick="event.stopPropagation();"><input type="checkbox" class="row-check" data-id="${r.id}"></td>
+        <td>${escapeHtml(interviewName || '-')}</td>
+        <td class="col-name">${escapeHtml(candidateNo || '-')}</td>
+        <td>${escapeHtml(getDisplayName(r))}</td>
+        <td>${dateStr}</td>
+        <td><span class="judge-badge ${judgeKey}">${judgeLabel}</span></td>
+        <td>${r.judgment_score != null ? r.judgment_score : '-'}</td>
+        <td>${summary.totalCorrect || '-'}</td>
+        <td>${avg}</td>
+        <td>${errPct}</td>
+        <td class="col-actions">
+          <button class="btn-mini" onclick="event.stopPropagation();showDetail('${r.id}')">詳細</button>
+          <button class="btn-mini danger" onclick="event.stopPropagation();deleteRecord('${r.id}', this)">削除</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all-cb" title="全選択"></th>
+          <th>面接名</th>
+          <th>候補者番号</th>
+          <th>表示名</th>
+          <th>検査日時</th>
+          <th>判定</th>
+          <th>スコア</th>
+          <th>合計正答</th>
+          <th>平均正答</th>
+          <th>誤答率</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  container.querySelectorAll('tr.row-hover').forEach(tr => {
+    tr.addEventListener('click', (e) => {
+      // チェックボックスのセル以外でクリックされた場合のみ詳細を開く
+      if (e.target.closest('.row-check') || e.target.tagName === 'INPUT') return;
+      showDetail(tr.dataset.id);
+    });
+  });
+
+  const selectAll = document.getElementById('select-all-cb');
+  if (selectAll) {
+    selectAll.checked = false;
+    selectAll.onchange = () => {
+      container.querySelectorAll('.row-check').forEach(cb => cb.checked = selectAll.checked);
+    };
+  }
+}
+
+function showDetail(id) {
+  const record = allRecords.find(r => r.id === id);
+  if (!record) return;
+  currentRecord = record;
+  document.getElementById('modal-title').textContent = `${record.name || '(無名)'} - ${formatDate(record.started_at || record.created_at)}`;
+  document.getElementById('modal-bg').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // モーダルがレイアウトされてから描画（canvas の高さ確保のため）
+  setTimeout(() => {
+    Results.render(record.results || [], {
+      name: record.name,
+      startedAt: record.started_at || record.created_at,
+    });
+  }, 50);
+}
+
+function printDetail() {
+  if (!currentRecord) { window.print(); return; }
+  const orig = document.title;
+  const safeName = (currentRecord.name || '無名').replace(/[\\/:*?"<>|]/g, '');
+  const d = new Date(currentRecord.started_at || currentRecord.created_at);
+  const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  document.title = `クレペリン検査_${safeName}_${dateStr}`;
+  window.print();
+  setTimeout(() => { document.title = orig; }, 1000);
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+async function deleteRecord(id, btn) {
+  if (!confirm('この記録を削除します。よろしいですか？')) return;
+  btn.disabled = true;
+  const { error } = await supabase.from('kraepelin_results').delete().eq('id', id);
+  if (error) {
+    alert('削除失敗: ' + error.message);
+    btn.disabled = false;
+    return;
+  }
+  allRecords = allRecords.filter(r => r.id !== id);
+  render();
+}
+
+function formatDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '-';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}/${m}/${day} ${hh}:${mm}`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function csvCell(value) {
+  const text = value == null ? '' : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function exportCsv() {
+  const selectedIds = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+  const source = selectedIds.length
+    ? selectedIds.map(id => allRecords.find(r => r.id === id)).filter(Boolean)
+    : currentFilteredRecords;
+
+  if (!source.length) {
+    alert('出力する記録がありません');
+    return;
+  }
+
+  const headers = [
+    'candidate_no',
+    'interview_name',
+    'display_name',
+    'started_at',
+    'judgment_type',
+    'judgment_score',
+    'first_correct',
+    'second_correct',
+    'total_correct',
+    'avg_correct',
+    'error_rate',
+    'record_id',
+  ];
+
+  const lines = [headers.join(',')];
+  source.forEach(r => {
+    const summary = summarizeRecord(r);
+    const row = [
+      getCandidateNo(r),
+      getInterviewName(r),
+      getDisplayName(r),
+      r.started_at || r.created_at || '',
+      r.judgment_type || '',
+      r.judgment_score != null ? r.judgment_score : '',
+      summary.firstCorrect,
+      summary.secondCorrect,
+      summary.totalCorrect,
+      summary.avgCorrect != null ? summary.avgCorrect.toFixed(2) : '',
+      r.error_rate != null ? r.error_rate : '',
+      r.id || '',
+    ];
+    lines.push(row.map(csvCell).join(','));
+  });
+
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kraepelin_results_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function assignInterviewName() {
+  const input = document.getElementById('assign-interview-name');
+  const interviewName = input.value.trim();
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+
+  if (!interviewName) {
+    input.focus();
+    alert('面接名を入力してください');
+    return;
+  }
+  if (ids.length === 0) {
+    alert('面接名を設定する結果を選択してください');
+    return;
+  }
+
+  const targets = ids.map(id => allRecords.find(r => r.id === id)).filter(Boolean);
+  const missingCandidate = targets.filter(r => !getCandidateNo(r));
+  if (missingCandidate.length) {
+    alert('候補者番号が読み取れない記録が含まれています。No.形式の面接用結果だけを選択してください。');
+    return;
+  }
+
+  const btn = document.getElementById('assign-interview-btn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '設定中...';
+
+  try {
+    for (const record of targets) {
+      const newName = makeStoredName(interviewName, getCandidateNo(record));
+      const { error } = await supabase
+        .from('kraepelin_results')
+        .update({ name: newName })
+        .eq('id', record.id);
+      if (error) throw error;
+      record.name = newName;
+    }
+    updateInterviewFilter();
+    document.getElementById('filter-interview').value = interviewName;
+    render();
+  } catch (err) {
+    alert('面接名の設定に失敗しました: ' + err.message);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+// guide.html をフェッチして PDF Blob を生成
+async function generateGuidePDF(opts) {
+  const resp = await fetch('guide.html');
+  const html = await resp.text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const guideStyleText = [...doc.querySelectorAll('head style')].map(s => s.textContent).join('\n');
+  const guideContent = doc.querySelector('.guide');
+  if (!guideContent) throw new Error('guide.html の .guide が見つかりません');
+
+  // toolbar はPDFでは不要なので除去
+  const toolbar = guideContent.querySelector('.guide-toolbar');
+  if (toolbar) toolbar.remove();
+
+  const tempStyle = document.createElement('style');
+  tempStyle.id = 'temp-guide-style';
+  tempStyle.textContent = guideStyleText;
+  document.head.appendChild(tempStyle);
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;visibility:hidden;z-index:-1;';
+  wrapper.appendChild(guideContent);
+  document.body.appendChild(wrapper);
+
+  try {
+    await new Promise(res => setTimeout(res, 200));
+    const blob = await html2pdf().set(opts).from(guideContent).output('blob');
+    return blob;
+  } finally {
+    tempStyle.remove();
+    wrapper.remove();
+  }
+}
+
+// PDF一括ダウンロード（ZIP）
+async function bulkDownloadPDF() {
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.dataset.id);
+  if (ids.length === 0) { alert('対象を選択してください'); return; }
+  const targets = ids.map(id => allRecords.find(r => r.id === id)).filter(Boolean);
+
+  const btn = document.getElementById('bulk-pdf-btn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+
+  // モーダルを show（display:flex）するが visibility:hidden で見えなくする
+  // → html2canvas は layout 済みの DOM を撮影できる
+  const modalBg = document.getElementById('modal-bg');
+  const wasShown = modalBg.classList.contains('show');
+  modalBg.classList.add('show');
+  modalBg.style.visibility = 'hidden';
+
+  const zip = new JSZip();
+  const opts = {
+    margin: [10, 10, 10, 10],
+    image: { type: 'jpeg', quality: 0.92 },
+    html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  try {
+    for (let i = 0; i < targets.length; i++) {
+      const r = targets[i];
+      btn.textContent = `生成中 ${i + 1}/${targets.length}...`;
+      currentRecord = r;
+      Results.render(r.results || [], { name: r.name, startedAt: r.started_at || r.created_at });
+      // レイアウト + canvas 描画完了を待つ（visibility:hidden 配下では rAF が発火しないので setTimeout のみ）
+      await new Promise(res => setTimeout(res, 300));
+
+      const reportEl = document.querySelector('.modal-panel .result-container');
+      const blob = await html2pdf().set(opts).from(reportEl).output('blob');
+      const safeName = (r.name || '無名').replace(/[\\/:*?"<>|]/g, '');
+      const d = new Date(r.started_at || r.created_at);
+      const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+      zip.file(`クレペリン検査_${safeName}_${dateStr}.pdf`, blob);
+    }
+
+    // ガイドPDFも同封
+    btn.textContent = 'ガイドPDF生成中...';
+    try {
+      const guideBlob = await generateGuidePDF(opts);
+      zip.file('00_結果の見方.pdf', guideBlob);
+    } catch (e) {
+      console.warn('ガイドPDF生成失敗（本体はZIPに含めます）:', e);
+    }
+
+    btn.textContent = 'ZIP生成中...';
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `クレペリン検査_一括_${new Date().toISOString().slice(0, 10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('PDF生成失敗: ' + err.message);
+    console.error(err);
+  } finally {
+    if (!wasShown) modalBg.classList.remove('show');
+    modalBg.style.visibility = '';
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+// イベント
+document.getElementById('search-name').addEventListener('input', render);
+document.getElementById('filter-interview').addEventListener('change', render);
+document.getElementById('filter-judgment').addEventListener('change', render);
+document.getElementById('csv-btn').addEventListener('click', exportCsv);
+document.getElementById('assign-interview-btn').addEventListener('click', assignInterviewName);
+document.getElementById('bulk-pdf-btn').addEventListener('click', bulkDownloadPDF);
+document.getElementById('modal-bg').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modal-bg')) closeModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+loadRecords();
