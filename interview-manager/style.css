@@ -417,9 +417,10 @@ h2 {
   flex-wrap: wrap;
 }
 
-.active-meta label { display: flex; align-items: center; gap: 8px; }
+.active-meta label { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .active-meta select { min-height: 32px; width: 140px; padding-block: 4px; }
 .active-meta input[type="date"] { min-height: 32px; width: 150px; padding-block: 4px; }
+.active-meta input[type="text"] { min-height: 32px; width: 140px; padding-block: 4px; }
 
 .sender-display { display: grid; gap: 3px; font-size: 12px; }
 .sender-display span { color: var(--muted); font-weight: 700; }
@@ -1054,6 +1055,111 @@ td input { min-height: 34px; padding: 5px 7px; }
 .behavior-detail-btn { min-height: 31px; padding: 5px 9px; font-size: 10px; }
 .behavior-tendency-brief { max-width: 230px; margin: 5px 0 8px; color: #394a61; font-size: 10.5px; font-weight: 700; line-height: 1.5; }
 
+/* ===== 数学テストの回答シート（ダイアログ表示と印刷で共用） =====
+   このページは候補者表のために全 table を幅1960px・列ごとの固定幅にしている。
+   シートの表にもそれが漏れてくるので、詳細度を上げて打ち消している。 */
+.math-dialog { width: min(980px, calc(100vw - 32px)); }
+.math-dialog-actions { display: flex; align-items: center; gap: 8px; }
+.math-sheet { color: #182234; font-size: 11px; }
+.math-sheet .ms-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid #243b5a; }
+.math-sheet .ms-head h2 { margin: 0; font-size: 17px; color: #1d3555; }
+.math-sheet .ms-sub { margin-top: 2px; font-size: 10px; color: #526177; }
+.math-sheet .ms-meta { font-size: 10px; line-height: 1.6; color: #526177; text-align: right; white-space: nowrap; }
+.math-sheet .ms-summary { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; margin-bottom: 8px; border: 1px solid #c3ccd7; }
+.math-sheet .ms-summary > div { min-width: 0; padding: 5px 8px; border-right: 1px solid #c3ccd7; }
+.math-sheet .ms-summary > div:last-child { border-right: 0; }
+.math-sheet .ms-summary span { display: block; font-size: 8.5px; color: #657489; }
+.math-sheet .ms-summary strong { font-size: 12.5px; word-break: keep-all; overflow-wrap: break-word; }
+.math-sheet table.ms-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; border-spacing: 0; }
+.math-sheet .ms-table th,
+.math-sheet .ms-table td { position: static; height: auto; padding: 4px 6px; border: 1px solid #c3ccd7; color: #182234; font-size: 11px; line-height: 1.4; vertical-align: middle; word-break: keep-all; overflow-wrap: break-word; box-shadow: none; background: #fff; }
+.math-sheet .ms-table thead th { background: #243b5a; color: #fff; font-size: 10px; font-weight: 700; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.math-sheet .ms-table tbody tr:hover td { background: #fff; }
+.math-sheet .ms-table tr { break-inside: avoid; page-break-inside: avoid; }
+.math-sheet .ms-table .ms-sec td { background: #eef2f6; font-size: 10px; font-weight: 700; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.math-sheet .ms-table .ms-no { width: 7%; text-align: center; }
+.math-sheet .ms-table .ms-q { width: 57%; text-align: left; }
+.math-sheet .ms-table .ms-ans { width: 14%; text-align: center; font-size: 11.5px; }
+.math-sheet .ms-table .ms-mark { width: 8%; text-align: center; font-size: 13px; }
+.math-sheet .ms-q-text { font-size: 10.5px; line-height: 1.45; }
+.math-sheet .ms-q-math { margin-top: 1px; font-size: 12px; }
+.math-sheet .ms-q-img { display: block; max-width: 70%; max-height: 90px; margin-top: 3px; }
+.math-sheet .ms-q-opts { margin-top: 2px; font-size: 10px; color: #3f4d5e; }
+.math-sheet .ms-nb { white-space: nowrap; }
+.math-sheet .ms-blank { font-size: 10px; color: #8a95a5; }
+.math-sheet .mf { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 2px; line-height: 1.1; font-size: 0.85em; }
+.math-sheet .mf-n { padding: 0 2px; border-bottom: 1px solid currentColor; }
+.math-sheet .mf-d { padding: 0 2px; }
+.math-sheet .mf-mixed { display: inline-flex; align-items: center; white-space: nowrap; }
+.math-sheet .mf-mixed .mf { margin-left: 1px; }
+.math-sheet .ms-note { margin: 6px 0 0; font-size: 9px; color: #657489; }
+.math-answers-btn { border: 0; background: none; cursor: pointer; font: inherit; }
+.viet-answers-btn { border: 0; background: none; cursor: pointer; font: inherit; }
+
+/* ベトナム国語の回答シート: 本人の回答・正解・選択肢を出さない3列表（問/問われていること/正誤）。種類は区切り行で示す */
+.viet-sheet .ms-table .ms-q { width: 85%; }
+/* 冒頭の説明欄を入れても1人A4縦1枚に収まるよう、国語の表は行を詰める（本人の回答欄が無く1行で済むため） */
+.math-sheet.viet-sheet .ms-table td { padding: 1.5px 6px; line-height: 1.22; }
+.math-sheet.viet-sheet .ms-table .ms-sec td { padding: 2px 6px; }
+/* 日本語学習への見通し（分析結果の中。得意分野のメリット・苦手分野で苦労しそうな点） */
+.math-sheet .vs-outlook { margin: 4px 0 3px; padding: 4px 7px 5px; border-top: 1px dashed #c3ccd7; }
+.math-sheet .vs-outlook h4 { margin: 0 0 2px; font-size: 10px; color: #1d3555; }
+.math-sheet .vs-outlook ul { margin: 0; padding: 0; list-style: none; }
+.math-sheet .vs-outlook li { margin: 0; font-size: 9.5px; line-height: 1.4; color: #182234; word-break: auto-phrase; overflow-wrap: break-word; }
+.math-sheet .vs-outlook li b { display: inline-block; min-width: 8em; margin-right: 4px; font-size: 9px; }
+.math-sheet .vs-outlook li.is-plus b { color: #3f7a4d; }
+.math-sheet .vs-outlook li.is-minus b { color: #b0463f; }
+/* 冒頭の「このテストについて」（目的と出題例） */
+.viet-sheet .vs-overview { margin-bottom: 6px; padding: 5px 9px 6px; border: 1px solid #c3ccd7; border-left: 3px solid #243b5a; font-size: 9.5px; line-height: 1.42; color: #26344a; break-inside: avoid; page-break-inside: avoid; }
+.viet-sheet .vs-overview h3 { margin: 0 0 3px; font-size: 11px; color: #1d3555; }
+.viet-sheet .vs-overview p { margin: 0 0 4px; }
+.viet-sheet .vs-examples { margin: 0; padding-left: 1.5em; }
+.viet-sheet .vs-examples li { margin: 2px 0 0; }
+.viet-sheet .vs-examples b { display: inline-block; min-width: 5.5em; margin-right: 4px; color: #1d3555; }
+.viet-sheet .vs-vi { margin-right: 6px; font-style: italic; color: #3f4d5e; }
+.viet-sheet .vs-examples u { text-decoration: none; font-weight: 700; color: #1d3555; }
+
+/* 数学テストの分析結果（.ms-summary と table.ms-table の間に挿入。表ではなくgridで組む） */
+.math-sheet .ms-analysis { margin-bottom: 8px; padding: 6px 8px 7px; border: 1px solid #c3ccd7; background: #f7f9fb; break-inside: avoid; page-break-inside: avoid; }
+.math-sheet .ms-analysis h3 { margin: 0 0 5px; font-size: 11px; color: #1d3555; }
+.math-sheet .ms-an-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin-bottom: 5px; }
+.math-sheet .ms-an-item { display: grid; grid-template-columns: 14.5em 1fr 3em; align-items: center; gap: 6px; min-width: 0; padding: 1px 0; }
+.math-sheet .ms-an-label { font-size: 10px; color: #3f4d5e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.math-sheet .ms-an-bar { position: relative; height: 6px; border-radius: 3px; background: #dde3ea; overflow: hidden; }
+.math-sheet .ms-an-bar i { display: block; height: 100%; background: #243b5a; border-radius: 3px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.math-sheet .ms-an-item strong { font-size: 10px; text-align: right; white-space: nowrap; color: #182234; }
+.math-sheet .ms-an-item.is-weak .ms-an-label { color: #c0504d; }
+.math-sheet .ms-an-item.is-weak .ms-an-bar i { background: #c0504d; }
+.math-sheet .ms-an-item.is-strong .ms-an-bar i { background: #4f8a5b; }
+.math-sheet .ms-an-line { margin: 0 0 3px; font-size: 10.5px; color: #182234; word-break: keep-all; overflow-wrap: break-word; }
+.math-sheet .ms-an-line b { margin-right: 4px; font-size: 9px; font-weight: 700; color: #526177; }
+.math-sheet .ms-an-comment { margin: 0 0 3px; font-size: 10.5px; line-height: 1.5; color: #182234; word-break: keep-all; overflow-wrap: break-word; }
+.math-sheet .ms-an-note { margin: 0; font-size: 8.5px; color: #8a95a5; word-break: keep-all; overflow-wrap: break-word; }
+
+/* AIが誤答から読み取った「つまずきの傾向」（.ms-analysisと同じ見た目でコンパクトに） */
+.math-sheet .ms-ai-notes { margin-bottom: 8px; padding: 6px 8px 7px; border: 1px solid #c3ccd7; background: #f7f9fb; break-inside: avoid; page-break-inside: avoid; }
+.math-sheet .ms-ai-notes h3 { margin: 0 0 5px; font-size: 11px; color: #1d3555; }
+.math-sheet .ms-ai-notes p { margin: 0 0 3px; font-size: 10.5px; line-height: 1.5; color: #182234; word-break: keep-all; overflow-wrap: break-word; }
+.math-sheet .ms-ai-notes .ms-an-note { margin: 0; }
+
+/* AI所見ダイアログ（各テストの結果からAIが総合所見・数学のつまずき傾向を作成） */
+.ai-dialog { width: min(760px, calc(100vw - 32px)); }
+.ai-dialog-note { margin: 0; padding: 10px 22px 0; font-size: 12.5px; color: var(--muted); word-break: keep-all; overflow-wrap: break-word; }
+.ai-card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; display: grid; gap: 8px; }
+.ai-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ai-card-head strong { font-size: 13.5px; }
+.ai-status { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.ai-status-none { color: var(--muted); background: var(--panel-soft); }
+.ai-status-ok { color: #1f6b3a; background: var(--green-soft); }
+.ai-status-edited { color: #185a8c; background: var(--blue-soft); }
+.ai-status-stale { color: #b03024; background: var(--red-soft); }
+.ai-field { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.ai-field-label { color: var(--text); }
+.ai-field textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; font: inherit; font-size: 13px; line-height: 1.5; color: var(--text); resize: vertical; }
+.ai-char-count { justify-self: end; font-size: 10.5px; font-weight: 400; color: var(--muted); }
+.ai-card-actions { display: flex; justify-content: flex-end; }
+.ai-card-actions .ai-save { min-height: 32px; padding: 6px 14px; font-size: 12.5px; }
+
 .behavior-dialog {
   width: min(880px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
@@ -1116,8 +1222,8 @@ td input { min-height: 34px; padding: 5px 7px; }
 .print-behavior-card .pb-option.selected strong { color: #205d39; }
 .print-behavior-card .pb-option.selected.alert-selected { border-color: #c0392b; background: #fdf0ee; color: #7f231b; }
 .print-behavior-card .pb-option.selected.alert-selected strong { color: #b03024; }
-.print-behavior-card .pb-analysis { display: flex; align-items: flex-start; gap: 6px; margin-top: 5px; padding: 4px 6px; border: 0; border-left: 2px solid #8064a2; border-radius: 3px; background: #f6f3fb; color: #594a70; font-size: 9.5px; line-height: 1.4; }
-.print-behavior-card .pb-analysis::before { flex: 0 0 auto; content: "判断ポイント"; padding: 1px 5px; border-radius: 999px; background: #8064a2; color: #fff; font-size: 7.5px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+.print-behavior-card .pb-analysis { display: flex; align-items: flex-start; gap: 6px; margin-top: 5px; padding: 4px 6px; border: 0; border-left: 2px solid #5d6f85; border-radius: 3px; background: #f3f6f9; color: #3f4d5e; font-size: 9.5px; line-height: 1.4; }
+.print-behavior-card .pb-analysis::before { flex: 0 0 auto; content: "判断ポイント"; padding: 1px 5px; border-radius: 999px; background: #5d6f85; color: #fff; font-size: 7.5px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
 
 @media (max-width: 1180px) {
   .app { grid-template-columns: 270px minmax(0, 1fr); }
@@ -1171,6 +1277,12 @@ td input { min-height: 34px; padding: 5px 7px; }
 
   /* テスト説明書はA4縦。結果表（A4横）とは別ページ設定にする */
   @page guide { size: 210mm 297mm; margin: 12mm; }
+  /* 数学テストの回答シート（A4縦・1人1枚。順位のPDFとは別に出す） */
+  @page mathsheet { size: 210mm 297mm; margin: 12mm; }
+  .print-math { display: none; }
+  body.printing-math .print-report { display: none; }
+  body.printing-math .print-math { display: block; page: mathsheet; }
+  body.printing-math .math-sheet + .math-sheet { break-before: page; page-break-before: always; }
   .print-guide { display: none; }
   body.printing-guide .print-report { display: none; }
   body.printing-guide .print-guide { display: block; page: guide; }
@@ -1392,6 +1504,10 @@ td input { min-height: 34px; padding: 5px 7px; }
     border: 1px solid #bcc6d2;
     border-radius: 3px;
   }
+  /* 職種セルが増えたときの5列版。列数だけ変え、他のスタイルは共通のまま使う */
+  .print-overview.print-overview-5col {
+    grid-template-columns: 0.8fr 1.5fr 1fr 1.1fr 0.6fr;
+  }
 
   .print-overview > div {
     min-width: 0;
@@ -1414,13 +1530,14 @@ td input { min-height: 34px; padding: 5px 7px; }
     border-spacing: 0;
   }
 
-  .print-col-rank { width: 8.5%; }
-  .print-col-candidate { width: 17%; }
+  .print-col-no { width: 4%; }
+  .print-col-rank { width: 8%; }
+  .print-col-candidate { width: 16%; }
   .print-col-kraepelin { width: 13.5%; }
-  .print-col-score { width: 7%; }
-  .print-col-pin { width: 12.5%; }
-  .print-col-subject-rank { width: 11%; }
-  .print-col-note { width: 16.5%; }
+  .print-col-score { width: 6%; }
+  .print-col-pin { width: 11.5%; }
+  .print-col-subject-rank { width: 8%; }
+  .print-col-note { width: 21%; }
 
   .print-table th,
   .print-table td {
@@ -1447,10 +1564,12 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-table tbody tr:nth-child(even) td { background: #f5f7fa; }
   /* 画面用の固定列シャドウを印刷表では解除し、全罫線を1pxに統一する。 */
   .print-table tbody td:first-child { position: static; left: auto; z-index: auto; box-shadow: none; }
-  .print-rank strong { font-size: 16.5px; font-weight: 800; white-space: nowrap; }
+  .print-rank strong { font-size: 10.5px; font-weight: 700; white-space: nowrap; }
   /* 得点行は「（4/5科目）」付きで列幅を超えることがある。はみ出して罫線に重なるので折り返す */
   .print-rank span { display: block; margin-top: 2px; color: #4a5a70; font-size: 9.5px; font-weight: 700; white-space: normal; line-height: 1.3; overflow-wrap: break-word; }
   .print-rank .print-reference-note { color: #8a5a00; font-size: 8.5px; white-space: normal; }
+  /* 採用担当は候補者番号で覚えているので、番号だけの列を太字で置く */
+  .print-table .print-no { font-size: 15px; font-weight: 800; white-space: nowrap; }
 
   .print-candidate {
     text-align: left !important;
@@ -1466,7 +1585,6 @@ td input { min-height: 34px; padding: 5px 7px; }
 
   /* 用紙が縦のまま印刷されて列幅が足りない場合でも、氏名が写真側へはみ出さないようにする */
   .print-candidate-copy { min-width: 0; overflow: hidden; }
-  .print-candidate-no { display: block; margin-bottom: 1px; color: #52647c; font-size: 8.5px; font-weight: 700; white-space: nowrap; }
   .print-candidate strong {
     display: block;
     font-size: 10.5px;
@@ -1503,6 +1621,12 @@ td input { min-height: 34px; padding: 5px 7px; }
   }
   .print-kraepelin-breakdown:first-of-type { margin-top: 2px; }
   .print-kraepelin-breakdown:last-of-type { margin-bottom: 3px; }
+  /* クレペリンの列がある面接（内訳4行）でも候補者8人の順位表を1ページに収めるため、内訳の行間と行の余白を詰める
+     （2026-09-21 富士金属の実データで8人目が2ページ目に落ちていた。AI所見を入れる前から） */
+  .print-table .print-kraepelin-breakdown { line-height: 1.25; }
+  .print-table .print-kraepelin-breakdown:last-of-type { margin-bottom: 1px; }
+  .print-table .print-kraepelin strong { margin-bottom: 0; font-size: 12px; }
+  .print-table tbody td { padding-top: 3px; padding-bottom: 3px; }
   .print-kraepelin-breakdown b { font-weight: 700; }
   .print-kraepelin-breakdown em { font-style: normal; white-space: nowrap; }
   .print-kraepelin-breakdown i { color: #8a97a8; font-style: normal; font-size: 7.5px; }
@@ -1526,9 +1650,13 @@ td input { min-height: 34px; padding: 5px 7px; }
     overflow-wrap: anywhere;
     white-space: pre-line;
   }
+  /* AI所見（全角80字程度）でも1人4行ほどに収め、候補者8人の順位表を1ページに保つ */
+  .print-table .print-note { font-size: 9.5px; line-height: 1.4; word-break: auto-phrase; overflow-wrap: break-word; }
+  /* 「でしょ／う。」のように語の途中で折り返さない。句読点・空白の位置で折り返し、長すぎる語だけ途中で折る */
 
   .print-footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 12px;
     margin-top: 6px;
@@ -1538,6 +1666,9 @@ td input { min-height: 34px; padding: 5px 7px; }
     page-break-inside: avoid;
   }
   .print-footer span:last-child { max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* AIが総合所見を作成した面接だけ出す注記。会社名（:last-child）の見た目はそのまま保つため、
+     DOM上は会社名より前に置きつつ order で見た目だけ最後の行に回す。 */
+  .print-footer-ai-note { color: #55647a; }
 }
 
 .reference-note { color: var(--amber); font-weight: 800; }

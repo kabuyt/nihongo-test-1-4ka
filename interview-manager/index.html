@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面接事前テスト管理</title>
-  <link rel="stylesheet" href="style.css?v=54">
+  <link rel="stylesheet" href="style.css?v=74">
 </head>
 <body>
   <section id="auth-screen" class="auth-screen">
@@ -47,6 +47,10 @@
         <label>
           会社名
           <input id="interview-company" type="text" placeholder="〇〇商事" required>
+        </label>
+        <label>
+          職種
+          <input id="interview-job-type" type="text" placeholder="塗装">
         </label>
         <label>
           送り出し
@@ -111,6 +115,14 @@
               <span>送り出し</span>
               <strong id="active-sender-name"></strong>
             </div>
+            <label id="active-job-type-control">
+              職種
+              <input id="active-job-type" type="text" placeholder="塗装" aria-label="選択中の面接の職種">
+            </label>
+            <div id="active-job-type-display" class="sender-display hidden">
+              <span>職種</span>
+              <strong id="active-job-type-name"></strong>
+            </div>
             <span id="current-account" class="account-pill"></span>
           </div>
         </div>
@@ -121,6 +133,9 @@
           <button id="open-link-sheet" class="btn"><i data-lucide="qr-code"></i>QR受験票</button>
           <button id="print-pdf" class="btn"><i data-lucide="printer"></i>PDF</button>
           <button id="print-guide-btn" class="btn"><i data-lucide="file-text"></i>テスト説明</button>
+          <button id="print-math-btn" class="btn" title="数学テストの問題と各候補者の回答（順位のPDFとは別）"><i data-lucide="calculator"></i>数学の回答</button>
+          <button id="print-viet-btn" class="btn" title="ベトナム国語テストの問題と各候補者の回答（順位のPDFとは別）"><i data-lucide="languages"></i>国語の回答</button>
+          <button id="ai-dialog-btn" class="btn" title="各テストの結果からAI（OpenAI）が総合所見・数学のつまずき傾向を作成"><i data-lucide="sparkles"></i>AI所見</button>
           <button id="export-csv" class="btn"><i data-lucide="download"></i>CSV</button>
           <button id="logout" class="btn"><i data-lucide="log-out"></i>退出</button>
         </div>
@@ -234,6 +249,7 @@
 
   <section id="print-report" class="print-report"></section>
   <section id="print-guide" class="print-report print-guide"></section>
+  <section id="print-math" class="print-report print-math"></section>
 
   <section id="archive-sheet" class="link-sheet hidden" aria-label="アーカイブ一覧">
     <div class="link-sheet-inner">
@@ -272,6 +288,42 @@
     </div>
   </section>
 
+  <!-- 数学テスト・ベトナム国語テストの回答（順位のPDFとは別に印刷する）。両方でこのダイアログを使い回す -->
+  <dialog id="math-dialog" class="behavior-dialog math-dialog">
+    <div class="behavior-dialog-card">
+      <header>
+        <div>
+          <p class="eyebrow" id="math-dialog-eyebrow">数学テストの回答</p>
+          <h2 id="math-dialog-title">数学テスト</h2>
+        </div>
+        <div class="math-dialog-actions">
+          <button type="button" class="btn" id="math-dialog-print"><i data-lucide="printer"></i>この人を印刷</button>
+          <button type="button" class="icon-btn" id="math-dialog-close" aria-label="閉じる"><i data-lucide="x"></i></button>
+        </div>
+      </header>
+      <div id="math-dialog-body" class="behavior-dialog-body"></div>
+    </div>
+  </dialog>
+
+  <!-- AI所見（OpenAIが各テストの結果から総合所見・数学のつまずき傾向を作成。担当者が確認・修正してから使う） -->
+  <dialog id="ai-dialog" class="behavior-dialog ai-dialog">
+    <div class="behavior-dialog-card">
+      <header>
+        <div>
+          <p class="eyebrow">各テストの結果から自動作成</p>
+          <h2>AI所見</h2>
+        </div>
+        <div class="math-dialog-actions">
+          <button type="button" class="btn primary" id="ai-generate-all"><i data-lucide="sparkles"></i>全員分を作る</button>
+          <button type="button" class="icon-btn" id="ai-dialog-close" aria-label="閉じる"><i data-lucide="x"></i></button>
+        </div>
+      </header>
+      <p class="ai-dialog-note">各テストの結果をもとにAI（OpenAI）が作成します。作り直すと、直した文は消えます。</p>
+      <div id="ai-dialog-body" class="behavior-dialog-body"></div>
+    </div>
+  </dialog>
+
+
   <dialog id="behavior-dialog" class="behavior-dialog">
     <form method="dialog" class="behavior-dialog-card">
       <header>
@@ -289,6 +341,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="../common/config.js"></script>
   <script src="https://kabuyt.github.io/behavior-test/questions.js?v=8"></script>
-  <script src="app.js?v=69"></script>
+  <script src="app.js?v=92"></script>
 </body>
 </html>

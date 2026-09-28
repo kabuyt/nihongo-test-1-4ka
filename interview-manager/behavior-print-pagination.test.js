@@ -46,12 +46,12 @@ assert.match(
 );
 assert.match(
   css,
-  /\.print-behavior-card \.pb-analysis\s*\{[^}]*background:\s*#f6f3fb;[^}]*color:\s*#594a70;/s,
+  /\.print-behavior-card \.pb-analysis\s*\{[^}]*background:\s*#f3f6f9;[^}]*color:\s*#3f4d5e;/s,
   '選択肢下の分析コメントを選択肢とは異なる注釈デザインにすること'
 );
 assert.match(
   css,
-  /\.print-behavior-card \.pb-analysis::before\s*\{[^}]*content:\s*"判断ポイント";[^}]*background:\s*#8064a2;/s,
+  /\.print-behavior-card \.pb-analysis::before\s*\{[^}]*content:\s*"判断ポイント";[^}]*background:\s*#5d6f85;/s,
   '分析コメントに判断ポイントのラベルを表示すること'
 );
 assert.match(

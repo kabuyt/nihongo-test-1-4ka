@@ -230,6 +230,12 @@ function withHonorific(name) {
   return /(様|御中)$/.test(value) ? value : `${value} 様`;
 }
 
+// 印刷物の「面接情報」欄に職種セルを足す。未設定なら空セルを増やさず4列のまま。
+function printOverviewJobTypeHtml(interview) {
+  const jobType = String(interview?.jobType ?? '').trim();
+  return jobType ? `<div><span>職種</span><strong>${escapeHtml(jobType)}</strong></div>` : '';
+}
+
 function normalizeNo(value) {
   return String(value || '').trim().replace(/^No\.?\s*/i, '');
 }
@@ -391,10 +397,17 @@ function formatScore(value) {
   return value == null ? '-' : Number(value).toFixed(Number.isInteger(value) ? 0 : 1);
 }
 
+// 数学と日本語単語（30問→100点換算）は小数点以下を切り上げる（Kabuさん指示 2026-09-18）。
+// 29/30*100=96.666… のような値の浮動小数の誤差で 70.00000000000001→71 とならないよう、先に丸めてから切り上げる。
+function ceilScore(value) {
+  if (value == null) return null;
+  return Math.ceil(Number(Number(value).toFixed(6)));
+}
+
 function japaneseTo100(value) {
   const raw = numeric(value);
   if (raw == null) return null;
-  return Number(Math.min(100, Math.max(0, raw / 30 * 100)).toFixed(1));
+  return ceilScore(Math.min(100, Math.max(0, raw / 30 * 100)));
 }
 
 function judgmentLabel(value) {
@@ -455,7 +468,12 @@ function vietnameseComment(score) {
   return '基礎語彙・文法の理解に課題があり、文章理解を含めた継続的な学習が必要です。';
 }
 
+// AIが所見を作成済み（担当者の直しがあればそちらを優先）ならそれを使い、無ければ従来のルールベースの文にする。
 function overallComment(row, interview) {
+  if (row.aiAnalysis) {
+    const aiText = String((row.aiAnalysis.edited_overall ?? row.aiAnalysis.overall) || '').trim();
+    if (aiText) return aiText;
+  }
   const comments = [];
   const kraepelin = kraepelinComment(row.kSummary, row.kraepelinEval);
   if (isTestEnabled(interview, 'kraepelin') && kraepelin) comments.push(`【クレペリン】${kraepelin}`);
@@ -469,6 +487,12 @@ function candidateFromDb(row) {
     no: row.candidate_no,
     name: row.name || '',
     photo: row.memo || '',
+    // 数学テストの回答記録（2026-09-17以降の受験分のみ。それ以前は点数しか残っていない）
+    mathAnswers: row.math_answers && Array.isArray(row.math_answers.answers) ? row.math_answers : null,
+    // ベトナム国語テストの回答記録（2026-09-21以降の受験分のみ）
+    vietnameseAnswers: row.vietnamese_answers && Array.isArray(row.vietnamese_answers.answers) ? row.vietnamese_answers : null,
+    // AIが各テストの結果から書いた所見（{v, generated_at, model, input_hash, overall, math_notes, edited_*}）
+    aiAnalysis: row.ai_analysis && typeof row.ai_analysis === 'object' ? row.ai_analysis : null,
     score: {
       math: row.math_score ?? '',
       vietnamese: row.vietnamese_score ?? '',
@@ -486,6 +510,7 @@ function interviewFromDb(row, candidatesByInterview) {
     id: row.id,
     date: row.interview_date,
     company: row.company,
+    jobType: row.job_type || '',
     senderOrg: row.sender_org || 'BARAEN',
     notes: row.notes || '',
     testSettings: normalizeTestSettings(row.test_settings),
@@ -788,7 +813,7 @@ function buildRows(interview) {
       behavior: getBehaviorFor(candidate, interview),
       kSummary,
       kraepelinTotal: kSummary?.total ?? null,
-      math: numeric(score.math),
+      math: ceilScore(numeric(score.math)),
       vietnamese: numeric(score.vietnamese),
       japaneseRaw: numeric(score.japanese),
       japanese: japaneseTo100(score.japanese),
@@ -937,8 +962,8 @@ function renderInterviews() {
   list.innerHTML = items.length
     ? items.map(interview => `
       <button class="interview-item ${interview.id === state.activeId ? 'active' : ''}" data-id="${interview.id}">
-        <strong>${formatInterviewName(interview)}</strong>
-        <span>${formatSender(interview.senderOrg)} / ${interview.candidates.length}人</span>
+        <strong>${escapeHtml(formatInterviewName(interview))}${interview.jobType ? `（${escapeHtml(interview.jobType)}）` : ''}</strong>
+        <span>${escapeHtml(formatSender(interview.senderOrg))} / ${interview.candidates.length}人</span>
       </button>
     `).join('')
     : '<p class="interview-empty">表示できる面接がありません。</p>';
@@ -998,6 +1023,7 @@ function subjectScoreCell(row, field, value, rank, options = {}) {
       <div class="score-meta">${note} / 順位 ${value == null ? '-' : rank}</div>
       <div class="score-link-slot">
         ${options.link ? `<a class="mini-link" href="${options.link}" target="_blank" rel="noopener">受験</a>` : ''}
+        ${options.extra || ''}
       </div>
     </div>
   `;
@@ -1125,9 +1151,10 @@ function renderTestGuide(interview) {
         <strong>作成日 ${today}</strong>
       </div>
     </header>
-    <section class="print-overview" aria-label="面接情報">
+    <section class="print-overview${interview.jobType ? ' print-overview-5col' : ''}" aria-label="面接情報">
       <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
       <div><span>受入企業</span><strong>${escapeHtml(withHonorific(interview.company))}</strong></div>
+      ${printOverviewJobTypeHtml(interview)}
       <div><span>送り出し機関</span><strong>${escapeHtml(formatSender(interview.senderOrg) || '-')}</strong></div>
       <div><span>実施テスト</span><strong>${tests.length}種類</strong></div>
     </section>
@@ -1158,13 +1185,586 @@ function renderTestGuide(interview) {
   `;
 }
 
+// ===== 数学テストの回答シート =====
+// 受験ページ(math-test)が保存した math_answers から、問題・本人の回答・正解・正誤の表を作る。
+// 順位のPDFとは別に、受入企業へ「問題と回答」を渡すための独立した印刷。
+// 記録に問題文・画像・選択肢・正解まで入っているので、math-test の questions.js は読まない
+// （このページは行動選択テストの QUESTIONS を既に読み込んでおり、同名で衝突するため）。
+const MATH_TEST_ASSET_BASE = '../math-test/';
+const MATH_SECTIONS = [
+  { from: 1, to: 12, title: '1. 次の計算をしなさい。', short: '計算' },
+  { from: 13, to: 14, title: '2. （　）の中の数の最大公約数を求めなさい。', short: '最大公約数' },
+  { from: 15, to: 16, title: '3. （　）の中の数の最小公倍数を求めなさい。', short: '最小公倍数' },
+  { from: 17, to: 18, title: '4. 次の比を最も簡単な整数の比で表しなさい。', short: '比' },
+  { from: 19, to: 20, title: '5. 次の式の□にあてはまる数を求めなさい。', short: '比例式（□を求める）' },
+  { from: 21, to: 22, title: '6. 次の方程式を解きなさい。', short: '方程式' },
+  { from: 23, to: 30, title: '7. 次の問いに答えなさい。', short: '応用（平均・図形・比例など）' },
+];
+// 受験画面の設問はベトナム語なので、受入企業向けに日本語へ訳したもの。
+// 固定の文言なのでHTMLのまま持つ（数式の塊が途中で改行されないよう nowrap を入れてある）。
+const MATH_PROMPT_JA = {
+  23: 'アオイさんのテストの点数です。平均点は何点ですか。',
+  24: 'この五角柱の面はいくつありますか。',
+  25: '直線ABを対称の軸とする線対称な図形になるように、<span class="ms-nb">ア〜エ</span>から位置を選びなさい。',
+  26: '次のデータの最頻値（最も多く現れる値）を求めなさい。',
+  27: '<span class="ms-nb">x = −7 のとき</span>、次の式の値を求めなさい。',
+  28: 'y は x に比例し、<span class="ms-nb">x = −6 のとき y = −54</span> です。<span class="ms-nb">y を x の式</span>で表しなさい。',
+  29: 'y は x に反比例し、<span class="ms-nb">x = −6 のとき y = 3</span> です。<span class="ms-nb">x = 2 のときの y の値</span>を求めなさい。',
+  30: '三角形ABCで、AHは辺BCを底辺としたときの高さです。AHとBCが垂直であることを正しく表しているものを選びなさい。',
+};
+const MATH_SUFFIX_JA = { 'điểm': '点', 'mặt': '面' };
+
+function mathSectionTitle(id) {
+  const n = Number(id);
+  return MATH_SECTIONS.find(section => n >= section.from && n <= section.to)?.title || '';
+}
+
+// 回答の配列から分野別の正答傾向を集計する（ルールベースのみ・AIは使わない。同じ回答なら常に同じ結果）。
+function mathAnalysis(answers) {
+  const list = Array.isArray(answers) ? answers : [];
+  const sections = MATH_SECTIONS.map(section => {
+    const items = list.filter(item => {
+      const n = Number(item.id);
+      return n >= section.from && n <= section.to;
+    });
+    const total = items.length;
+    const correct = items.filter(item => item.ok).length;
+    return { short: section.short, title: section.title, correct, total };
+  }).filter(section => section.total > 0);
+  const strong = sections.filter(section => section.correct === section.total).map(section => section.short);
+  const weak = sections.filter(section => section.correct / section.total <= 0.5).map(section => section.short);
+  const unanswered = list.filter(item => !item.given).length;
+  const correct = list.filter(item => item.ok).length;
+  const total = list.length;
+  const rate = total ? correct / total : 0;
+
+  let comment = rate >= 0.9 ? '全体としてよく理解できています。'
+    : rate >= 0.7 ? '基礎はおおむね身についています。'
+    : rate >= 0.5 ? '基礎の一部に抜けがあります。'
+    : '基礎の計算から復習が必要です。';
+
+  // 得意は直前の「得意」行に並ぶので、コメントでは繰り返さず苦手だけを言う。
+  if (weak.length) {
+    comment += `${weak.join('・')}は未定着です。`;
+  }
+  if (unanswered >= 5) {
+    comment += `未回答が${unanswered}問あります。`;
+  }
+
+  return { sections, strong, weak, unanswered, correct, total, comment };
+}
+
+// mathAnswerSheetHtml から呼ぶ「分析結果」ブロック（ダイアログ・印刷どちらでも同じHTML）。
+function mathAnalysisHtml(answers) {
+  const analysis = mathAnalysis(answers);
+  const items = analysis.sections.map(section => {
+    const pct = section.total ? Math.round(section.correct / section.total * 100) : 0;
+    const cls = ['ms-an-item'];
+    if (analysis.weak.includes(section.short)) cls.push('is-weak');
+    if (analysis.strong.includes(section.short)) cls.push('is-strong');
+    return `<div class="${cls.join(' ')}"><span class="ms-an-label">${escapeHtml(section.short)}</span><span class="ms-an-bar"><i style="width:${pct}%"></i></span><strong>${escapeHtml(section.correct)}/${escapeHtml(section.total)}</strong></div>`;
+  }).join('');
+  return `
+    <section class="ms-analysis">
+      <h3>分析結果</h3>
+      <div class="ms-an-grid">${items}</div>
+      <p class="ms-an-line"><b>得意</b>${escapeHtml(analysis.strong.join('・') || 'なし')}　<b>苦手</b>${escapeHtml(analysis.weak.join('・') || 'なし')}</p>
+      <p class="ms-an-comment">${escapeHtml(analysis.comment)}</p>
+      <p class="ms-an-note">分野別の正答数から自動で判定しています（満点の分野を得意、正答率5割以下の分野を苦手としています）。</p>
+    </section>
+  `;
+}
+
+// 受験ページの書式「15.4x + -3.5」を「15.4x − 3.5」に整える（表示だけ。記録はそのまま）
+function formatMathValue(value) {
+  return String(value).replace(/x \+ -(\d)/g, 'x − $1');
+}
+
+// 答え欄の前後の文字を付けて読める形にする（例: 「y = 9x」「9点」）
+function mathAnswerWithAffix(item, value) {
+  if (value === '' || value == null) return '';
+  const prefix = String(item.prefix || '').trim();
+  const rawSuffix = String(item.suffix || '').trim();
+  const suffix = MATH_SUFFIX_JA[rawSuffix] ?? rawSuffix;
+  const body = formatMathValue(value) + suffix;
+  return prefix ? `${prefix} ${body}` : body;
+}
+
+// 分数を教科書のような縦書き（上に分子・下に分母）で表示する。
+// 先にHTMLエスケープしてから変換するので、呼び出し側の escapeHtml の代わりに使う。
+function mathFractionHtml(text) {
+  const stacked = (n, d) => `<span class="mf"><span class="mf-n">${n}</span><span class="mf-d">${d}</span></span>`;
+  let out = escapeHtml(text);
+  // (式)/分母 → 括弧を外して分子にする（例: (2x − 3)/5 = (9x + 5)/4）
+  out = out.replace(/\(([^()]+)\)\/(\d+)/g, (m, expr, d) => stacked(expr.trim(), d));
+  // 帯分数「整数 分子/分母」（例: 3 3/20）。数字や「/」の直後から始まらないようにする
+  out = out.replace(/(?<![\d/])(\d+) (\d+)\/(\d+)(?!\d)/g, (m, w, n, d) => `<span class="mf-mixed">${w}${stacked(n, d)}</span>`);
+  // 残りの単純な分数「分子/分母」
+  out = out.replace(/(\d+)\/(\d+)/g, (m, n, d) => stacked(n, d));
+  return out;
+}
+
+function mathAnswerSheetHtml(interview, candidate) {
+  const record = candidate.mathAnswers;
+  const answers = record && Array.isArray(record.answers) ? record.answers : [];
+  const submitted = record?.submitted_at
+    ? new Date(record.submitted_at).toLocaleString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : '-';
+  const unanswered = answers.filter(item => !item.given).length;
+  const parts = splitCandidateName(candidate.name);
+  const displayName = parts.kana || parts.latin || '氏名未入力';
+  let previousSection = null;
+  const rows = answers.map(item => {
+    const section = mathSectionTitle(item.id);
+    const sectionRow = section && section !== previousSection
+      ? `<tr class="ms-sec"><td colspan="5">${escapeHtml(section)}</td></tr>`
+      : '';
+    previousSection = section;
+    const question = [
+      MATH_PROMPT_JA[item.id] ? `<div class="ms-q-text">${MATH_PROMPT_JA[item.id]}</div>` : '',
+      item.math ? `<div class="ms-q-math">${mathFractionHtml(item.math)}</div>` : '',
+      item.image ? `<img class="ms-q-img" src="${escapeHtml(MATH_TEST_ASSET_BASE + item.image)}" alt="">` : '',
+      Array.isArray(item.options) ? `<div class="ms-q-opts">選択肢：${escapeHtml(item.options.join('　'))}</div>` : '',
+    ].join('');
+    const given = mathAnswerWithAffix(item, item.given);
+    return `${sectionRow}<tr>
+      <td class="ms-no">${escapeHtml(item.id)}</td>
+      <td class="ms-q">${question}</td>
+      <td class="ms-ans">${given ? mathFractionHtml(given) : '<span class="ms-blank">（未回答）</span>'}</td>
+      <td class="ms-ans">${mathFractionHtml(mathAnswerWithAffix(item, item.correct))}</td>
+      <td class="ms-mark">${item.ok ? '○' : '×'}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <article class="math-sheet">
+      <header class="ms-head">
+        <div>
+          <h2>数学テスト 回答</h2>
+          <div class="ms-sub">事前テスト（数学検定5級 第1回 1次 相当・全${escapeHtml(record?.total ?? answers.length)}問）</div>
+        </div>
+        <div class="ms-meta">${escapeHtml(formatInterviewName(interview))}<br>受験日時 ${escapeHtml(submitted)}</div>
+      </header>
+      <div class="ms-summary">
+        <div><span>候補者</span><strong>${escapeHtml(candidateLabel(candidate))}　${escapeHtml(displayName)}</strong></div>
+        <div><span>得点</span><strong>${escapeHtml(formatScore(ceilScore(record?.score ?? null)))}点</strong></div>
+        <div><span>正解数</span><strong>${escapeHtml(record?.correct ?? '-')} / ${escapeHtml(record?.total ?? answers.length)}問</strong></div>
+        <div><span>未回答</span><strong>${unanswered}問</strong></div>
+      </div>
+      ${mathAnalysisHtml(answers)}
+      <table class="ms-table">
+        <thead><tr><th class="ms-no">問</th><th class="ms-q">問題</th><th class="ms-ans">本人の回答</th><th class="ms-ans">正解</th><th class="ms-mark">正誤</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="ms-note">問題文は受験時のベトナム語の設問を日本語に訳して表示しています。数式は受験画面と同じです。</p>
+      ${aiMathNotesHtml(candidate)}
+    </article>
+  `;
+}
+
+// AIが誤答から読み取った「つまずきの傾向」（担当者が直していればそちらを優先）。無ければ何も出さない。
+function aiMathNotesHtml(candidate) {
+  const ai = candidate.aiAnalysis;
+  if (!ai) return '';
+  const text = String((ai.edited_math_notes ?? ai.math_notes) || '').trim();
+  if (!text) return '';
+  return `
+    <section class="ms-ai-notes">
+      <h3>つまずきの傾向</h3>
+      <p>${escapeHtml(text)}</p>
+      <p class="ms-an-note">回答の内容からAIが読み取った傾向です（担当者確認済み）。</p>
+    </section>
+  `;
+}
+
+function openMathAnswers(candidateId) {
+  const interview = activeInterview();
+  const candidate = interview?.candidates.find(item => item.id === candidateId);
+  if (!candidate?.mathAnswers) return;
+  $('#math-dialog-eyebrow').textContent = '数学テストの回答';
+  $('#math-dialog-title').textContent = `${candidateLabel(candidate)} ${candidate.name || '氏名未入力'}`;
+  $('#math-dialog-body').innerHTML = mathAnswerSheetHtml(interview, candidate);
+  $('#math-dialog-print').dataset.id = candidateId;
+  $('#math-dialog-print').dataset.kind = 'math';
+  const dialog = $('#math-dialog');
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+  if (window.lucide) lucide.createIcons();
+}
+
+// 順位のPDFとは別の独立した印刷（A4縦・1人1枚から）。
+function printMathAnswers(candidates) {
+  const interview = activeInterview();
+  const targets = (candidates || [])
+    .filter(candidate => candidate.mathAnswers)
+    .sort((a, b) => Number(a.no) - Number(b.no));
+  if (!interview || !targets.length) {
+    alert('数学テストの回答が保存されている候補者がいません。\n（2026年9月17日より前の受験分は点数だけで、回答は残っていません）');
+    return;
+  }
+  $('#print-math').innerHTML = targets.map(candidate => mathAnswerSheetHtml(interview, candidate)).join('');
+  const dialog = $('#math-dialog');
+  if (dialog?.open) dialog.close();
+  document.body.classList.add('printing-math');
+  printWithTitle(interview, targets.length === 1 ? `数学の回答_No.${targets[0].no}` : '数学の回答');
+  setTimeout(() => document.body.classList.remove('printing-math'), 500);
+}
+
+// ===== ベトナム国語テストの回答シート =====
+// 受験ページ(vietnamese-language-test)が保存した vietnamese_answers から、問題・正誤の表を作る。
+// 設問はベトナム語の文法問題そのものなので、問題文・選択肢・正解は訳さず出さない。
+// 「何を問う問題か」だけを自前の日本語要約(VIET_QUESTION_JA)で示す。
+const VIET_CATEGORIES = [
+  { key: 'word_class', label: '品詞（名詞・動詞・形容詞）' },
+  { key: 'connective', label: '関係詞・接続の表現' },
+  { key: 'sentence', label: '文の種類・文の組み立て' },
+  { key: 'meaning', label: '語の意味（同義語・本来の意味）' },
+  { key: 'pronoun', label: '代名詞' },
+];
+// 設問はベトナム語の文法そのものを問うので訳さず、何を問う問題かだけを日本語で示す（自前の要約）。
+// vietnamese-language-test の問題を差し替えたら、この2つも直すこと。
+const VIET_QUESTION_JA = {
+  1: '関係詞（接続語）の使い方が誤っている文を選ぶ',
+  2: '「〜してもらえますか」型の文の種類を答える',
+  3: '形容詞の定義を選ぶ',
+  4: '複文（節が2つ以上の文）でない文を選ぶ',
+  5: '文中の形容詞と動詞の数を数える',
+  6: '動詞だけでできた組を選ぶ',
+  7: '名詞でない語を選ぶ',
+  8: '同音異義語（豆／合格する）の品詞を答える',
+  9: '述語が欠けている文の誤りを見抜く',
+  10: '目的による文の分類（平叙・疑問・感嘆・命令）を答える',
+  11: '同義語だけの組を選ぶ',
+  12: '「平和」と同じ意味の語の組を選ぶ',
+  13: '代名詞「nó（それ）」が指すものを答える',
+  14: '「chạy（走る）」が本来の意味で使われている文を選ぶ',
+  15: '対になった関係詞（〜だけでなく〜も）が表す関係を答える',
+  16: '「〜だけでなく」に続く後半を補う',
+  17: '「Do（〜のために）」が表す意味（原因）を答える',
+  18: '代名詞「chúng tôi（私たち）」の働きを答える',
+  19: '動詞の定義を選ぶ',
+  20: 'ことわざの文の名詞・動詞・形容詞を見分ける',
+};
+// シート冒頭の「このテストについて」。テストの意義と出題例（原文＋日本語訳）を受入企業向けに示す。
+// 例は questions.js の問2・7・16。問題を差し替えたらここも直すこと。
+const VIET_OVERVIEW_HTML = `
+  <section class="vs-overview">
+    <h3>このテストについて</h3>
+    <p>母語（ベトナム語）の基本的な文法事項を理解しているかを確認するテストです。問題は、ベトナムの小学生が学校で解く問題から集めた全20問です。品詞や接続の表現、文の組み立てといった文法の考え方が母語で身についていると、日本語の文法も理解しやすく、習得が進みやすくなると考えています。</p>
+    <ol class="vs-examples">
+      <li><b>品詞</b><span class="vs-vi">Trong các từ sau, từ nào không phải danh từ?</span>次の語のうち、名詞でないものはどれか。<br>Niềm vui（喜び）／Màu xanh（青色）／Nụ cười（笑顔）／<u>Lầy lội（ぬかるんだ）</u>← 正解（形容詞）</li>
+      <li><b>接続の表現</b><span class="vs-vi">Trời không những mưa to...</span>「雨がひどいだけでなく…」に続く後半を選ぶ。<br>正解：<u>mà còn kèm theo giông lốc.</u>（→ 雨がひどいだけでなく、雷や突風まで起きている。）</li>
+      <li><b>文の種類</b><span class="vs-vi">"Bạn có thể đưa cho tôi lọ mực được không?"</span>「インク瓶を取ってもらえますか」は、どの種類の文か。<br>正解：<u>依頼を目的とした疑問文</u></li>
+    </ol>
+  </section>
+`;
+// 国語の分野別の結果から、日本語学習で出やすい傾向（メリット／苦労しそうな点）を示す決まった文。
+// AIは使わない（同じ結果なら常に同じ文）。日本語の文法との対応から書いた自前の見通し。
+// 並びは日本語学習への影響が大きい順（文の組み立て→接続→品詞→語の意味→代名詞）。各2つまで出す。
+const VIET_JAPANESE_OUTLOOK = [
+  { key: 'sentence',
+    plus: '依頼・疑問など文の働きをつかめているため、「〜てください」「〜てもいいですか」などを場面に合わせて使いやすいと考えられます。',
+    minus: '文の組み立ての理解が弱いと、語順がベトナム語と大きく違う日本語の長い文や指示文の読み取りで苦労する可能性があります。' },
+  { key: 'connective',
+    plus: '理由や逆接をつなぐ言葉の働きを理解しているため、「〜から」「〜けど」「〜のに」などの表現の意味をつかみやすいと考えられます。',
+    minus: '理由・逆接・条件をつなぐ表現（〜から・〜けど・〜たら など）の使い分けで苦労する可能性があります。' },
+  { key: 'word_class',
+    plus: '名詞・動詞・形容詞の区別がついているため、日本語の動詞・形容詞の活用（て形・ない形など）を整理して覚えやすいと考えられます。',
+    minus: '日本語の動詞・形容詞の活用を学ぶとき、品詞の区別があいまいなことでつまずく可能性があります。' },
+  { key: 'meaning',
+    plus: '言葉の意味の近さ・違いに注意が向くため、日本語の語彙を増やしやすいと考えられます。',
+    minus: '似た意味の日本語の言葉（例:「見る」と「見える」）の使い分けで迷う可能性があります。' },
+  { key: 'pronoun',
+    plus: '指し示す言葉や人の呼び方の働きを理解しているため、「これ・それ・あれ」や会話での呼び方を理解しやすいと考えられます。',
+    minus: '「これ・それ・あれ」などの指し示す言葉や、会話での人の呼び方で迷う可能性があります。' },
+];
+
+function vietnameseOutlookHtml(analysis) {
+  const labelOf = key => VIET_CATEGORIES.find(category => category.key === key)?.label;
+  const pick = (names, field) => VIET_JAPANESE_OUTLOOK
+    .filter(item => names.includes(labelOf(item.key)))
+    .slice(0, 2)
+    .map(item => item[field]);
+  const plus = pick(analysis.strong, 'plus');
+  const minus = pick(analysis.weak, 'minus');
+  if (!plus.length && !minus.length) return '';
+  return `
+      <div class="vs-outlook">
+        <h4>日本語学習への見通し</h4>
+        <ul>
+          ${plus.map(text => `<li class="is-plus"><b>メリット</b>${escapeHtml(text)}</li>`).join('')}
+          ${minus.map(text => `<li class="is-minus"><b>苦労しそうな点</b>${escapeHtml(text)}</li>`).join('')}
+        </ul>
+      </div>`;
+}
+
+const VIET_OPENINGS = {
+  high: '母語の文法をよく理解しています。',
+  midHigh: '母語の文法の基礎はおおむね身についています。',
+  midLow: '母語の文法に一部抜けがあります。',
+  low: '母語の文法の基礎が十分ではありません。',
+};
+
+// 分野別の正答傾向を集計する共通ヘルパー（ルールベースのみ・AIは使わない。同じ回答なら常に同じ結果）。
+// groups: [{short, correct, total}]（total=0の分野は除く）、unanswered: 未回答の問題数、
+// openings: 正答率の閾値ごとの書き出し文（high >=90% / midHigh >=70% / midLow >=50% / low それ未満）。
+// ルールは mathAnalysis と同じにしてある。mathAnalysis 自体は既存テスト(math-analysis.test.js)が
+// 関数本体だけを取り出して単体で動かすため、そちらは書き換えずに独立のまま残し、
+// この共通ヘルパーは新規のベトナム国語側から使う。
+function answerAnalysis(groups, unanswered, openings) {
+  const sections = groups.filter(group => group.total > 0);
+  const strong = sections.filter(section => section.correct === section.total).map(section => section.short);
+  const weak = sections.filter(section => section.correct / section.total <= 0.5).map(section => section.short);
+  const correct = sections.reduce((sum, section) => sum + section.correct, 0);
+  const total = sections.reduce((sum, section) => sum + section.total, 0);
+  const rate = total ? correct / total : 0;
+
+  let comment = rate >= 0.9 ? openings.high
+    : rate >= 0.7 ? openings.midHigh
+    : rate >= 0.5 ? openings.midLow
+    : openings.low;
+
+  // 国語の分野名は「関係詞・接続の表現」のように中に「・」を含むので、分野どうしは「、」で区切る
+  if (weak.length && weak.length === sections.length) {
+    comment += 'どの分野も未定着です。';
+  } else if (weak.length) {
+    comment += `${weak.join('、')}は未定着です。`;
+  }
+  if (unanswered >= 5) {
+    comment += `未回答が${unanswered}問あります。`;
+  }
+
+  return { sections, strong, weak, unanswered, correct, total, comment };
+}
+
+function vietnameseAnalysis(answers) {
+  const list = Array.isArray(answers) ? answers : [];
+  const groups = VIET_CATEGORIES.map(category => {
+    const items = list.filter(item => item.category === category.key);
+    return { short: category.label, correct: items.filter(item => item.ok).length, total: items.length };
+  });
+  const unanswered = list.filter(item => !item.given).length;
+  return answerAnalysis(groups, unanswered, VIET_OPENINGS);
+}
+
+// vietnameseAnswerSheetHtml から呼ぶ「分析結果」ブロック。markup/CSSは mathAnalysisHtml と共通（.ms-analysis）。
+function vietnameseAnalysisHtml(answers) {
+  const analysis = vietnameseAnalysis(answers);
+  const items = analysis.sections.map(section => {
+    const pct = section.total ? Math.round(section.correct / section.total * 100) : 0;
+    const cls = ['ms-an-item'];
+    if (analysis.weak.includes(section.short)) cls.push('is-weak');
+    if (analysis.strong.includes(section.short)) cls.push('is-strong');
+    return `<div class="${cls.join(' ')}"><span class="ms-an-label">${escapeHtml(section.short)}</span><span class="ms-an-bar"><i style="width:${pct}%"></i></span><strong>${escapeHtml(section.correct)}/${escapeHtml(section.total)}</strong></div>`;
+  }).join('');
+  return `
+    <section class="ms-analysis">
+      <h3>分析結果</h3>
+      <div class="ms-an-grid">${items}</div>
+      <p class="ms-an-line"><b>得意</b>${escapeHtml(analysis.strong.join('、') || 'なし')}　<b>苦手</b>${escapeHtml(analysis.weak.join('、') || 'なし')}</p>
+      <p class="ms-an-comment">${escapeHtml(analysis.comment)}</p>
+      ${vietnameseOutlookHtml(analysis)}
+      <p class="ms-an-note">分野別の正答数から自動で判定しています（満点の分野を得意、正答率5割以下の分野を苦手としています）。日本語学習への見通しは、国語の結果と日本語の文法の対応から出やすい傾向を示したものです。</p>
+    </section>
+  `;
+}
+
+// overview=false のときは冒頭の「このテストについて」を省く（全員分の印刷では先頭の1人だけに出す）。
+function vietnameseAnswerSheetHtml(interview, candidate, { overview = true } = {}) {
+  const record = candidate.vietnameseAnswers;
+  const answers = record && Array.isArray(record.answers) ? record.answers : [];
+  const submitted = record?.submitted_at
+    ? new Date(record.submitted_at).toLocaleString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : '-';
+  const unanswered = answers.filter(item => !item.given).length;
+  const parts = splitCandidateName(candidate.name);
+  const displayName = parts.kana || parts.latin || '氏名未入力';
+  const byCategory = new Map(VIET_CATEGORIES.map(category => [category.key, []]));
+  answers.forEach(item => {
+    const list = byCategory.get(item.category);
+    if (list) list.push(item);
+  });
+  const rows = VIET_CATEGORIES.map(category => {
+    const items = (byCategory.get(category.key) || []).slice().sort((a, b) => Number(a.id) - Number(b.id));
+    if (!items.length) return '';
+    const sectionRow = `<tr class="ms-sec"><td colspan="3">${escapeHtml(category.label)}</td></tr>`;
+    const itemRows = items.map(item => {
+      return `<tr>
+        <td class="ms-no">${escapeHtml(item.id)}</td>
+        <td class="ms-q">${escapeHtml(VIET_QUESTION_JA[item.id] || '')}</td>
+        <td class="ms-mark">${item.ok ? '○' : '×'}</td>
+      </tr>`;
+    }).join('');
+    return sectionRow + itemRows;
+  }).join('');
+  return `
+    <article class="math-sheet viet-sheet">
+      <header class="ms-head">
+        <div>
+          <h2>ベトナム国語テスト 回答</h2>
+          <div class="ms-sub">事前テスト（ベトナム語の文法・全${escapeHtml(record?.total ?? answers.length)}問）</div>
+        </div>
+        <div class="ms-meta">${escapeHtml(formatInterviewName(interview))}<br>受験日時 ${escapeHtml(submitted)}</div>
+      </header>
+      <div class="ms-summary">
+        <div><span>候補者</span><strong>${escapeHtml(candidateLabel(candidate))}　${escapeHtml(displayName)}</strong></div>
+        <div><span>得点</span><strong>${escapeHtml(formatScore(record?.score ?? null))}点</strong></div>
+        <div><span>正解数</span><strong>${escapeHtml(record?.correct ?? '-')} / ${escapeHtml(record?.total ?? answers.length)}問</strong></div>
+        <div><span>未回答</span><strong>${unanswered}問</strong></div>
+      </div>
+      ${overview ? VIET_OVERVIEW_HTML : ''}
+      ${vietnameseAnalysisHtml(answers)}
+      <table class="ms-table">
+        <thead><tr><th class="ms-no">問</th><th class="ms-q">問われていること</th><th class="ms-mark">正誤</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="ms-note">設問はベトナム語の文法問題です。問題文・選択肢は訳さず、何を問う問題かだけを示しています。</p>
+    </article>
+  `;
+}
+
+function openVietnameseAnswers(candidateId) {
+  const interview = activeInterview();
+  const candidate = interview?.candidates.find(item => item.id === candidateId);
+  if (!candidate?.vietnameseAnswers) return;
+  $('#math-dialog-eyebrow').textContent = 'ベトナム国語テストの回答';
+  $('#math-dialog-title').textContent = `${candidateLabel(candidate)} ${candidate.name || '氏名未入力'}`;
+  $('#math-dialog-body').innerHTML = vietnameseAnswerSheetHtml(interview, candidate);
+  $('#math-dialog-print').dataset.id = candidateId;
+  $('#math-dialog-print').dataset.kind = 'vietnamese';
+  const dialog = $('#math-dialog');
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+  if (window.lucide) lucide.createIcons();
+}
+
+// 順位のPDFとは別の独立した印刷（A4縦・1人1枚から）。ベトナム国語版。
+function printVietnameseAnswers(candidates) {
+  const interview = activeInterview();
+  const targets = (candidates || [])
+    .filter(candidate => candidate.vietnameseAnswers)
+    .sort((a, b) => Number(a.no) - Number(b.no));
+  if (!interview || !targets.length) {
+    alert('ベトナム国語テストの回答が保存されている候補者がいません。\n（回答の保存は2026年9月21日以降の受験分からです）');
+    return;
+  }
+  $('#print-math').innerHTML = targets.map((candidate, index) => vietnameseAnswerSheetHtml(interview, candidate, { overview: index === 0 })).join('');
+  const dialog = $('#math-dialog');
+  if (dialog?.open) dialog.close();
+  document.body.classList.add('printing-math');
+  printWithTitle(interview, targets.length === 1 ? `ベトナム国語の回答_No.${targets[0].no}` : 'ベトナム国語の回答');
+  setTimeout(() => document.body.classList.remove('printing-math'), 500);
+}
+
+// ===== AI所見（OpenAIが各テストの結果から総合所見・数学のつまずき傾向を作成） =====
+
+function stripHtmlTags(value) {
+  return String(value || '').replace(/<[^>]+>/g, '');
+}
+
+// mathAnswerSheetHtml と同じ考え方で問題を表す。日本語訳（MATH_PROMPT_JA）があればタグを除いてそれを、
+// 無ければ受験時の数式（item.math）をそのまま使う。
+function mathQuestionForAi(item) {
+  const ja = MATH_PROMPT_JA[item.id];
+  return ja ? stripHtmlTags(ja) : (item.math || '');
+}
+
+// buildRows() が組み立てた1候補者分の row から、AIへ渡す入力を作る。
+// 氏名・写真・候補者番号・受入企業名は含めない（入力に無いことは推測させない）。
+// 実施していない（チェックが外れている）テストは丸ごと省き、まだ点が入っていない科目も省く。
+function aiInput(row, interview) {
+  const input = {
+    総合: {
+      順位: rankLabel(row),
+      得点: row.rankScore,
+      満点: row.rankMax,
+      人数: (interview?.candidates || []).length,
+    },
+  };
+
+  if (isTestEnabled(interview, 'kraepelin') && row.kSummary && row.kraepelinEval) {
+    input.クレペリン = {
+      評価点: row.kraepelinEval.total,
+      作業量: row.kraepelinEval.work,
+      正確性: row.kraepelinEval.accuracy,
+      安定性: row.kraepelinEval.stability,
+      判定: judgmentLabel(row.kSummary.judgment),
+      誤答率: row.kSummary.errorRate == null ? null : formatPercent(row.kSummary.errorRate),
+      順位: row.ranks.k,
+    };
+  }
+
+  if (isTestEnabled(interview, 'math') && row.math != null) {
+    const math = { 得点: row.math, 順位: row.ranks.math };
+    if (row.mathAnswers) {
+      const analysis = mathAnalysis(row.mathAnswers.answers);
+      math.分野別 = analysis.sections.map(section => ({ 分野: section.short, 正答: section.correct, 問数: section.total }));
+      math.誤答 = (row.mathAnswers.answers || [])
+        .filter(item => !item.ok)
+        .map(item => ({
+          問: item.id,
+          問題: mathQuestionForAi(item),
+          本人の答え: mathAnswerWithAffix(item, item.given) || '（未回答）',
+          正解: mathAnswerWithAffix(item, item.correct),
+        }));
+    }
+    input.数学 = math;
+  }
+
+  if (isTestEnabled(interview, 'vietnamese') && row.vietnamese != null) {
+    const viet = { 得点: row.vietnamese, 順位: row.ranks.vietnamese };
+    if (row.vietnameseAnswers) {
+      const analysis = vietnameseAnalysis(row.vietnameseAnswers.answers);
+      viet.分野別 = analysis.sections.map(section => ({ 分野: section.short, 正答: section.correct, 問数: section.total }));
+    }
+    input.ベトナム国語 = viet;
+  }
+
+  if (isTestEnabled(interview, 'japanese') && row.japanese != null) {
+    input.日本語単語 = {
+      得点: row.japanese,
+      正答数: `${row.japaneseRaw ?? 0}/30`,
+      順位: row.ranks.japanese,
+    };
+  }
+
+  if (isTestEnabled(interview, 'pinboard') && row.pinSummaryData && row.pinSummaryData.enteredCount > 0) {
+    const pin = row.pinSummaryData;
+    input.ピンボード = {
+      '1回目': pinAttemptText(pin.grades[0], pin.times[0]),
+      '2回目': pinAttemptText(pin.grades[1], pin.times[1]),
+      得点: row.pinScoreValue,
+      順位: row.ranks.pin,
+    };
+  }
+
+  if (isTestEnabled(interview, 'behavior') && row.behavior) {
+    const behavior = {
+      まとめ: behaviorSummary(row.behavior),
+      傾向: behaviorTendencyComment(row.behavior),
+    };
+    const alerts = behaviorAlerts(row.behavior);
+    if (alerts.length) behavior.注意 = alerts.join('／');
+    input.行動選択 = behavior;
+  }
+
+  return input;
+}
+
+// aiInput() の結果をSHA-256でハッシュ化する。保存済みの input_hash と比較して
+// 「テスト結果があとから変わったのに所見が古いまま」を検出するために使う。
+async function aiInputHash(input) {
+  const bytes = new TextEncoder().encode(JSON.stringify(input));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 function printTestGuide() {
   const interview = activeInterview();
   if (!interview) return;
   renderTestGuide(interview);
   document.body.classList.add('printing-guide');
   warnLandscapeIfNeeded();
-  window.print();
+  printWithTitle(interview, 'テスト説明');
   setTimeout(() => document.body.classList.remove('printing-guide'), 500);
 }
 
@@ -1214,24 +1814,27 @@ function renderPrintReport(interview, rows) {
       <b>ピンボード評価<i>評価90点（◎3・○2・△1・×0の2回合計÷6）＋時間10点（最速者÷本人の合計時間）</i></b>
       ${PIN_GRADES.map(grade => `<span><strong>${grade.symbol}</strong><em>${grade.label}<i>${grade.detail}</i></em></span>`).join('')}
     </div>` : ''}
-    <section class="print-overview" aria-label="面接情報">
+    <section class="print-overview${interview.jobType ? ' print-overview-5col' : ''}" aria-label="面接情報">
       <div><span>面接日</span><strong>${escapeHtml(interviewDate)}</strong></div>
       <div><span>受入企業</span><strong>${escapeHtml(withHonorific(interview.company))}</strong></div>
+      ${printOverviewJobTypeHtml(interview)}
       <div><span>送り出し機関</span><strong>${escapeHtml(formatSender(interview.senderOrg) || '-')}</strong></div>
       <div><span>候補者数</span><strong>${rows.length}名</strong></div>
     </section>
     <table class="print-table">
       <colgroup>
-        <col class="print-col-rank">
+        <col class="print-col-no">
         <col class="print-col-candidate">
+        <col class="print-col-rank">
         ${rankedTests.map(test => `<col class="${test.key === 'kraepelin' ? 'print-col-kraepelin' : test.key === 'pinboard' ? 'print-col-pin' : 'print-col-score'}">`).join('')}
         <col class="print-col-subject-rank">
         <col class="print-col-note">
       </colgroup>
       <thead>
         <tr>
-          <th>総合結果</th>
+          <th>No.</th>
           <th>候補者</th>
+          <th>総合結果</th>
           ${rankedTests.map(test => `<th>${escapeHtml(test.label)}</th>`).join('')}
           <th>科目順位</th>
           <th>総合所見</th>
@@ -1242,16 +1845,11 @@ function renderPrintReport(interview, rows) {
           const pin = pinSummary(row.score);
           return `
             <tr>
-              <td class="print-rank">
-                <strong>${escapeHtml(rankLabel(row))}</strong>
-                ${rankScoreText(row) ? `<span>${escapeHtml(rankScoreText(row))}</span>` : ''}
-                ${row.reference ? `<span class="print-reference-note">${escapeHtml(referenceReason(row))}</span>` : ''}
-              </td>
+              <td class="print-no">${escapeHtml(String(row.no ?? ''))}</td>
               <td class="print-candidate">
                 <div class="print-candidate-inner">
                   ${row.photo ? `<img class="print-photo" src="${escapeHtml(row.photo)}" alt="">` : '<div class="print-photo print-photo-empty">写真なし</div>'}
                   <div class="print-candidate-copy">
-                    <span class="print-candidate-no">${escapeHtml(candidateLabel(row))}</span>
                     ${(() => {
                       // 「カタカナ / LATIN」を1行に詰めると変な位置で折り返すので2段に分ける
                       const parts = splitCandidateName(row.name);
@@ -1261,6 +1859,11 @@ function renderPrintReport(interview, rows) {
                     })()}
                   </div>
                 </div>
+              </td>
+              <td class="print-rank">
+                <strong>${escapeHtml(rankLabel(row))}</strong>
+                ${rankScoreText(row) ? `<span>${escapeHtml(rankScoreText(row))}</span>` : ''}
+                ${row.reference ? `<span class="print-reference-note">${escapeHtml(referenceReason(row))}</span>` : ''}
               </td>
               ${isTestEnabled(interview, 'kraepelin') ? `<td class="print-kraepelin">${row.kraepelinEval ? `<strong>${formatScore(row.kraepelinEval.total)}点</strong>
                 <span class="print-kraepelin-breakdown"><b>作業量</b><em>${row.kraepelinEval.work}<i>/45</i></em></span>
@@ -1283,7 +1886,10 @@ function renderPrintReport(interview, rows) {
       </tbody>
     </table>
     <footer class="print-footer">
-      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の各100点満点、合計${rankedTests.length * 100}点で総合順位を算出${rows.some(row => row.provisional && row.finalRank != null) ? '（現在は暫定順位：未入力の科目を除いて算出）' : ''}</span>
+      <span>評価基準：${escapeHtml(rankedTests.map(test => test.label).join('・'))}の各100点満点、合計${rankedTests.length * 100}点で総合順位を算出${rows.some(row => row.provisional && row.finalRank != null) ? '（現在は暫定順位：未入力の科目を除いて算出）' : ''}${rows.some(row => {
+        if (!row.aiAnalysis) return false;
+        return String((row.aiAnalysis.edited_overall ?? row.aiAnalysis.overall) || '').trim().length > 0;
+      }) ? '<span class="print-footer-ai-note">　総合所見は各テストの結果をもとにAIが作成し、担当者が確認した文です。</span>' : ''}</span>
       <span>${escapeHtml(formatInterviewName(interview))}</span>
     </footer>
     ${behaviorAppendix}
@@ -1413,8 +2019,8 @@ function renderTable(interview) {
           </div>
         </td>
         ${isTestEnabled(interview, 'kraepelin') ? `<td class="kraepelin-cell kraepelin-col">${kraepelinCell}</td>` : ''}
-        ${isTestEnabled(interview, 'math') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'math', row.math, row.ranks.math, { link: mathTestUrl(interview, row) })}</td>` : ''}
-        ${isTestEnabled(interview, 'vietnamese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row) })}</td>` : ''}
+        ${isTestEnabled(interview, 'math') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'math', row.math, row.ranks.math, { link: mathTestUrl(interview, row), extra: row.mathAnswers ? `<button type="button" class="mini-link math-answers-btn" data-id="${row.id}">回答を見る</button>` : '' })}</td>` : ''}
+        ${isTestEnabled(interview, 'vietnamese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'vietnamese', row.vietnamese, row.ranks.vietnamese, { link: vietnameseTestUrl(interview, row), extra: row.vietnameseAnswers ? `<button type="button" class="mini-link viet-answers-btn" data-id="${row.id}">回答を見る</button>` : '' })}</td>` : ''}
         ${isTestEnabled(interview, 'japanese') ? `<td class="score-entry-table-cell subject-score-col">${subjectScoreCell(row, 'japanese', row.japanese, row.ranks.japanese, { max: 30, placeholder: '0-30', note: (value, raw) => `${raw || 0}/30 → ${formatScore(value)}点` })}</td>` : ''}
         ${isTestEnabled(interview, 'pinboard') ? `<td class="score-entry-table-cell pin-grade-col">${pinGradeControl(row, 1)}</td>
         <td class="score-entry-table-cell pin-time-col">${pinTimeInput(row, 1)}</td>
@@ -1454,6 +2060,12 @@ function renderTable(interview) {
   body.querySelectorAll('.remove-candidate').forEach(button => {
     button.addEventListener('click', () => removeCandidate(button.dataset.id));
   });
+  body.querySelectorAll('.math-answers-btn').forEach(button => {
+    button.addEventListener('click', () => openMathAnswers(button.dataset.id));
+  });
+  body.querySelectorAll('.viet-answers-btn').forEach(button => {
+    button.addEventListener('click', () => openVietnameseAnswers(button.dataset.id));
+  });
   body.querySelectorAll('.behavior-detail-btn').forEach(button => {
     button.addEventListener('click', () => openBehaviorDetail(button.dataset.id));
   });
@@ -1483,11 +2095,16 @@ function render() {
   $('#active-sender-display').classList.toggle('hidden', isAdmin || !hasInterview);
   $('#active-date-name').textContent = !isAdmin && hasInterview ? interview.date || '-' : '';
   $('#active-sender-name').textContent = !isAdmin && hasInterview ? user?.sender || '' : '';
+  $('#active-job-type-control').classList.toggle('hidden', !isAdmin);
+  $('#active-job-type-display').classList.toggle('hidden', isAdmin || !hasInterview || !interview?.jobType);
+  $('#active-job-type-name').textContent = !isAdmin && hasInterview ? interview.jobType || '' : '';
   if (hasInterview) {
     $('#active-date').value = interview.date || '';
     $('#active-date').disabled = user?.role !== 'admin' || !state.dbReady;
     $('#active-sender').value = interview.senderOrg || 'BARAEN';
     $('#active-sender').disabled = user?.role !== 'admin';
+    $('#active-job-type').value = interview.jobType || '';
+    $('#active-job-type').disabled = user?.role !== 'admin' || !state.dbReady;
   }
   $('#delete-interview').classList.toggle('hidden', !isAdmin);
   $('#delete-interview').disabled = !hasInterview || !state.dbReady || !isAdmin;
@@ -1504,6 +2121,12 @@ function render() {
   $('#open-link-sheet').disabled = !hasInterview;
   $('#print-pdf').classList.toggle('hidden', !isAdmin);
   $('#print-guide-btn').classList.toggle('hidden', !isAdmin);
+  $('#print-math-btn').classList.toggle('hidden', !isAdmin);
+  $('#print-math-btn').disabled = !hasInterview;
+  $('#print-viet-btn').classList.toggle('hidden', !isAdmin);
+  $('#print-viet-btn').disabled = !hasInterview;
+  $('#ai-dialog-btn').classList.toggle('hidden', !isAdmin);
+  $('#ai-dialog-btn').disabled = !hasInterview;
   $('#print-guide-btn').disabled = !hasInterview;
   $('#export-csv').classList.toggle('hidden', !isAdmin);
   $('#print-pdf').disabled = !hasInterview;
@@ -1525,6 +2148,7 @@ async function createInterview(event) {
   }
   const date = $('#interview-date').value;
   const company = $('#interview-company').value.trim();
+  const jobType = $('#interview-job-type').value.trim();
   const count = Math.max(1, Number($('#candidate-count').value || 1));
   const user = currentUser();
   const senderOrg = user?.role === 'sender' ? user.sender : $('#interview-sender').value;
@@ -1537,7 +2161,7 @@ async function createInterview(event) {
 
   const { data, error } = await supabase
     .from('interview_sessions')
-    .insert({ interview_date: date, company, sender_org: senderOrg, test_settings: testSettings })
+    .insert({ interview_date: date, company, job_type: jobType || null, sender_org: senderOrg, test_settings: testSettings })
     .select('*')
     .single();
   if (error) {
@@ -1714,6 +2338,29 @@ async function updateInterviewDate(value) {
     return;
   }
   interview.date = value;
+  render();
+}
+
+async function updateInterviewJobType(value) {
+  const interview = activeInterview();
+  const input = $('#active-job-type');
+  if (!interview || !input || !isAdminUser()) return;
+  const nextValue = String(value || '').trim();
+  if (nextValue === (interview.jobType || '')) return;
+
+  const previous = interview.jobType || '';
+  input.disabled = true;
+  const { error } = await supabase
+    .from('interview_sessions')
+    .update({ job_type: nextValue || null })
+    .eq('id', interview.id);
+  input.disabled = false;
+  if (error) {
+    alert('職種の保存に失敗しました: ' + error.message);
+    input.value = previous;
+    return;
+  }
+  interview.jobType = nextValue;
   render();
 }
 
@@ -2016,12 +2663,30 @@ function warnLandscapeIfNeeded() {
   localStorage.setItem(LANDSCAPE_HINT_KEY, '1');
 }
 
+// 印刷時のファイル名はページのタイトルから決まる（ChromeのPDF保存）。
+// 面接名を入れた名前にして、印刷が終わったら元のタイトルに戻す。
+const BASE_DOCUMENT_TITLE = document.title;
+function sanitizeFileName(value) {
+  return String(value ?? '')
+    .replace(/[\\/:*?"<>|\x00-\x1f]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function printWithTitle(interview, suffix) {
+  const name = interview ? `${interview.date}_${formatInterviewName(interview)}_${suffix}` : suffix;
+  document.title = sanitizeFileName(name);
+  window.print();
+  setTimeout(() => { document.title = BASE_DOCUMENT_TITLE; }, 1000);
+}
+
 function printPdf() {
   const interview = activeInterview();
   if (!interview) return;
-  renderPrintReport(interview, buildRows(interview));
+  // PDFは順位順ではなく候補者番号順で出す（受入企業から番号順のままが良いとのFB）。
+  // 順位の見せ方は従来どおり（左端の総合結果の列）。
+  renderPrintReport(interview, scoreEntryRows(buildRows(interview)));
   warnLandscapeIfNeeded();
-  window.print();
+  printWithTitle(interview, '事前テスト結果');
 }
 
 function openLinkSheet() {
@@ -2048,7 +2713,7 @@ function printLinkSheet() {
   renderLinkSheet(interview);
   resetLinkPrintState();
   document.body.classList.add('printing-links');
-  window.print();
+  printWithTitle(interview, 'QR受験票');
   setTimeout(resetLinkPrintState, 500);
 }
 
@@ -2056,10 +2721,12 @@ function printCandidateLinkSheet(candidateId) {
   const target = [...document.querySelectorAll('.link-card')]
     .find(card => card.dataset.candidateId === candidateId);
   if (!target) return;
+  const interview = activeInterview();
+  const candidate = findCandidateById(candidateId);
   resetLinkPrintState();
   target.classList.add('print-target');
   document.body.classList.add('printing-links', 'printing-single-link');
-  window.print();
+  printWithTitle(interview, candidate ? `QR受験票_No.${candidate.no}` : 'QR受験票');
   setTimeout(resetLinkPrintState, 500);
 }
 
@@ -2145,12 +2812,220 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
+// ===== AI所見ダイアログ =====
+let aiCurrentHashes = new Map(); // candidateId -> aiInput()の現在のハッシュ（描画のたびに作り直す）
+let aiGenerating = false;
+
+function formatAiDate(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+// ステータスの優先順位: 未作成 → 結果が変わった（ハッシュ不一致） → 担当者が直した → 作成済み
+function aiStatusInfo(row, currentHash) {
+  const ai = row.aiAnalysis;
+  if (!ai) return { text: '未作成', cls: 'ai-status-none' };
+  if (currentHash && ai.input_hash && ai.input_hash !== currentHash) {
+    return { text: '結果が変わりました。作り直してください', cls: 'ai-status-stale' };
+  }
+  const edited = ai.edited_overall != null || ai.edited_math_notes != null;
+  if (edited) return { text: '直しあり', cls: 'ai-status-edited' };
+  const date = formatAiDate(ai.generated_at);
+  return { text: `作成済み${date ? ` ${date}` : ''}`, cls: 'ai-status-ok' };
+}
+
+async function computeAiHashes(interview, rows) {
+  const map = new Map();
+  for (const row of rows) {
+    map.set(row.id, await aiInputHash(aiInput(row, interview)));
+  }
+  return map;
+}
+
+function aiCardHtml(row) {
+  const ai = row.aiAnalysis;
+  const status = aiStatusInfo(row, aiCurrentHashes.get(row.id));
+  const overallText = ai ? String(ai.edited_overall ?? ai.overall ?? '') : '';
+  const mathText = ai ? String(ai.edited_math_notes ?? ai.math_notes ?? '') : '';
+  const hasMath = !!row.mathAnswers;
+  return `
+    <article class="ai-card" data-id="${escapeHtml(row.id)}">
+      <header class="ai-card-head">
+        <strong>${escapeHtml(candidateLabel(row))} ${escapeHtml(row.name || '氏名未入力')}</strong>
+        <span class="ai-status ${status.cls}">${escapeHtml(status.text)}</span>
+      </header>
+      <label class="ai-field">
+        <span class="ai-field-label">総合所見</span>
+        <textarea class="ai-overall" data-id="${escapeHtml(row.id)}" rows="3">${escapeHtml(overallText)}</textarea>
+        <span class="ai-char-count">${overallText.length}文字</span>
+      </label>
+      ${hasMath ? `
+      <label class="ai-field">
+        <span class="ai-field-label">数学のつまずき</span>
+        <textarea class="ai-math-notes" data-id="${escapeHtml(row.id)}" rows="2">${escapeHtml(mathText)}</textarea>
+        <span class="ai-char-count">${mathText.length}文字</span>
+      </label>` : ''}
+      <div class="ai-card-actions">
+        <button type="button" class="btn ai-save" data-id="${escapeHtml(row.id)}">保存</button>
+      </div>
+    </article>
+  `;
+}
+
+function aiDialogRows(interview) {
+  return [...buildRows(interview)].sort((a, b) => Number(a.no) - Number(b.no));
+}
+
+async function renderAiDialog() {
+  const interview = activeInterview();
+  const body = $('#ai-dialog-body');
+  if (!interview || !body) return;
+  const rows = aiDialogRows(interview);
+  aiCurrentHashes = await computeAiHashes(interview, rows);
+  body.innerHTML = rows.map(row => aiCardHtml(row)).join('');
+  body.querySelectorAll('.ai-save').forEach(button => {
+    button.addEventListener('click', () => saveAiCard(button.dataset.id));
+  });
+  body.querySelectorAll('textarea.ai-overall, textarea.ai-math-notes').forEach(textarea => {
+    const counter = textarea.parentElement.querySelector('.ai-char-count');
+    textarea.addEventListener('input', () => {
+      if (counter) counter.textContent = `${textarea.value.length}文字`;
+    });
+  });
+  if (window.lucide) lucide.createIcons();
+}
+
+async function openAiDialog() {
+  const interview = activeInterview();
+  if (!interview) return;
+  const dialog = $('#ai-dialog');
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+  await renderAiDialog();
+}
+
+async function saveAiCard(candidateId) {
+  const candidate = findCandidateById(candidateId);
+  const card = document.querySelector(`.ai-card[data-id="${candidateId}"]`);
+  if (!candidate || !card) return;
+  const ai = candidate.aiAnalysis;
+  if (!ai) {
+    alert('先に「全員分を作る」でAI所見を作成してください。');
+    return;
+  }
+  const overallInput = card.querySelector('.ai-overall')?.value.trim() || '';
+  const mathField = card.querySelector('.ai-math-notes');
+  const mathInput = mathField ? mathField.value.trim() : '';
+
+  const next = { ...ai };
+  if (overallInput && overallInput !== String(ai.overall || '')) next.edited_overall = overallInput;
+  else delete next.edited_overall;
+  if (mathField && mathInput && mathInput !== String(ai.math_notes || '')) next.edited_math_notes = mathInput;
+  else delete next.edited_math_notes;
+  if (next.edited_overall !== undefined || next.edited_math_notes !== undefined) {
+    next.edited_at = new Date().toISOString();
+  } else {
+    delete next.edited_at;
+  }
+
+  const button = card.querySelector('.ai-save');
+  if (button) button.disabled = true;
+  const { error } = await supabase.from('interview_candidates').update({ ai_analysis: next }).eq('id', candidateId);
+  if (button) button.disabled = false;
+  if (error) {
+    alert('保存に失敗しました: ' + error.message);
+    return;
+  }
+  await loadData();
+  await renderAiDialog();
+}
+
+// 10人ずつまとめてAPIへ送る（1回のAI呼び出しが1候補者なので、まとめすぎるとタイムアウトしやすい）
+const AI_GENERATE_CHUNK_SIZE = 10;
+
+async function generateAllAi() {
+  if (aiGenerating) return;
+  const interview = activeInterview();
+  if (!interview) return;
+  const rows = aiDialogRows(interview);
+  if (!rows.length) return;
+  if (!confirm(`${rows.length}人分のAI所見を作成します。\n既に作成済みの人がいる場合、作り直すと直した文は消えます。\n\nよろしいですか？`)) return;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) {
+    alert('ログイン情報を確認できません。再度ログインしてください。');
+    return;
+  }
+
+  const hashes = await computeAiHashes(interview, rows);
+  const items = rows.map(row => ({
+    id: row.id,
+    input: aiInput(row, interview),
+    input_hash: hashes.get(row.id),
+  }));
+
+  const button = $('#ai-generate-all');
+  aiGenerating = true;
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = `作成中… (${items.length}人)`;
+  }
+
+  const errors = [];
+  try {
+    for (let i = 0; i < items.length; i += AI_GENERATE_CHUNK_SIZE) {
+      const chunk = items.slice(i, i + AI_GENERATE_CHUNK_SIZE);
+      let response;
+      try {
+        response = await fetch('/grvn-api/interview-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ candidates: chunk }),
+        });
+      } catch (error) {
+        errors.push('通信に失敗しました: ' + error.message);
+        continue;
+      }
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+      if (!response.ok) {
+        errors.push(payload?.error || `作成に失敗しました（${response.status}）`);
+        continue;
+      }
+      (payload?.results || []).forEach(result => {
+        if (result.ok) return;
+        const target = rows.find(row => row.id === result.id);
+        errors.push(`${target ? `${candidateLabel(target)} ${target.name || ''}` : result.id}: ${result.error || '作成に失敗しました'}`);
+      });
+    }
+  } finally {
+    aiGenerating = false;
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<i data-lucide="sparkles"></i>全員分を作る';
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+
+  await loadData();
+  await renderAiDialog();
+  if (errors.length) alert('一部の作成に失敗しました:\n' + errors.join('\n'));
+}
+
 function bindEvents() {
   $('#auth-form').addEventListener('submit', handleAuth);
   $('#interview-form').addEventListener('submit', createInterview);
   $('#candidate-form').addEventListener('submit', addCandidate);
   $('#active-date').addEventListener('change', event => updateInterviewDate(event.target.value));
   $('#active-sender').addEventListener('change', event => updateInterviewSender(event.target.value));
+  $('#active-job-type').addEventListener('change', event => updateInterviewJobType(event.target.value));
   $('#renumber-candidates').addEventListener('click', renumberCandidates);
   $('#delete-interview').addEventListener('click', deleteInterview);
   $('#archive-interview').addEventListener('click', archiveActiveInterview);
@@ -2163,6 +3038,18 @@ function bindEvents() {
   $('#print-link-sheet').addEventListener('click', printLinkSheet);
   $('#print-pdf').addEventListener('click', printPdf);
   $('#print-guide-btn').addEventListener('click', printTestGuide);
+  $('#print-math-btn').addEventListener('click', () => printMathAnswers(activeInterview()?.candidates || []));
+  $('#print-viet-btn').addEventListener('click', () => printVietnameseAnswers(activeInterview()?.candidates || []));
+  $('#ai-dialog-btn').addEventListener('click', openAiDialog);
+  $('#ai-dialog-close').addEventListener('click', () => $('#ai-dialog').close());
+  $('#ai-generate-all').addEventListener('click', generateAllAi);
+  $('#math-dialog-close').addEventListener('click', () => $('#math-dialog').close());
+  $('#math-dialog-print').addEventListener('click', event => {
+    const candidate = activeInterview()?.candidates.find(item => item.id === event.currentTarget.dataset.id);
+    if (!candidate) return;
+    if (event.currentTarget.dataset.kind === 'vietnamese') printVietnameseAnswers([candidate]);
+    else printMathAnswers([candidate]);
+  });
   $('#export-csv').addEventListener('click', exportCsv);
   $('#logout').addEventListener('click', logout);
   window.addEventListener('focus', () => {
