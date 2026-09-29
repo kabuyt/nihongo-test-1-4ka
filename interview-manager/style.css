@@ -438,14 +438,15 @@ h2 {
   font-weight: 800;
 }
 
+/* 横スクロールだとボタンが隠れて見つけにくい（2026-09-29 Kabuさん指摘）ので、入りきらない分は下の段へ折り返す */
 .actions {
   max-width: min(650px, 48vw);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 7px;
-  overflow-x: auto;
   padding: 2px 0 4px;
-  scrollbar-width: thin;
 }
 
 .actions .btn { flex: 0 0 auto; min-height: 37px; padding-inline: 11px; font-size: 12px; }
@@ -1228,7 +1229,7 @@ td input { min-height: 34px; padding: 5px 7px; }
 @media (max-width: 1180px) {
   .app { grid-template-columns: 270px minmax(0, 1fr); }
   .topbar { grid-template-columns: 1fr; }
-  .actions { max-width: 100%; }
+  .actions { max-width: 100%; justify-content: flex-start; }
   .candidate-tools { grid-template-columns: 1fr auto; }
   .candidate-tools-copy { grid-column: 1 / -1; }
   .candidate-tools-copy p { white-space: normal; }
