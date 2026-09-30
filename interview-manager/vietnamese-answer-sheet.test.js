@@ -101,7 +101,8 @@ const interview = { company: '株式会社サンプル', date: '2026-09-21' };
   assert.doesNotMatch(out, /本人の回答/, '本人の回答の列を出さないこと');
   assert.doesNotMatch(out, /正解<\/th>/, '正解の列を出さないこと');
 
-  assert.match(out, /設問はベトナム語の文法問題です/, '注記が出ること');
+  // 1人1枚に収めるため末尾の注記は出さない（2026-09-29 Kabuさん指示）
+  assert.doesNotMatch(out, /設問はベトナム語の文法問題です/, '末尾の注記を出さないこと');
 }
 
 // ケース2: connective(1,15,16,17)を全滅させる → 苦手は「関係詞・接続の表現」のみ

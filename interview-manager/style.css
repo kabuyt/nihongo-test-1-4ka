@@ -1100,8 +1100,9 @@ td input { min-height: 34px; padding: 5px 7px; }
 /* ベトナム国語の回答シート: 本人の回答・正解・選択肢を出さない3列表（問/問われていること/正誤）。種類は区切り行で示す */
 .viet-sheet .ms-table .ms-q { width: 85%; }
 /* 冒頭の説明欄を入れても1人A4縦1枚に収まるよう、国語の表は行を詰める（本人の回答欄が無く1行で済むため） */
-.math-sheet.viet-sheet .ms-table td { padding: 1.5px 6px; line-height: 1.22; }
-.math-sheet.viet-sheet .ms-table .ms-sec td { padding: 2px 6px; }
+/* 概要つきの先頭の1人で見通しが4項目そろうと1行はみ出して白紙に近い2ページ目が出た（2026-09-30 塗装）。表の行をさらに詰める */
+.math-sheet.viet-sheet .ms-table td { padding: 0.5px 6px; line-height: 1.16; }
+.math-sheet.viet-sheet .ms-table .ms-sec td { padding: 1px 6px; }
 /* 日本語学習への見通し（分析結果の中。得意分野のメリット・苦手分野で苦労しそうな点） */
 .math-sheet .vs-outlook { margin: 4px 0 3px; padding: 4px 7px 5px; border-top: 1px dashed #c3ccd7; }
 .math-sheet .vs-outlook h4 { margin: 0 0 2px; font-size: 10px; color: #1d3555; }
@@ -1633,6 +1634,8 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-kraepelin-breakdown i { color: #8a97a8; font-style: normal; font-size: 7.5px; }
   .print-score strong { font-size: 13.5px; }
   .print-score span { color: #637084; font-size: 9px; white-space: nowrap; }
+  /* 「100点（30/30）」は欄に入らず「点」だけ次の行に落ちた（2026-10-01 やまびこ）。正答数は必ず下の段に出す */
+  .print-score .print-score-raw { display: block; margin-top: 1px; }
   .print-pin { text-align: left !important; }
   .print-pin span { display: block; font-size: 9px; white-space: nowrap; }
   .print-pin span + span { margin-top: 3px; }

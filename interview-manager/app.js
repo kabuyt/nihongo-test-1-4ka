@@ -1617,7 +1617,6 @@ function vietnameseAnswerSheetHtml(interview, candidate, { overview = true } = {
         <thead><tr><th class="ms-no">問</th><th class="ms-q">問われていること</th><th class="ms-mark">正誤</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="ms-note">設問はベトナム語の文法問題です。問題文・選択肢は訳さず、何を問う問題かだけを示しています。</p>
     </article>
   `;
 }
@@ -1872,7 +1871,7 @@ function renderPrintReport(interview, rows) {
                 <span>正答 ${row.kraepelinTotal} ／ 誤答 ${formatPercent(row.kSummary.errorRate)}</span>` : '<span>未取得</span>'}</td>` : ''}
               ${isTestEnabled(interview, 'math') ? `<td class="print-score">${row.math == null ? '<span>-</span>' : `<strong>${formatScore(row.math)}</strong><span>点</span>`}</td>` : ''}
               ${isTestEnabled(interview, 'vietnamese') ? `<td class="print-score">${row.vietnamese == null ? '<span>-</span>' : `<strong>${formatScore(row.vietnamese)}</strong><span>点</span>`}</td>` : ''}
-              ${isTestEnabled(interview, 'japanese') ? `<td class="print-score">${row.japanese == null ? '<span>-</span>' : `<strong>${formatScore(row.japanese)}</strong><span>点（${row.japaneseRaw}/30）</span>`}</td>` : ''}
+              ${isTestEnabled(interview, 'japanese') ? `<td class="print-score">${row.japanese == null ? '<span>-</span>' : `<strong>${formatScore(row.japanese)}</strong><span>点</span><span class="print-score-raw">${row.japaneseRaw}/30</span>`}</td>` : ''}
               ${isTestEnabled(interview, 'pinboard') ? `<td class="print-pin">
                 <span>1回目　${escapeHtml(pinAttemptText(pin.grades[0], pin.times[0]))}</span>
                 <span>2回目　${escapeHtml(pinAttemptText(pin.grades[1], pin.times[1]))}</span>
