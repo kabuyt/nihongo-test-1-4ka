@@ -290,6 +290,19 @@ function kraepelinUrl(interview, candidate) {
   return url.href;
 }
 
+// クレペリンの結果帳票（集計一覧の帳票を、この候補者の記録で開く）。
+// 帳票の見出しに面接名・番号・氏名を出し、PDFのファイル名を「日付_面接名_クレペリン_No.N」にする。
+function kraepelinReportUrl(interview, candidate) {
+  const url = new URL('../kraepelin/list.html', window.location.href);
+  const { kana, latin } = splitCandidateName(candidate.name);
+  const displayName = kana || latin;
+  url.searchParams.set('id', candidate.kraepelin.id);
+  url.searchParams.set('iv', formatInterviewName(interview));
+  url.searchParams.set('no', `${candidateLabel(candidate)}${displayName ? `　${displayName}` : ''}`);
+  url.searchParams.set('title', sanitizeFileName(`${interview.date}_${formatInterviewName(interview)}_クレペリン_${candidateLabel(candidate)}`));
+  return url.href;
+}
+
 function vietnameseTestUrl(interview, candidate) {
   const url = new URL('../vietnamese-language-test/index.html', window.location.href);
   url.searchParams.set('session', interview.id);
@@ -1994,6 +2007,7 @@ function renderTable(interview) {
     const kraepelinCell = `${kraepelinResult}
       <div class="score-link-slot kraepelin-link-slot">
         <a class="mini-link" href="${escapeHtml(kraepelinUrl(interview, row))}" target="_blank" rel="noopener">受験</a>
+        ${row.kraepelin?.id ? `<a class="mini-link" href="${escapeHtml(kraepelinReportUrl(interview, row))}" target="_blank" rel="noopener">結果PDF</a>` : ''}
       </div>`;
     const nameParts = splitCandidateName(row.name);
     return `
