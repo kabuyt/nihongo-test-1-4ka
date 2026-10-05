@@ -290,10 +290,11 @@ function kraepelinUrl(interview, candidate) {
   return url.href;
 }
 
-// クレペリンの結果帳票（集計一覧の帳票を、この候補者の記録で開く）。
-// 帳票の見出しに面接名・番号・氏名を出し、PDFのファイル名を「日付_面接名_クレペリン_No.N」にする。
+// クレペリンの結果帳票（面接管理専用の kraepelin-report.html。特定技能の配布で使う
+// クレペリンのページとは切り離してある）。見出しに面接名・番号・氏名を出し、
+// PDFのファイル名を「日付_面接名_クレペリン_No.N」にする。
 function kraepelinReportUrl(interview, candidate) {
-  const url = new URL('../kraepelin/list.html', window.location.href);
+  const url = new URL('kraepelin-report.html', window.location.href);
   const { kana, latin } = splitCandidateName(candidate.name);
   const displayName = kana || latin;
   url.searchParams.set('id', candidate.kraepelin.id);

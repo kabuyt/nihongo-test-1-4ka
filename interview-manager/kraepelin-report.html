@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クレペリン検査結果</title>
+  <!-- 面接管理専用のクレペリン結果帳票（1人分）。特定技能の配布で使うクレペリンのページ
+       （GitHub Pages / kanri の kraepelin/）とは切り離し、描画と見た目も interview 配下の写しを使う。 -->
+  <link rel="stylesheet" href="kraepelin-report.css?v=1">
+  <style>
+    html, body { overflow: auto; user-select: text; -webkit-user-select: text; background: #f9fafb; height: auto; }
+    .report-toolbar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; align-items: center; gap: 10px; max-width: 900px; margin: 0 auto; padding: 12px 20px; background: #f9fafb; }
+    .report-toolbar span { color: #6b7280; font-size: 12px; }
+    .report-message { max-width: 900px; margin: 40px auto; padding: 0 20px; color: #b91c1c; text-align: center; }
+    .report-page { max-width: 900px; margin: 0 auto; }
+    @media print {
+      html, body { overflow: visible !important; background: #fff !important; height: auto !important; }
+      .report-toolbar, .report-message { display: none !important; }
+      .report-page { max-width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-toolbar">
+    <span>印刷画面で「PDFに保存」を選ぶとPDFになります</span>
+    <button type="button" class="btn-mini" id="print-btn">PDF保存</button>
+  </div>
+  <p id="report-message" class="report-message" hidden></p>
+  <div id="report" class="report-page" hidden>
+    <div id="screen-result" class="screen active" style="position:static;display:block;height:auto;">
+        <div class="result-container">
+          <h2>検査結果<span class="vi-h">Kết quả kiểm tra</span></h2>
+          <div id="result-meta" class="result-meta"></div>
+          <div id="judgment-card" class="judgment-card">
+            <div id="judgment-icon" class="judgment-icon"></div>
+            <div id="judgment-label" class="judgment-label"></div>
+            <div id="judgment-desc" class="judgment-desc"></div>
+          </div>
+          <div class="result-section">
+            <h3>作業曲線<span class="vi-inline">/ Đường cong làm việc</span></h3>
+            <canvas id="chart-curve" width="800" height="350"></canvas>
+            <div id="curve-note" class="curve-note"></div>
+          </div>
+          <div class="result-section">
+            <h3>性格・行動特性（4軸評価）<span class="vi-inline">/ Tính cách・hành vi (4 trục)</span></h3>
+            <div id="four-axes" class="four-axes"></div>
+          </div>
+          <div class="result-section">
+            <h3>作業能力<span class="vi-inline">/ Năng lực làm việc</span></h3>
+            <div id="summary-stats" class="summary-stats"></div>
+          </div>
+          <div class="result-section">
+            <h3>詳細分析<span class="vi-inline">/ Phân tích chi tiết</span></h3>
+            <div id="analysis" class="analysis"></div>
+          </div>
+          <div class="result-section">
+            <h3>各行の詳細<span class="vi-inline">/ Chi tiết từng dòng</span></h3>
+            <div class="table-wrapper">
+              <table id="detail-table">
+                <thead>
+                  <tr>
+                    <th>行<div class="vi-th">Dòng</div></th>
+                    <th>区分<div class="vi-th">Phần</div></th>
+                    <th>正答数<div class="vi-th">Đúng</div></th>
+                    <th>誤答数<div class="vi-th">Sai</div></th>
+                    <th>正答率<div class="vi-th">Tỉ lệ</div></th>
+                  </tr>
+                </thead>
+                <tbody id="detail-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../common/config.js"></script>
+  <script src="kraepelin-results.js?v=1"></script>
+  <script src="kraepelin-report.js?v=1"></script>
+</body>
+</html>
