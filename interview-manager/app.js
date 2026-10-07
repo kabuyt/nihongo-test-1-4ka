@@ -494,6 +494,8 @@ function overallComment(row, interview) {
     const aiText = String((row.aiAnalysis.edited_overall ?? row.aiAnalysis.overall) || '').trim();
     if (aiText) return aiText;
   }
+  // どの科目も受けていない人は、点数の欄と同じく「-」だけにする（2026-10-07 Kabuさん指示）
+  if (!hasAiScores(row)) return '-';
   const comments = [];
   const kraepelin = kraepelinComment(row.kSummary, row.kraepelinEval);
   if (isTestEnabled(interview, 'kraepelin')) {
