@@ -1630,7 +1630,8 @@ td input { min-height: 34px; padding: 5px 7px; }
   .print-table .print-kraepelin-breakdown { line-height: 1.25; }
   .print-table .print-kraepelin-breakdown:last-of-type { margin-bottom: 1px; }
   .print-table .print-kraepelin strong { margin-bottom: 0; font-size: 12px; }
-  .print-table tbody td { padding-top: 3px; padding-bottom: 3px; }
+  /* 18人（8人＋10人）で表の下の評価基準の1行だけが3ページ目に押し出された（2026-10-07 コスモ電子）ので、さらに1pxずつ詰める */
+  .print-table tbody td { padding-top: 2px; padding-bottom: 2px; }
   .print-kraepelin-breakdown b { font-weight: 700; }
   .print-kraepelin-breakdown em { font-style: normal; white-space: nowrap; }
   .print-kraepelin-breakdown i { color: #8a97a8; font-style: normal; font-size: 7.5px; }
