@@ -1113,7 +1113,8 @@ function pinTimeInput(row, round) {
 // 総合順位のラベル。全科目そろう前は「仮 第N位」、そろえば「第N位」。
 // bare=true のときは接頭・接尾なしの数字だけ（管理画面のバッジ用）に「仮N」。
 function rankLabel(row, { bare = false } = {}) {
-  if (row.reference) return '参考';
+  // 受けていない科目がある人は順位をつけない。「参考」は意味がわかりにくいので「-」にする（2026-10-07 Kabuさん指示）
+  if (row.reference) return '-';
   if (row.finalRank == null) return bare ? '—' : '未集計';
   if (bare) return row.provisional ? `仮${row.finalRank}` : `${row.finalRank}`;
   return row.provisional ? `仮 第${row.finalRank}位` : `第${row.finalRank}位`;
@@ -1122,7 +1123,7 @@ function rankLabel(row, { bare = false } = {}) {
 // 参考扱いの理由（例：「クレペリン未受験」）
 function referenceReason(row) {
   if (!row.reference) return '';
-  return `${row.missingTests.map(test => test.label).join('・')}未受験のため参考`;
+  return `${row.missingTests.map(test => test.label).join('・')}未受験`;
 }
 
 // 「320 / 400点（4/5科目）」の得点行。未入力なら空文字。
