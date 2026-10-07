@@ -496,7 +496,11 @@ function overallComment(row, interview) {
   }
   const comments = [];
   const kraepelin = kraepelinComment(row.kSummary, row.kraepelinEval);
-  if (isTestEnabled(interview, 'kraepelin') && kraepelin) comments.push(`【クレペリン】${kraepelin}`);
+  if (isTestEnabled(interview, 'kraepelin')) {
+    // 未受験でも他の科目（ベトナム国語）と同じく一文を出す（2026-10-07 Kabuさん指示）
+    if (!row.kSummary) comments.push('【クレペリン】未受験のため、作業傾向は未評価です。');
+    else if (kraepelin) comments.push(`【クレペリン】${kraepelin}`);
+  }
   if (isTestEnabled(interview, 'vietnamese')) comments.push(`【ベトナム国語】${vietnameseComment(row.vietnamese)}`);
   return comments.join('\n');
 }
