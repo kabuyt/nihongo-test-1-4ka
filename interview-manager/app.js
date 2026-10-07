@@ -2969,13 +2969,24 @@ async function saveAiCard(candidateId) {
 // 10人ずつまとめてAPIへ送る（1回のAI呼び出しが1候補者なので、まとめすぎるとタイムアウトしやすい）
 const AI_GENERATE_CHUNK_SIZE = 10;
 
+// AI所見を作る対象か（点数のある科目が1つでもあるか）
+function hasAiScores(row) {
+  return row.kraepelinEval != null || row.math != null || row.vietnamese != null || row.japanese != null || row.pinScoreValue != null;
+}
+
 async function generateAllAi() {
   if (aiGenerating) return;
   const interview = activeInterview();
   if (!interview) return;
-  const rows = aiDialogRows(interview);
-  if (!rows.length) return;
-  if (!confirm(`${rows.length}人分のAI所見を作成します。\n既に作成済みの人がいる場合、作り直すと直した文は消えます。\n\nよろしいですか？`)) return;
+  // 点数のある科目が1つも無い（未受験の）人は作らない。以前は順位などだけでAIが文を書いていた（2026-10-07）
+  const allRows = aiDialogRows(interview);
+  const rows = allRows.filter(hasAiScores);
+  const skipped = allRows.length - rows.length;
+  if (!rows.length) {
+    alert('受験結果がある候補者がいないため、AI所見は作成しません。');
+    return;
+  }
+  if (!confirm(`${rows.length}人分のAI所見を作成します。${skipped ? `\n（受験結果が無い${skipped}人は作成しません）` : ''}\n既に作成済みの人がいる場合、作り直すと直した文は消えます。\n\nよろしいですか？`)) return;
 
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
