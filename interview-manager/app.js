@@ -470,6 +470,12 @@ function kraepelinComment(summary, evaluation) {
     comments.push('作業量・正確さとも標準的な水準です');
   }
 
+  // どの条件にも当たらない中くらいの人（ペースの差が小さく安定性7〜13、誤答率5〜15%、作業量も中くらい）は
+  // 所見が空になっていた（2026-10-07 コスモ電子 No.4）。その人にだけ、結果どおりの2文を出す。
+  if (!comments.length && total > 0) {
+    comments.push('作業量にやや波があります', 'ミスがやや見られます');
+  }
+
   return [...new Set(comments)].slice(0, 2).join('。') + (comments.length ? '。' : '');
 }
 
